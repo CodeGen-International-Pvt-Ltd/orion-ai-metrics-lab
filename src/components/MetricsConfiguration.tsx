@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -7,7 +6,8 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Slider } from "@/components/ui/slider";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Settings, BarChart3, ArrowRight } from "lucide-react";
+import { Settings, BarChart3, ArrowRight, Save } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 
 interface MetricsConfigurationProps {
   config: any;
@@ -19,6 +19,8 @@ interface MetricsConfigurationProps {
 
 const MetricsConfiguration = ({ config, setConfig, testSuites, onNext, onBack }: MetricsConfigurationProps) => {
   const [selectedTestSuiteId, setSelectedTestSuiteId] = useState(testSuites[0]?.id || '');
+  const [isSaving, setIsSaving] = useState(false);
+  const { toast } = useToast();
 
   const predefinedMetrics = [
     { id: 'correctness', name: 'Correctness', defaultThreshold: 95, description: 'Accuracy of responses', defaultEnabled: true },
@@ -48,7 +50,6 @@ const MetricsConfiguration = ({ config, setConfig, testSuites, onNext, onBack }:
     'BERT', 'BART', 'DistilBERT', 'RoBERTa', 'BLEURT', 'G-Eval', 'BERTScore', 'SPICE', 'WMD', 'ELMO'
   ];
 
-  // Initialize config for selected test suite with defaults if not already set
   const initializeDefaults = (testSuiteId: string) => {
     if (!config.testSuiteConfigs) {
       setConfig({ ...config, testSuiteConfigs: {} });
@@ -78,7 +79,6 @@ const MetricsConfiguration = ({ config, setConfig, testSuites, onNext, onBack }:
     }
   };
 
-  // Initialize defaults when component mounts or test suite changes
   useState(() => {
     if (selectedTestSuiteId) {
       initializeDefaults(selectedTestSuiteId);
@@ -113,6 +113,19 @@ const MetricsConfiguration = ({ config, setConfig, testSuites, onNext, onBack }:
     });
   };
 
+  const handleSaveConfiguration = async () => {
+    setIsSaving(true);
+    
+    // Simulate saving process
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    
+    setIsSaving(false);
+    toast({
+      title: "Configuration Saved",
+      description: `Settings for ${selectedTestSuite?.name} have been saved successfully.`,
+    });
+  };
+
   const selectedTestSuite = testSuites.find(suite => suite.id === selectedTestSuiteId);
 
   if (testSuites.length === 0) {
@@ -139,13 +152,25 @@ const MetricsConfiguration = ({ config, setConfig, testSuites, onNext, onBack }:
     <div className="max-w-6xl mx-auto space-y-6">
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Settings className="w-5 h-5" />
-            Metrics Configuration
-          </CardTitle>
-          <CardDescription>
-            Configure evaluation metrics and thresholds for your test suites (optional)
-          </CardDescription>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle className="flex items-center gap-2">
+                <Settings className="w-5 h-5" />
+                Metrics Configuration
+              </CardTitle>
+              <CardDescription>
+                Configure evaluation metrics and thresholds for your test suites (optional)
+              </CardDescription>
+            </div>
+            <Button 
+              onClick={handleSaveConfiguration}
+              disabled={isSaving || !selectedTestSuiteId}
+              className="bg-green-600 hover:bg-green-700"
+            >
+              <Save className="w-4 h-4 mr-2" />
+              {isSaving ? 'Saving...' : 'Save Configuration'}
+            </Button>
+          </div>
         </CardHeader>
         <CardContent className="space-y-6">
           {/* Test Suite Selection */}
