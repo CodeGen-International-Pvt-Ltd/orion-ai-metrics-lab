@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -79,7 +78,7 @@ const Index = () => {
       case 2:
         return <TestSuiteCreation testSuites={testSuites} setTestSuites={setTestSuites} onNext={() => setCurrentStep(3)} onBack={() => setCurrentStep(1)} />;
       case 3:
-        return <MetricsConfiguration config={metricsConfig} setConfig={setMetricsConfig} onNext={() => setCurrentStep(4)} onBack={() => setCurrentStep(2)} />;
+        return <MetricsConfiguration config={metricsConfig} setConfig={setMetricsConfig} testSuites={testSuites} onNext={() => setCurrentStep(4)} onBack={() => setCurrentStep(2)} />;
       case 4:
         return <ModelSelection selectedModel={selectedModel} setSelectedModel={setSelectedModel} onNext={() => setCurrentStep(5)} onBack={() => setCurrentStep(3)} />;
       case 5:
