@@ -1,13 +1,12 @@
 
 import { useState } from 'react';
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Slider } from "@/components/ui/slider";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Settings, BarChart3, ArrowRight, Plus, Trash2 } from "lucide-react";
+import { Settings, BarChart3, ArrowRight } from "lucide-react";
 
 interface MetricsConfigurationProps {
   config: any;
@@ -17,14 +16,11 @@ interface MetricsConfigurationProps {
 }
 
 const MetricsConfiguration = ({ config, setConfig, onNext, onBack }: MetricsConfigurationProps) => {
-  const [customMetrics, setCustomMetrics] = useState([]);
-  const [newCustomMetric, setNewCustomMetric] = useState({ name: '', threshold: 85 });
-
   const predefinedMetrics = [
-    { id: 'correctness', name: 'Correctness', defaultThreshold: 95, description: 'Accuracy of responses' },
-    { id: 'hallucination', name: 'Hallucination Rate', defaultThreshold: 5, description: 'Rate of false information', inverted: true },
-    { id: 'answer_relevancy', name: 'Answer Relevancy', defaultThreshold: 95, description: 'Relevance to the question' },
-    { id: 'contextual_relevance', name: 'Contextual Relevance', defaultThreshold: 95, description: 'Context appropriateness' }
+    { id: 'correctness', name: 'Correctness', defaultThreshold: 95, description: 'Accuracy of responses', defaultEnabled: true },
+    { id: 'hallucination', name: 'Hallucination Rate', defaultThreshold: 5, description: 'Rate of false information', inverted: true, defaultEnabled: true },
+    { id: 'answer_relevancy', name: 'Answer Relevancy', defaultThreshold: 95, description: 'Relevance to the question', defaultEnabled: true },
+    { id: 'contextual_relevance', name: 'Contextual Relevance', defaultThreshold: 95, description: 'Context appropriateness', defaultEnabled: true }
   ];
 
   const evaluationTypes = [
@@ -48,23 +44,27 @@ const MetricsConfiguration = ({ config, setConfig, onNext, onBack }: MetricsConf
     'BERT', 'BART', 'DistilBERT', 'RoBERTa', 'BLEURT', 'G-Eval', 'BERTScore', 'SPICE', 'WMD', 'ELMO'
   ];
 
-  const addCustomMetric = () => {
-    if (!newCustomMetric.name.trim()) return;
-    
-    const metric = {
-      id: Date.now().toString(),
-      name: newCustomMetric.name,
-      threshold: newCustomMetric.threshold,
-      custom: true
-    };
-    
-    setCustomMetrics([...customMetrics, metric]);
-    setNewCustomMetric({ name: '', threshold: 85 });
+  // Initialize config with default metrics if not already set
+  const initializeDefaults = () => {
+    if (!config.metrics) {
+      const defaultMetrics = {};
+      predefinedMetrics.forEach(metric => {
+        defaultMetrics[metric.id] = {
+          enabled: metric.defaultEnabled,
+          threshold: metric.defaultThreshold
+        };
+      });
+      setConfig({
+        ...config,
+        metrics: defaultMetrics
+      });
+    }
   };
 
-  const removeCustomMetric = (id: string) => {
-    setCustomMetrics(customMetrics.filter(metric => metric.id !== id));
-  };
+  // Initialize defaults on component mount
+  useState(() => {
+    initializeDefaults();
+  });
 
   const updateMetricConfig = (metricId: string, field: string, value: any) => {
     setConfig({
@@ -93,22 +93,22 @@ const MetricsConfiguration = ({ config, setConfig, onNext, onBack }: MetricsConf
         </CardHeader>
         <CardContent>
           <Tabs defaultValue="predefined" className="space-y-6">
-            <TabsList className="grid w-full grid-cols-4">
+            <TabsList className="grid w-full grid-cols-3">
               <TabsTrigger value="predefined">Core Metrics</TabsTrigger>
               <TabsTrigger value="evaluation">Evaluation Types</TabsTrigger>
               <TabsTrigger value="scoring">Scoring Methods</TabsTrigger>
-              <TabsTrigger value="custom">Custom Metrics</TabsTrigger>
             </TabsList>
 
             <TabsContent value="predefined" className="space-y-4">
               <h3 className="text-lg font-semibold">Predefined Metrics</h3>
+              <p className="text-sm text-gray-600 mb-4">Default metrics are pre-selected. You can customize which metrics to include in your evaluation.</p>
               <div className="grid gap-4">
                 {predefinedMetrics.map((metric) => (
                   <Card key={metric.id} className="p-4">
                     <div className="flex items-start justify-between mb-4">
                       <div className="flex items-center space-x-3">
                         <Checkbox
-                          checked={config.metrics?.[metric.id]?.enabled || false}
+                          checked={config.metrics?.[metric.id]?.enabled ?? metric.defaultEnabled}
                           onCheckedChange={(checked) => updateMetricConfig(metric.id, 'enabled', checked)}
                         />
                         <div>
@@ -119,11 +119,11 @@ const MetricsConfiguration = ({ config, setConfig, onNext, onBack }: MetricsConf
                       <BarChart3 className="w-5 h-5 text-gray-400" />
                     </div>
                     
-                    {config.metrics?.[metric.id]?.enabled && (
+                    {(config.metrics?.[metric.id]?.enabled ?? metric.defaultEnabled) && (
                       <div className="space-y-3">
-                        <Label>Threshold: {config.metrics?.[metric.id]?.threshold || metric.defaultThreshold}%</Label>
+                        <Label>Threshold: {config.metrics?.[metric.id]?.threshold ?? metric.defaultThreshold}%</Label>
                         <Slider
-                          value={[config.metrics?.[metric.id]?.threshold || metric.defaultThreshold]}
+                          value={[config.metrics?.[metric.id]?.threshold ?? metric.defaultThreshold]}
                           onValueChange={([value]) => updateMetricConfig(metric.id, 'threshold', value)}
                           min={0}
                           max={100}
@@ -193,56 +193,6 @@ const MetricsConfiguration = ({ config, setConfig, onNext, onBack }: MetricsConf
                   </div>
                 </div>
               </div>
-            </TabsContent>
-
-            <TabsContent value="custom" className="space-y-4">
-              <h3 className="text-lg font-semibold">Custom Metrics</h3>
-              
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 border rounded-lg bg-gray-50">
-                <div className="space-y-2">
-                  <Label>Metric Name</Label>
-                  <Input
-                    placeholder="e.g., Response Time"
-                    value={newCustomMetric.name}
-                    onChange={(e) => setNewCustomMetric({ ...newCustomMetric, name: e.target.value })}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label>Default Threshold (%)</Label>
-                  <Input
-                    type="number"
-                    min="0"
-                    max="100"
-                    value={newCustomMetric.threshold}
-                    onChange={(e) => setNewCustomMetric({ ...newCustomMetric, threshold: parseInt(e.target.value) || 85 })}
-                  />
-                </div>
-                <Button onClick={addCustomMetric} className="md:col-span-2">
-                  <Plus className="w-4 h-4 mr-2" />
-                  Add Custom Metric
-                </Button>
-              </div>
-
-              {customMetrics.length > 0 && (
-                <div className="space-y-3">
-                  {customMetrics.map((metric) => (
-                    <div key={metric.id} className="flex items-center justify-between p-4 border rounded-lg">
-                      <div>
-                        <h4 className="font-medium">{metric.name}</h4>
-                        <p className="text-sm text-gray-600">Threshold: {metric.threshold}%</p>
-                      </div>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => removeCustomMetric(metric.id)}
-                        className="text-red-600 hover:text-red-700"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
-                    </div>
-                  ))}
-                </div>
-              )}
             </TabsContent>
           </Tabs>
         </CardContent>
