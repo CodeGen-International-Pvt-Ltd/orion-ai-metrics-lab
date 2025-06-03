@@ -2,7 +2,7 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { FileText, ArrowLeft, Play, AlertCircle, CheckCircle, Clock } from "lucide-react";
+import { FileText, ArrowLeft, AlertCircle, CheckCircle, Clock } from "lucide-react";
 
 interface TestSuite {
   id: string;
@@ -20,11 +20,12 @@ interface DisplayTestSuitesProps {
 const DisplayTestSuites = ({ testSuites, testSuiteResults, onSelectTestSuite, onBack }: DisplayTestSuitesProps) => {
   const getTestSuiteStatus = (suiteId: string) => {
     const results = testSuiteResults[suiteId];
-    if (!results) {
+    if (!results || !results.testRuns || results.testRuns.length === 0) {
       return { status: 'not-run', icon: AlertCircle, color: 'bg-gray-100 text-gray-700', label: 'Not Run' };
     }
     
-    const overallScore = results.overall_score;
+    const latestRun = results.testRuns[results.testRuns.length - 1];
+    const overallScore = latestRun.overall_score;
     if (overallScore >= 95) {
       return { status: 'excellent', icon: CheckCircle, color: 'bg-green-100 text-green-700', label: 'Excellent' };
     } else if (overallScore >= 85) {
@@ -38,10 +39,17 @@ const DisplayTestSuites = ({ testSuites, testSuiteResults, onSelectTestSuite, on
 
   const formatLastRun = (suiteId: string) => {
     const results = testSuiteResults[suiteId];
-    if (!results || !results.timestamp) return 'Never';
+    if (!results || !results.testRuns || results.testRuns.length === 0) return 'Never';
     
-    const date = new Date(results.timestamp);
+    const latestRun = results.testRuns[results.testRuns.length - 1];
+    const date = new Date(latestRun.timestamp);
     return date.toLocaleDateString() + ' ' + date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  };
+
+  const getLatestResults = (suiteId: string) => {
+    const results = testSuiteResults[suiteId];
+    if (!results || !results.testRuns || results.testRuns.length === 0) return null;
+    return results.testRuns[results.testRuns.length - 1];
   };
 
   return (
@@ -72,11 +80,15 @@ const DisplayTestSuites = ({ testSuites, testSuiteResults, onSelectTestSuite, on
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {testSuites.map((suite) => {
             const status = getTestSuiteStatus(suite.id);
-            const results = testSuiteResults[suite.id];
+            const latestResults = getLatestResults(suite.id);
             const StatusIcon = status.icon;
             
             return (
-              <Card key={suite.id} className="hover:shadow-lg transition-shadow cursor-pointer group">
+              <Card 
+                key={suite.id} 
+                className="hover:shadow-lg transition-shadow cursor-pointer group"
+                onClick={() => onSelectTestSuite(suite.id)}
+              >
                 <CardHeader>
                   <div className="flex items-center justify-between">
                     <FileText className="w-8 h-8 text-blue-600" />
@@ -102,20 +114,20 @@ const DisplayTestSuites = ({ testSuites, testSuiteResults, onSelectTestSuite, on
                 <CardContent>
                   <div className="space-y-4">
                     {/* Test Results Summary */}
-                    {results ? (
+                    {latestResults ? (
                       <div className="space-y-2">
                         <div className="flex justify-between items-center">
-                          <span className="text-sm font-medium text-gray-600">Overall Score</span>
-                          <span className="text-lg font-bold text-blue-600">{results.overall_score}%</span>
+                          <span className="text-sm font-medium text-gray-600">Latest Score</span>
+                          <span className="text-lg font-bold text-blue-600">{latestResults.overall_score}%</span>
                         </div>
                         <div className="grid grid-cols-2 gap-2 text-xs">
                           <div className="flex justify-between">
-                            <span className="text-gray-500">Passed:</span>
-                            <span className="text-green-600 font-medium">{results.detailed_results?.passed || 0}</span>
+                            <span className="text-gray-500">Total Runs:</span>
+                            <span className="text-blue-600 font-medium">{testSuiteResults[suite.id]?.testRuns?.length || 0}</span>
                           </div>
                           <div className="flex justify-between">
-                            <span className="text-gray-500">Failed:</span>
-                            <span className="text-red-600 font-medium">{results.detailed_results?.failed || 0}</span>
+                            <span className="text-gray-500">Passed:</span>
+                            <span className="text-green-600 font-medium">{latestResults.detailed_results?.passed || 0}</span>
                           </div>
                         </div>
                         <div className="pt-2 border-t">
@@ -129,17 +141,9 @@ const DisplayTestSuites = ({ testSuites, testSuiteResults, onSelectTestSuite, on
                       <div className="text-center py-4">
                         <AlertCircle className="w-8 h-8 mx-auto text-gray-400 mb-2" />
                         <p className="text-sm text-gray-500">No test runs yet</p>
-                        <p className="text-xs text-gray-400">Click to run evaluation</p>
+                        <p className="text-xs text-gray-400">Click to view test suite</p>
                       </div>
                     )}
-                    
-                    <Button 
-                      onClick={() => onSelectTestSuite(suite.id)}
-                      className="w-full bg-blue-600 hover:bg-blue-700 group-hover:bg-blue-700"
-                    >
-                      <Play className="w-4 h-4 mr-2" />
-                      {results ? 'View Results' : 'Run Tests'}
-                    </Button>
                   </div>
                 </CardContent>
               </Card>

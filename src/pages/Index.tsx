@@ -12,17 +12,19 @@ import ResultsDashboard from '@/components/ResultsDashboard';
 import ReportGeneration from '@/components/ReportGeneration';
 import DisplayTestSuites from '@/components/DisplayTestSuites';
 import AppSidebar from '@/components/AppSidebar';
+import TestRunsDisplay from '@/components/TestRunsDisplay';
 
 const Index = () => {
   const [currentStep, setCurrentStep] = useState(0);
-  const [currentView, setCurrentView] = useState('workflow'); // 'workflow' or 'displaySuites'
+  const [currentView, setCurrentView] = useState('workflow'); // 'workflow', 'displaySuites', or 'testRuns'
   const [userData, setUserData] = useState({ name: '', email: '' });
   const [testSuites, setTestSuites] = useState([]);
   const [metricsConfig, setMetricsConfig] = useState({});
   const [selectedModel, setSelectedModel] = useState('OpenAI');
   const [evaluationResults, setEvaluationResults] = useState(null);
   const [selectedTestSuiteId, setSelectedTestSuiteId] = useState(null);
-  // Track results per test suite
+  const [selectedTestRunId, setSelectedTestRunId] = useState(null);
+  // Track results per test suite with multiple test runs
   const [testSuiteResults, setTestSuiteResults] = useState({});
 
   const steps = [
@@ -48,20 +50,31 @@ const Index = () => {
   const handleSelectTestSuite = (suiteId: string) => {
     console.log('Selected test suite:', suiteId);
     setSelectedTestSuiteId(suiteId);
-    // Check if this test suite has results
-    if (testSuiteResults[suiteId]) {
-      setEvaluationResults(testSuiteResults[suiteId]);
-      setCurrentView('workflow');
-      setCurrentStep(6); // Go to Results page
-    } else {
-      // If no results, go to test execution to run tests for this suite
-      setCurrentView('workflow');
-      setCurrentStep(5); // Go to Test Execution page
+    setCurrentView('testRuns');
+  };
+
+  const handleSelectTestRun = (runId: string) => {
+    console.log('Selected test run:', runId);
+    setSelectedTestRunId(runId);
+    
+    // Find the specific test run results
+    const suiteResults = testSuiteResults[selectedTestSuiteId];
+    if (suiteResults && suiteResults.testRuns) {
+      const testRun = suiteResults.testRuns.find(run => run.id === runId);
+      if (testRun) {
+        setEvaluationResults(testRun);
+        setCurrentView('workflow');
+        setCurrentStep(6); // Go to Results page
+      }
     }
   };
 
   const handleBackToWorkflow = () => {
     setCurrentView('workflow');
+  };
+
+  const handleBackToTestSuites = () => {
+    setCurrentView('displaySuites');
   };
 
   const handleUserProfileClick = () => {
@@ -82,14 +95,36 @@ const Index = () => {
   };
 
   const handleTestExecutionComplete = (results: any) => {
-    // Store results for the selected test suite
+    // Store results for the selected test suite as a new test run
     if (selectedTestSuiteId) {
+      const testRunId = `run_${Date.now()}`;
+      const testRunResults = {
+        ...results,
+        id: testRunId,
+        timestamp: new Date().toISOString()
+      };
+
       setTestSuiteResults(prev => ({
         ...prev,
-        [selectedTestSuiteId]: results
+        [selectedTestSuiteId]: {
+          ...prev[selectedTestSuiteId],
+          testRuns: [
+            ...(prev[selectedTestSuiteId]?.testRuns || []),
+            testRunResults
+          ]
+        }
       }));
     }
     setEvaluationResults(results);
+  };
+
+  const getSelectedTestSuite = () => {
+    return testSuites.find(suite => suite.id === selectedTestSuiteId);
+  };
+
+  const getTestRunsForSuite = () => {
+    const suiteResults = testSuiteResults[selectedTestSuiteId];
+    return suiteResults?.testRuns || [];
   };
 
   const renderCurrentStep = () => {
@@ -100,6 +135,20 @@ const Index = () => {
           testSuiteResults={testSuiteResults}
           onSelectTestSuite={handleSelectTestSuite}
           onBack={handleBackToWorkflow}
+        />
+      );
+    }
+
+    if (currentView === 'testRuns') {
+      const selectedSuite = getSelectedTestSuite();
+      const testRuns = getTestRunsForSuite();
+      
+      return (
+        <TestRunsDisplay
+          testSuiteName={selectedSuite?.name || 'Unknown Test Suite'}
+          testRuns={testRuns}
+          onSelectTestRun={handleSelectTestRun}
+          onBack={handleBackToTestSuites}
         />
       );
     }
@@ -177,7 +226,6 @@ const Index = () => {
           userData={userData}
           onRegisterTestSuite={handleRegisterTestSuite}
           onDisplayTestSuites={handleDisplayTestSuites}
-          onUserProfileClick={handleUserProfileClick}
         />
         
         <div className="flex-1 bg-gray-50 ml-0">
