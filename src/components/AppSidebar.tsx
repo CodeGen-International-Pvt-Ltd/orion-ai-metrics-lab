@@ -18,9 +18,10 @@ interface AppSidebarProps {
   userData: { name: string; email: string };
   onRegisterTestSuite: () => void;
   onDisplayTestSuites: () => void;
+  onUserProfileClick: () => void;
 }
 
-const AppSidebar = ({ userData, onRegisterTestSuite, onDisplayTestSuites }: AppSidebarProps) => {
+const AppSidebar = ({ userData, onRegisterTestSuite, onDisplayTestSuites, onUserProfileClick }: AppSidebarProps) => {
   const menuItems = [
     {
       title: "Register Test Suite",
@@ -71,7 +72,10 @@ const AppSidebar = ({ userData, onRegisterTestSuite, onDisplayTestSuites }: AppS
 
       <SidebarFooter>
         <div className="p-4 border-t">
-          <div className="flex items-center gap-3">
+          <div 
+            className="flex items-center gap-3 cursor-pointer hover:bg-gray-50 rounded-lg p-2 transition-colors"
+            onClick={onUserProfileClick}
+          >
             <Avatar className="w-10 h-10">
               <AvatarImage src="" />
               <AvatarFallback className="bg-blue-100 text-blue-600">

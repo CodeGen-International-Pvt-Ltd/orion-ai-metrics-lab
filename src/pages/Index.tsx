@@ -54,6 +54,23 @@ const Index = () => {
     setCurrentView('workflow');
   };
 
+  const handleUserProfileClick = () => {
+    setCurrentView('workflow');
+    setCurrentStep(1); // Go to User Profile page
+  };
+
+  const getStepIcon = (stepIndex: number) => {
+    const icons = [null, Brain, FileText, BarChart3, Brain, Brain, BarChart3, FileText];
+    return icons[stepIndex];
+  };
+
+  const handleStepIconClick = (stepIndex: number) => {
+    if (stepIndex <= currentStep) {
+      setCurrentView('workflow');
+      setCurrentStep(stepIndex);
+    }
+  };
+
   const renderCurrentStep = () => {
     if (currentView === 'displaySuites') {
       return (
@@ -138,13 +155,14 @@ const Index = () => {
           userData={userData}
           onRegisterTestSuite={handleRegisterTestSuite}
           onDisplayTestSuites={handleDisplayTestSuites}
+          onUserProfileClick={handleUserProfileClick}
         />
         
-        <div className="flex-1 bg-gray-50">
+        <div className="flex-1 bg-gray-50 ml-0">
           {/* Progress Header - only show for workflow */}
           {currentView === 'workflow' && (
             <div className="bg-white shadow-sm border-b">
-              <div className="max-w-6xl mx-auto px-4 py-4">
+              <div className="max-w-6xl mx-auto px-6 py-4">
                 <div className="flex items-center justify-between mb-4">
                   <h1 className="text-2xl font-bold text-gray-900">AI Evaluator Platform</h1>
                   <div className="text-sm text-gray-600">
@@ -152,34 +170,40 @@ const Index = () => {
                   </div>
                 </div>
                 <div className="flex items-center space-x-2">
-                  {steps.slice(1).map((step, index) => (
-                    <div key={step} className="flex items-center">
-                      <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
-                        index + 1 < currentStep ? 'bg-blue-600 text-white' : 
-                        index + 1 === currentStep ? 'bg-blue-100 text-blue-600 border-2 border-blue-600' : 
-                        'bg-gray-200 text-gray-600'
-                      }`}>
-                        {/* Removed numbers */}
+                  {steps.slice(1).map((step, index) => {
+                    const StepIcon = getStepIcon(index + 1);
+                    return (
+                      <div key={step} className="flex items-center">
+                        <div 
+                          className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium cursor-pointer transition-colors ${
+                            index + 1 < currentStep ? 'bg-blue-600 text-white hover:bg-blue-700' : 
+                            index + 1 === currentStep ? 'bg-blue-100 text-blue-600 border-2 border-blue-600' : 
+                            'bg-gray-200 text-gray-600'
+                          }`}
+                          onClick={() => handleStepIconClick(index + 1)}
+                        >
+                          {StepIcon && <StepIcon className="w-4 h-4" />}
+                        </div>
+                        <div className={`ml-2 text-sm font-medium ${
+                          index + 1 <= currentStep ? 'text-gray-900' : 'text-gray-400'
+                        }`}>
+                          {step}
+                        </div>
+                        {index < steps.length - 2 && (
+                          <div className={`w-8 h-0.5 mx-4 ${
+                            index + 1 < currentStep ? 'bg-blue-600' : 'bg-gray-200'
+                          }`} />
+                        )}
                       </div>
-                      <div className={`ml-2 text-sm font-medium ${
-                        index + 1 <= currentStep ? 'text-gray-900' : 'text-gray-400'
-                      }`}>
-                        {step}
-                      </div>
-                      {index < steps.length - 2 && (
-                        <div className={`w-8 h-0.5 mx-4 ${
-                          index + 1 < currentStep ? 'bg-blue-600' : 'bg-gray-200'
-                        }`} />
-                      )}
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </div>
             </div>
           )}
 
           {/* Main Content */}
-          <div className="max-w-6xl mx-auto px-4 py-8">
+          <div className="max-w-6xl mx-auto px-6 py-8">
             {renderCurrentStep()}
           </div>
         </div>

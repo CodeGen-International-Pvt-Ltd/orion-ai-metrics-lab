@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -59,9 +59,27 @@ const MetricsConfiguration = ({ config, setConfig, testSuites, onNext, onBack }:
       const defaultMetrics = {};
       predefinedMetrics.forEach(metric => {
         defaultMetrics[metric.id] = {
-          enabled: metric.defaultEnabled,
+          enabled: true, // Auto-select all metrics
           threshold: metric.defaultThreshold
         };
+      });
+
+      // Auto-select all evaluation types
+      const defaultEvaluationTypes = {};
+      evaluationTypes.forEach(type => {
+        defaultEvaluationTypes[type] = true;
+      });
+
+      // Auto-select all statistical methods
+      const defaultStatisticalMethods = {};
+      statisticalMethods.forEach(method => {
+        defaultStatisticalMethods[method] = true;
+      });
+
+      // Auto-select all model-based methods
+      const defaultModelBasedMethods = {};
+      modelBasedMethods.forEach(method => {
+        defaultModelBasedMethods[method] = true;
       });
       
       setConfig({
@@ -70,20 +88,20 @@ const MetricsConfiguration = ({ config, setConfig, testSuites, onNext, onBack }:
           ...config.testSuiteConfigs,
           [testSuiteId]: {
             metrics: defaultMetrics,
-            evaluationTypes: {},
-            statisticalMethods: {},
-            modelBasedMethods: {}
+            evaluationTypes: defaultEvaluationTypes,
+            statisticalMethods: defaultStatisticalMethods,
+            modelBasedMethods: defaultModelBasedMethods
           }
         }
       });
     }
   };
 
-  useState(() => {
+  useEffect(() => {
     if (selectedTestSuiteId) {
       initializeDefaults(selectedTestSuiteId);
     }
-  });
+  }, [selectedTestSuiteId]);
 
   const getCurrentConfig = () => {
     return config.testSuiteConfigs?.[selectedTestSuiteId] || {};
@@ -159,7 +177,7 @@ const MetricsConfiguration = ({ config, setConfig, testSuites, onNext, onBack }:
                 Metrics Configuration
               </CardTitle>
               <CardDescription>
-                Configure evaluation metrics and thresholds for your test suites (optional)
+                Configure evaluation metrics and thresholds for your test suites (All options are pre-selected)
               </CardDescription>
             </div>
             <Button 
@@ -210,11 +228,11 @@ const MetricsConfiguration = ({ config, setConfig, testSuites, onNext, onBack }:
 
             <TabsContent value="predefined" className="space-y-4">
               <h3 className="text-lg font-semibold">Predefined Metrics</h3>
-              <p className="text-sm text-gray-600 mb-4">Default metrics are pre-selected. You can customize which metrics to include in your evaluation.</p>
+              <p className="text-sm text-gray-600 mb-4">All metrics are pre-selected. You can customize which metrics to include in your evaluation.</p>
               <div className="grid gap-4">
                 {predefinedMetrics.map((metric) => {
                   const currentConfig = getCurrentConfig();
-                  const isEnabled = currentConfig.metrics?.[metric.id]?.enabled ?? metric.defaultEnabled;
+                  const isEnabled = currentConfig.metrics?.[metric.id]?.enabled ?? true;
                   const threshold = currentConfig.metrics?.[metric.id]?.threshold ?? metric.defaultThreshold;
                   
                   return (
@@ -254,10 +272,11 @@ const MetricsConfiguration = ({ config, setConfig, testSuites, onNext, onBack }:
 
             <TabsContent value="evaluation" className="space-y-4">
               <h3 className="text-lg font-semibold">Evaluation Types</h3>
+              <p className="text-sm text-gray-600 mb-4">All evaluation types are pre-selected.</p>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 {evaluationTypes.map((type) => {
                   const currentConfig = getCurrentConfig();
-                  const isChecked = currentConfig.evaluationTypes?.[type] || false;
+                  const isChecked = currentConfig.evaluationTypes?.[type] ?? true;
                   
                   return (
                     <div key={type} className="flex items-center space-x-2 p-3 border rounded-lg">
@@ -282,10 +301,11 @@ const MetricsConfiguration = ({ config, setConfig, testSuites, onNext, onBack }:
               <div className="grid md:grid-cols-2 gap-6">
                 <div>
                   <h3 className="text-lg font-semibold mb-4">Statistical Methods</h3>
+                  <p className="text-sm text-gray-600 mb-4">All statistical methods are pre-selected.</p>
                   <div className="space-y-3">
                     {statisticalMethods.map((method) => {
                       const currentConfig = getCurrentConfig();
-                      const isChecked = currentConfig.statisticalMethods?.[method] || false;
+                      const isChecked = currentConfig.statisticalMethods?.[method] ?? true;
                       
                       return (
                         <div key={method} className="flex items-center space-x-2 p-3 border rounded-lg">
@@ -308,10 +328,11 @@ const MetricsConfiguration = ({ config, setConfig, testSuites, onNext, onBack }:
 
                 <div>
                   <h3 className="text-lg font-semibold mb-4">Model-Based Methods</h3>
+                  <p className="text-sm text-gray-600 mb-4">All model-based methods are pre-selected.</p>
                   <div className="space-y-3">
                     {modelBasedMethods.map((method) => {
                       const currentConfig = getCurrentConfig();
-                      const isChecked = currentConfig.modelBasedMethods?.[method] || false;
+                      const isChecked = currentConfig.modelBasedMethods?.[method] ?? true;
                       
                       return (
                         <div key={method} className="flex items-center space-x-2 p-3 border rounded-lg">
