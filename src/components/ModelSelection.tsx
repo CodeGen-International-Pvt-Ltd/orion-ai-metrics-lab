@@ -1,8 +1,10 @@
 
+import { useState } from 'react';
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Label } from "@/components/ui/label";
 import { Brain, ArrowRight } from "lucide-react";
 
 interface ModelSelectionProps {
@@ -13,6 +15,8 @@ interface ModelSelectionProps {
 }
 
 const ModelSelection = ({ selectedModel, setSelectedModel, onNext, onBack }: ModelSelectionProps) => {
+  const [customEndpoint, setCustomEndpoint] = useState('');
+
   const models = [
     {
       id: 'OpenAI',
@@ -29,17 +33,10 @@ const ModelSelection = ({ selectedModel, setSelectedModel, onNext, onBack }: Mod
       recommended: false
     },
     {
-      id: 'Gemini',
-      name: 'Google Gemini',
-      description: 'Multimodal AI model with strong analytical capabilities',
-      features: ['Multimodal input', 'Fast processing', 'Code understanding'],
-      recommended: false
-    },
-    {
-      id: 'PaLM',
-      name: 'Google PaLM 2',
-      description: 'Large language model optimized for various tasks',
-      features: ['Efficient processing', 'Task versatility', 'Good performance'],
+      id: 'Custom',
+      name: 'Custom LLM Endpoint',
+      description: 'Connect to your own custom language model endpoint',
+      features: ['Full control', 'Custom configuration', 'Private deployment'],
       recommended: false
     }
   ];
@@ -88,6 +85,27 @@ const ModelSelection = ({ selectedModel, setSelectedModel, onNext, onBack }: Mod
               </div>
             ))}
           </RadioGroup>
+
+          {/* Custom Endpoint Input */}
+          {selectedModel === 'Custom' && (
+            <div className="mt-6 p-4 border rounded-lg bg-gray-50">
+              <div className="space-y-3">
+                <Label htmlFor="customEndpoint" className="text-sm font-medium">
+                  Custom LLM Endpoint URL
+                </Label>
+                <Input
+                  id="customEndpoint"
+                  placeholder="https://your-custom-llm-endpoint.com/api/v1"
+                  value={customEndpoint}
+                  onChange={(e) => setCustomEndpoint(e.target.value)}
+                  className="w-full"
+                />
+                <p className="text-xs text-gray-600">
+                  Enter the API endpoint URL for your custom language model. Make sure it follows OpenAI-compatible API format.
+                </p>
+              </div>
+            </div>
+          )}
 
           <div className="mt-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
             <h4 className="font-semibold text-yellow-800 mb-2">Note about Model Selection</h4>

@@ -1,6 +1,8 @@
+
 import { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { SidebarProvider } from "@/components/ui/sidebar";
 import { ArrowRight, Brain, BarChart3, FileText } from "lucide-react";
 import UserProfile from '@/components/UserProfile';
 import TestSuiteCreation from '@/components/TestSuiteCreation';
@@ -9,9 +11,12 @@ import ModelSelection from '@/components/ModelSelection';
 import TestExecution from '@/components/TestExecution';
 import ResultsDashboard from '@/components/ResultsDashboard';
 import ReportGeneration from '@/components/ReportGeneration';
+import DisplayTestSuites from '@/components/DisplayTestSuites';
+import AppSidebar from '@/components/AppSidebar';
 
 const Index = () => {
   const [currentStep, setCurrentStep] = useState(0);
+  const [currentView, setCurrentView] = useState('workflow'); // 'workflow' or 'displaySuites'
   const [userData, setUserData] = useState({ name: '', email: '' });
   const [testSuites, setTestSuites] = useState([]);
   const [metricsConfig, setMetricsConfig] = useState({});
@@ -29,7 +34,37 @@ const Index = () => {
     'Report'
   ];
 
+  const handleRegisterTestSuite = () => {
+    setCurrentView('workflow');
+    setCurrentStep(2); // Go to Test Suites page
+  };
+
+  const handleDisplayTestSuites = () => {
+    setCurrentView('displaySuites');
+  };
+
+  const handleSelectTestSuite = (suiteId: string) => {
+    console.log('Selected test suite:', suiteId);
+    // Navigate to results page for the selected test suite
+    setCurrentView('workflow');
+    setCurrentStep(6); // Go to Results page
+  };
+
+  const handleBackToWorkflow = () => {
+    setCurrentView('workflow');
+  };
+
   const renderCurrentStep = () => {
+    if (currentView === 'displaySuites') {
+      return (
+        <DisplayTestSuites 
+          testSuites={testSuites}
+          onSelectTestSuite={handleSelectTestSuite}
+          onBack={handleBackToWorkflow}
+        />
+      );
+    }
+
     switch (currentStep) {
       case 0:
         return (
@@ -97,47 +132,59 @@ const Index = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Progress Header */}
-      <div className="bg-white shadow-sm border-b">
-        <div className="max-w-6xl mx-auto px-4 py-4">
-          <div className="flex items-center justify-between mb-4">
-            <h1 className="text-2xl font-bold text-gray-900">AI Evaluator Platform</h1>
-            <div className="text-sm text-gray-600">
-              Step {currentStep} of {steps.length - 1}
-            </div>
-          </div>
-          <div className="flex items-center space-x-2">
-            {steps.slice(1).map((step, index) => (
-              <div key={step} className="flex items-center">
-                <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
-                  index + 1 < currentStep ? 'bg-blue-600 text-white' : 
-                  index + 1 === currentStep ? 'bg-blue-100 text-blue-600 border-2 border-blue-600' : 
-                  'bg-gray-200 text-gray-600'
-                }`}>
-                  {index + 1}
+    <SidebarProvider>
+      <div className="min-h-screen flex w-full">
+        <AppSidebar 
+          userData={userData}
+          onRegisterTestSuite={handleRegisterTestSuite}
+          onDisplayTestSuites={handleDisplayTestSuites}
+        />
+        
+        <div className="flex-1 bg-gray-50">
+          {/* Progress Header - only show for workflow */}
+          {currentView === 'workflow' && (
+            <div className="bg-white shadow-sm border-b">
+              <div className="max-w-6xl mx-auto px-4 py-4">
+                <div className="flex items-center justify-between mb-4">
+                  <h1 className="text-2xl font-bold text-gray-900">AI Evaluator Platform</h1>
+                  <div className="text-sm text-gray-600">
+                    Step {currentStep} of {steps.length - 1}
+                  </div>
                 </div>
-                <div className={`ml-2 text-sm font-medium ${
-                  index + 1 <= currentStep ? 'text-gray-900' : 'text-gray-400'
-                }`}>
-                  {step}
+                <div className="flex items-center space-x-2">
+                  {steps.slice(1).map((step, index) => (
+                    <div key={step} className="flex items-center">
+                      <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
+                        index + 1 < currentStep ? 'bg-blue-600 text-white' : 
+                        index + 1 === currentStep ? 'bg-blue-100 text-blue-600 border-2 border-blue-600' : 
+                        'bg-gray-200 text-gray-600'
+                      }`}>
+                        {/* Removed numbers */}
+                      </div>
+                      <div className={`ml-2 text-sm font-medium ${
+                        index + 1 <= currentStep ? 'text-gray-900' : 'text-gray-400'
+                      }`}>
+                        {step}
+                      </div>
+                      {index < steps.length - 2 && (
+                        <div className={`w-8 h-0.5 mx-4 ${
+                          index + 1 < currentStep ? 'bg-blue-600' : 'bg-gray-200'
+                        }`} />
+                      )}
+                    </div>
+                  ))}
                 </div>
-                {index < steps.length - 2 && (
-                  <div className={`w-8 h-0.5 mx-4 ${
-                    index + 1 < currentStep ? 'bg-blue-600' : 'bg-gray-200'
-                  }`} />
-                )}
               </div>
-            ))}
+            </div>
+          )}
+
+          {/* Main Content */}
+          <div className="max-w-6xl mx-auto px-4 py-8">
+            {renderCurrentStep()}
           </div>
         </div>
       </div>
-
-      {/* Main Content */}
-      <div className="max-w-6xl mx-auto px-4 py-8">
-        {renderCurrentStep()}
-      </div>
-    </div>
+    </SidebarProvider>
   );
 };
 

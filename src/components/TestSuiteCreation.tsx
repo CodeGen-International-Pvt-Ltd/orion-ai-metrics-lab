@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,7 +10,7 @@ import { Plus, Trash2, FileText, ArrowRight } from "lucide-react";
 interface TestSuite {
   id: string;
   name: string;
-  type: 'Excel' | 'PDF';
+  type: 'Excel' | 'Custom';
 }
 
 interface TestSuiteCreationProps {
@@ -20,7 +21,7 @@ interface TestSuiteCreationProps {
 }
 
 const TestSuiteCreation = ({ testSuites, setTestSuites, onNext, onBack }: TestSuiteCreationProps) => {
-  const [newSuite, setNewSuite] = useState({ name: '', type: 'Excel' as 'Excel' | 'PDF' });
+  const [newSuite, setNewSuite] = useState({ name: '', type: 'Excel' as 'Excel' | 'Custom' });
   const [errors, setErrors] = useState({ name: '' });
 
   const addTestSuite = () => {
@@ -73,17 +74,17 @@ const TestSuiteCreation = ({ testSuites, setTestSuites, onNext, onBack }: TestSu
               {errors.name && <p className="text-sm text-red-500">{errors.name}</p>}
             </div>
             <div className="space-y-2">
-              <Label>Output Format</Label>
+              <Label>Input Format</Label>
               <Select
                 value={newSuite.type}
-                onValueChange={(value: 'Excel' | 'PDF') => setNewSuite({ ...newSuite, type: value })}
+                onValueChange={(value: 'Excel' | 'Custom') => setNewSuite({ ...newSuite, type: value })}
               >
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="Excel">Excel</SelectItem>
-                  <SelectItem value="PDF">PDF</SelectItem>
+                  <SelectItem value="Custom">Custom</SelectItem>
                 </SelectContent>
               </Select>
             </div>
