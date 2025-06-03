@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -22,6 +21,9 @@ const Index = () => {
   const [metricsConfig, setMetricsConfig] = useState({});
   const [selectedModel, setSelectedModel] = useState('OpenAI');
   const [evaluationResults, setEvaluationResults] = useState(null);
+  const [selectedTestSuiteId, setSelectedTestSuiteId] = useState(null);
+  // Track results per test suite
+  const [testSuiteResults, setTestSuiteResults] = useState({});
 
   const steps = [
     'Welcome',
@@ -45,9 +47,17 @@ const Index = () => {
 
   const handleSelectTestSuite = (suiteId: string) => {
     console.log('Selected test suite:', suiteId);
-    // Navigate to results page for the selected test suite
-    setCurrentView('workflow');
-    setCurrentStep(6); // Go to Results page
+    setSelectedTestSuiteId(suiteId);
+    // Check if this test suite has results
+    if (testSuiteResults[suiteId]) {
+      setEvaluationResults(testSuiteResults[suiteId]);
+      setCurrentView('workflow');
+      setCurrentStep(6); // Go to Results page
+    } else {
+      // If no results, go to test execution to run tests for this suite
+      setCurrentView('workflow');
+      setCurrentStep(5); // Go to Test Execution page
+    }
   };
 
   const handleBackToWorkflow = () => {
@@ -71,11 +81,23 @@ const Index = () => {
     }
   };
 
+  const handleTestExecutionComplete = (results: any) => {
+    // Store results for the selected test suite
+    if (selectedTestSuiteId) {
+      setTestSuiteResults(prev => ({
+        ...prev,
+        [selectedTestSuiteId]: results
+      }));
+    }
+    setEvaluationResults(results);
+  };
+
   const renderCurrentStep = () => {
     if (currentView === 'displaySuites') {
       return (
         <DisplayTestSuites 
           testSuites={testSuites}
+          testSuiteResults={testSuiteResults}
           onSelectTestSuite={handleSelectTestSuite}
           onBack={handleBackToWorkflow}
         />
@@ -134,7 +156,7 @@ const Index = () => {
       case 4:
         return <ModelSelection selectedModel={selectedModel} setSelectedModel={setSelectedModel} onNext={() => setCurrentStep(5)} onBack={() => setCurrentStep(3)} />;
       case 5:
-        return <TestExecution onNext={() => setCurrentStep(6)} onBack={() => setCurrentStep(4)} setResults={setEvaluationResults} />;
+        return <TestExecution onNext={() => setCurrentStep(6)} onBack={() => setCurrentStep(4)} setResults={handleTestExecutionComplete} selectedTestSuiteId={selectedTestSuiteId} />;
       case 6:
         return <ResultsDashboard results={evaluationResults} onNext={() => setCurrentStep(7)} onBack={() => setCurrentStep(5)} />;
       case 7:

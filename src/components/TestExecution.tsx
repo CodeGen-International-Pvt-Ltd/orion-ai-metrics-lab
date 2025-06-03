@@ -9,9 +9,10 @@ interface TestExecutionProps {
   onNext: () => void;
   onBack: () => void;
   setResults: (results: any) => void;
+  selectedTestSuiteId?: string | null;
 }
 
-const TestExecution = ({ onNext, onBack, setResults }: TestExecutionProps) => {
+const TestExecution = ({ onNext, onBack, setResults, selectedTestSuiteId }: TestExecutionProps) => {
   const [isRunning, setIsRunning] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
   const [progress, setProgress] = useState(0);
@@ -31,29 +32,63 @@ const TestExecution = ({ onNext, onBack, setResults }: TestExecutionProps) => {
     { name: 'Finalizing Results', duration: 500 }
   ];
 
-  const mockResults = {
-    overall_score: 92.3,
-    metrics: {
-      correctness: { score: 94.2, threshold: 95, status: 'warning' },
-      hallucination: { score: 3.1, threshold: 5, status: 'passed' },
-      answer_relevancy: { score: 96.8, threshold: 95, status: 'passed' },
-      contextual_relevance: { score: 91.5, threshold: 95, status: 'warning' }
-    },
-    detailed_results: {
-      total_tests: 150,
-      passed: 138,
-      warnings: 8,
-      failed: 4
-    },
-    execution_time: '4m 32s',
-    timestamp: new Date().toISOString()
+  // Generate unique results based on test suite ID
+  const generateMockResults = (suiteId: string) => {
+    const seed = suiteId ? parseInt(suiteId.slice(-3)) || 123 : 123;
+    const random = (min: number, max: number) => min + ((seed * 9301 + 49297) % 233280) / 233280 * (max - min);
+    
+    const correctnessScore = 85 + random(0, 15);
+    const hallucinationScore = random(1, 8);
+    const relevancyScore = 88 + random(0, 12);
+    const contextualScore = 82 + random(0, 18);
+    
+    const overallScore = (correctnessScore + (100 - hallucinationScore) + relevancyScore + contextualScore) / 4;
+    
+    const totalTests = Math.floor(120 + random(0, 80));
+    const passRate = 0.85 + random(0, 0.15);
+    const passed = Math.floor(totalTests * passRate);
+    const failed = Math.floor(totalTests * (1 - passRate) * 0.7);
+    const warnings = totalTests - passed - failed;
+
+    return {
+      overall_score: Math.round(overallScore * 10) / 10,
+      metrics: {
+        correctness: { 
+          score: Math.round(correctnessScore * 10) / 10, 
+          threshold: 95, 
+          status: correctnessScore >= 95 ? 'passed' : 'warning' 
+        },
+        hallucination: { 
+          score: Math.round(hallucinationScore * 10) / 10, 
+          threshold: 5, 
+          status: hallucinationScore <= 5 ? 'passed' : 'warning' 
+        },
+        answer_relevancy: { 
+          score: Math.round(relevancyScore * 10) / 10, 
+          threshold: 95, 
+          status: relevancyScore >= 95 ? 'passed' : 'warning' 
+        },
+        contextual_relevance: { 
+          score: Math.round(contextualScore * 10) / 10, 
+          threshold: 95, 
+          status: contextualScore >= 95 ? 'passed' : 'warning' 
+        }
+      },
+      detailed_results: {
+        total_tests: totalTests,
+        passed: passed,
+        warnings: warnings,
+        failed: failed
+      },
+      execution_time: `${Math.floor(3 + random(0, 4))}m ${Math.floor(10 + random(0, 50))}s`,
+      timestamp: new Date().toISOString()
+    };
   };
 
   useEffect(() => {
     if (isRunning && !isPaused) {
       const totalDuration = testPhases.reduce((sum, phase) => sum + phase.duration, 0);
       let currentTime = 0;
-      let phaseIndex = 0;
 
       const interval = setInterval(() => {
         currentTime += 100;
@@ -84,13 +119,14 @@ const TestExecution = ({ onNext, onBack, setResults }: TestExecutionProps) => {
         if (newProgress >= 100) {
           clearInterval(interval);
           setIsComplete(true);
-          setResults(mockResults);
+          const results = generateMockResults(selectedTestSuiteId || '');
+          setResults(results);
         }
       }, 100);
 
       return () => clearInterval(interval);
     }
-  }, [isRunning, isPaused, setResults]);
+  }, [isRunning, isPaused, setResults, selectedTestSuiteId]);
 
   const startTest = () => {
     setIsRunning(true);
@@ -112,6 +148,11 @@ const TestExecution = ({ onNext, onBack, setResults }: TestExecutionProps) => {
           <CardTitle className="flex items-center gap-2">
             <Play className="w-5 h-5" />
             Test Execution
+            {selectedTestSuiteId && (
+              <span className="text-sm font-normal text-gray-600">
+                (Suite ID: {selectedTestSuiteId})
+              </span>
+            )}
           </CardTitle>
           <CardDescription>
             Execute evaluation tests for OrionAI performance analysis
@@ -165,7 +206,7 @@ const TestExecution = ({ onNext, onBack, setResults }: TestExecutionProps) => {
             <div className="space-y-3">
               <h4 className="font-semibold">Test Phases</h4>
               <div className="space-y-2">
-                {testPhases.map((phase, index) => (
+                {testPhases.map((phase) => (
                   <div key={phase.name} className="flex items-center gap-3 p-2 rounded border">
                     {completedTests.includes(phase.name) ? (
                       <CheckCircle className="w-5 h-5 text-green-600" />

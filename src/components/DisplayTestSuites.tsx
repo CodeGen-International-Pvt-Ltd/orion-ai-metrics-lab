@@ -1,7 +1,8 @@
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { FileText, ArrowLeft, Play } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { FileText, ArrowLeft, Play, AlertCircle, CheckCircle, Clock } from "lucide-react";
 
 interface TestSuite {
   id: string;
@@ -11,17 +12,44 @@ interface TestSuite {
 
 interface DisplayTestSuitesProps {
   testSuites: TestSuite[];
+  testSuiteResults: Record<string, any>;
   onSelectTestSuite: (suiteId: string) => void;
   onBack: () => void;
 }
 
-const DisplayTestSuites = ({ testSuites, onSelectTestSuite, onBack }: DisplayTestSuitesProps) => {
+const DisplayTestSuites = ({ testSuites, testSuiteResults, onSelectTestSuite, onBack }: DisplayTestSuitesProps) => {
+  const getTestSuiteStatus = (suiteId: string) => {
+    const results = testSuiteResults[suiteId];
+    if (!results) {
+      return { status: 'not-run', icon: AlertCircle, color: 'bg-gray-100 text-gray-700', label: 'Not Run' };
+    }
+    
+    const overallScore = results.overall_score;
+    if (overallScore >= 95) {
+      return { status: 'excellent', icon: CheckCircle, color: 'bg-green-100 text-green-700', label: 'Excellent' };
+    } else if (overallScore >= 85) {
+      return { status: 'good', icon: CheckCircle, color: 'bg-blue-100 text-blue-700', label: 'Good' };
+    } else if (overallScore >= 70) {
+      return { status: 'warning', icon: AlertCircle, color: 'bg-yellow-100 text-yellow-700', label: 'Needs Improvement' };
+    } else {
+      return { status: 'poor', icon: AlertCircle, color: 'bg-red-100 text-red-700', label: 'Poor' };
+    }
+  };
+
+  const formatLastRun = (suiteId: string) => {
+    const results = testSuiteResults[suiteId];
+    if (!results || !results.timestamp) return 'Never';
+    
+    const date = new Date(results.timestamp);
+    return date.toLocaleDateString() + ' ' + date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  };
+
   return (
     <div className="max-w-6xl mx-auto space-y-6">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold text-gray-900">Test Suites</h1>
-          <p className="text-gray-600 mt-2">Manage and view your test suites</p>
+          <p className="text-gray-600 mt-2">Manage and view your test suites and their latest results</p>
         </div>
         <Button variant="outline" onClick={onBack}>
           <ArrowLeft className="w-4 h-4 mr-2" />
@@ -42,41 +70,81 @@ const DisplayTestSuites = ({ testSuites, onSelectTestSuite, onBack }: DisplayTes
         </Card>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {testSuites.map((suite) => (
-            <Card key={suite.id} className="hover:shadow-lg transition-shadow cursor-pointer group">
-              <CardHeader>
-                <div className="flex items-center justify-between">
-                  <FileText className="w-8 h-8 text-blue-600" />
-                  <span className={`px-2 py-1 text-xs rounded-full font-medium ${
-                    suite.type === 'Excel' 
-                      ? 'bg-green-100 text-green-700' 
-                      : 'bg-purple-100 text-purple-700'
-                  }`}>
-                    {suite.type}
-                  </span>
-                </div>
-                <CardTitle className="text-lg">{suite.name}</CardTitle>
-                <CardDescription>
-                  Input Format: {suite.type}
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
-                  <div className="flex items-center text-sm text-gray-600">
-                    <span className="w-2 h-2 bg-green-500 rounded-full mr-2"></span>
-                    Ready for execution
+          {testSuites.map((suite) => {
+            const status = getTestSuiteStatus(suite.id);
+            const results = testSuiteResults[suite.id];
+            const StatusIcon = status.icon;
+            
+            return (
+              <Card key={suite.id} className="hover:shadow-lg transition-shadow cursor-pointer group">
+                <CardHeader>
+                  <div className="flex items-center justify-between">
+                    <FileText className="w-8 h-8 text-blue-600" />
+                    <div className="flex gap-2">
+                      <Badge variant="outline" className={
+                        suite.type === 'Excel' 
+                          ? 'bg-green-100 text-green-700 border-green-200' 
+                          : 'bg-purple-100 text-purple-700 border-purple-200'
+                      }>
+                        {suite.type}
+                      </Badge>
+                      <Badge variant="outline" className={status.color}>
+                        <StatusIcon className="w-3 h-3 mr-1" />
+                        {status.label}
+                      </Badge>
+                    </div>
                   </div>
-                  <Button 
-                    onClick={() => onSelectTestSuite(suite.id)}
-                    className="w-full bg-blue-600 hover:bg-blue-700 group-hover:bg-blue-700"
-                  >
-                    <Play className="w-4 h-4 mr-2" />
-                    View Results
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
+                  <CardTitle className="text-lg">{suite.name}</CardTitle>
+                  <CardDescription>
+                    Input Format: {suite.type}
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    {/* Test Results Summary */}
+                    {results ? (
+                      <div className="space-y-2">
+                        <div className="flex justify-between items-center">
+                          <span className="text-sm font-medium text-gray-600">Overall Score</span>
+                          <span className="text-lg font-bold text-blue-600">{results.overall_score}%</span>
+                        </div>
+                        <div className="grid grid-cols-2 gap-2 text-xs">
+                          <div className="flex justify-between">
+                            <span className="text-gray-500">Passed:</span>
+                            <span className="text-green-600 font-medium">{results.detailed_results?.passed || 0}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-gray-500">Failed:</span>
+                            <span className="text-red-600 font-medium">{results.detailed_results?.failed || 0}</span>
+                          </div>
+                        </div>
+                        <div className="pt-2 border-t">
+                          <div className="flex items-center text-xs text-gray-500">
+                            <Clock className="w-3 h-3 mr-1" />
+                            Last run: {formatLastRun(suite.id)}
+                          </div>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="text-center py-4">
+                        <AlertCircle className="w-8 h-8 mx-auto text-gray-400 mb-2" />
+                        <p className="text-sm text-gray-500">No test runs yet</p>
+                        <p className="text-xs text-gray-400">Click to run evaluation</p>
+                      </div>
+                    )}
+                    
+                    <Button 
+                      onClick={() => onSelectTestSuite(suite.id)}
+                      className="w-full bg-blue-600 hover:bg-blue-700 group-hover:bg-blue-700"
+                    >
+                      <Play className="w-4 h-4 mr-2" />
+                      {results ? 'View Results' : 'Run Tests'}
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            );
+          })}
         </div>
       )}
     </div>
