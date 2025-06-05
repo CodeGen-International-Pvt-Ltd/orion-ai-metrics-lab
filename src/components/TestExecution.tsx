@@ -31,60 +31,60 @@ const TestExecution = ({ onNext, onBack, setResults, selectedTestSuiteId }: Test
     { name: 'Finalizing Results', duration: 500 }
   ];
 
-  // Generate comprehensive results with new structure
+  // Generate comprehensive results with realistic variance
   const generateMockResults = (suiteId: string) => {
     const seed = suiteId ? parseInt(suiteId.slice(-3)) || 123 : 123;
     const random = (min: number, max: number) => min + ((seed * 9301 + 49297) % 233280) / 233280 * (max - min);
     
-    // Content Evaluation
+    // Content Evaluation with more variance
     const contentEvaluation = {
-      correctness: Math.round((85 + random(0, 15)) * 10) / 10,
-      hallucination: Math.round((1 + random(0, 8)) * 10) / 10,
-      answer_relevancy: Math.round((88 + random(0, 12)) * 10) / 10,
-      contextual_relevance: Math.round((82 + random(0, 18)) * 10) / 10
+      correctness: Math.round((45 + random(0, 40)) * 10) / 10,
+      hallucination: Math.round((5 + random(0, 25)) * 10) / 10,
+      answer_relevancy: Math.round((35 + random(0, 50)) * 10) / 10,
+      contextual_relevance: Math.round((30 + random(0, 45)) * 10) / 10
     };
 
-    // Retrieval and Generation Evaluation
+    // Retrieval and Generation Evaluation with variance
     const retrievalGeneration = {
       summarization: {
-        fluency: Math.round((80 + random(0, 20)) * 10) / 10,
-        conciseness: Math.round((75 + random(0, 25)) * 10) / 10,
-        relevance: Math.round((85 + random(0, 15)) * 10) / 10
+        fluency: Math.round((25 + random(0, 55)) * 10) / 10,
+        conciseness: Math.round((40 + random(0, 45)) * 10) / 10,
+        relevance: Math.round((50 + random(0, 40)) * 10) / 10
       },
-      retrieving_same_content: Math.round((90 + random(0, 10)) * 10) / 10,
-      retrieving_similar_content: Math.round((85 + random(0, 15)) * 10) / 10
+      retrieving_same_content: Math.round((60 + random(0, 35)) * 10) / 10,
+      retrieving_similar_content: Math.round((20 + random(0, 60)) * 10) / 10
     };
 
-    // Functional Testing
+    // Functional Testing with realistic variance
     const functionalTesting = {
       leading_questions: {
-        biasness: Math.round((70 + random(0, 30)) * 10) / 10,
-        consistency: Math.round((80 + random(0, 20)) * 10) / 10,
-        factuality: Math.round((85 + random(0, 15)) * 10) / 10
+        biasness: Math.round((30 + random(0, 50)) * 10) / 10,
+        consistency: Math.round((45 + random(0, 40)) * 10) / 10,
+        factuality: Math.round((65 + random(0, 30)) * 10) / 10
       },
       edge_cases: {
-        fluency: Math.round((75 + random(0, 25)) * 10) / 10,
-        conciseness: Math.round((70 + random(0, 30)) * 10) / 10,
-        relevance: Math.round((80 + random(0, 20)) * 10) / 10,
-        correctness: Math.round((85 + random(0, 15)) * 10) / 10,
-        hallucination: Math.round((2 + random(0, 8)) * 10) / 10
+        fluency: Math.round((35 + random(0, 45)) * 10) / 10,
+        conciseness: Math.round((25 + random(0, 55)) * 10) / 10,
+        relevance: Math.round((50 + random(0, 35)) * 10) / 10,
+        correctness: Math.round((40 + random(0, 45)) * 10) / 10,
+        hallucination: Math.round((10 + random(0, 30)) * 10) / 10
       },
       unnecessary_context: {
-        fluency: Math.round((80 + random(0, 20)) * 10) / 10,
-        conciseness: Math.round((75 + random(0, 25)) * 10) / 10,
-        relevance: Math.round((85 + random(0, 15)) * 10) / 10,
-        correctness: Math.round((90 + random(0, 10)) * 10) / 10,
-        hallucination: Math.round((1 + random(0, 5)) * 10) / 10
+        fluency: Math.round((55 + random(0, 35)) * 10) / 10,
+        conciseness: Math.round((30 + random(0, 50)) * 10) / 10,
+        relevance: Math.round((45 + random(0, 40)) * 10) / 10,
+        correctness: Math.round((70 + random(0, 25)) * 10) / 10,
+        hallucination: Math.round((5 + random(0, 20)) * 10) / 10
       }
     };
 
-    // Non-Functional Testing
+    // Non-Functional Testing with variance
     const nonFunctionalTesting = {
-      repetitive_loops: Math.round((95 + random(0, 5)) * 10) / 10,
-      spam_flooding: Math.round((90 + random(0, 10)) * 10) / 10,
-      intentional_misdirection: Math.round((85 + random(0, 15)) * 10) / 10,
-      prompt_overloading: Math.round((80 + random(0, 20)) * 10) / 10,
-      susceptibility_prompt_tuning: Math.round((75 + random(0, 25)) * 10) / 10
+      repetitive_loops: Math.round((75 + random(0, 20)) * 10) / 10,
+      spam_flooding: Math.round((50 + random(0, 40)) * 10) / 10,
+      intentional_misdirection: Math.round((35 + random(0, 45)) * 10) / 10,
+      prompt_overloading: Math.round((25 + random(0, 55)) * 10) / 10,
+      susceptibility_prompt_tuning: Math.round((40 + random(0, 45)) * 10) / 10
     };
 
     // Calculate overall scores for each category
@@ -252,7 +252,7 @@ const TestExecution = ({ onNext, onBack, setResults, selectedTestSuiteId }: Test
             {!isRunning ? (
               <Button 
                 onClick={startTest} 
-                className="bg-green-600 hover:bg-green-700"
+                className="bg-emerald-600 hover:bg-emerald-700 transform transition-transform hover:scale-105"
                 disabled={!orionEndpoint.trim()}
               >
                 <Play className="w-4 h-4 mr-2" />
@@ -261,12 +261,12 @@ const TestExecution = ({ onNext, onBack, setResults, selectedTestSuiteId }: Test
             ) : (
               <>
                 {isPaused ? (
-                  <Button onClick={resumeTest} className="bg-blue-600 hover:bg-blue-700">
+                  <Button onClick={resumeTest} className="bg-blue-600 hover:bg-blue-700 transform transition-transform hover:scale-105">
                     <Play className="w-4 h-4 mr-2" />
                     Resume
                   </Button>
                 ) : (
-                  <Button onClick={pauseTest} variant="outline">
+                  <Button onClick={pauseTest} variant="outline" className="transform transition-transform hover:scale-105">
                     <Pause className="w-4 h-4 mr-2" />
                     Pause
                   </Button>
@@ -283,10 +283,10 @@ const TestExecution = ({ onNext, onBack, setResults, selectedTestSuiteId }: Test
                   <h3 className="text-lg font-semibold">Execution Progress</h3>
                   <span className="text-sm font-medium">{Math.round(progress)}%</span>
                 </div>
-                <Progress value={progress} className="h-3" />
+                <Progress value={progress} variant="score" className="h-4 animate-pulse" />
               </div>
 
-              <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+              <div className="p-4 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg">
                 <p className="font-medium text-blue-900">Current Phase:</p>
                 <p className="text-blue-700">{currentPhase}</p>
               </div>
@@ -299,16 +299,16 @@ const TestExecution = ({ onNext, onBack, setResults, selectedTestSuiteId }: Test
               <h4 className="font-semibold">Test Phases</h4>
               <div className="space-y-2">
                 {testPhases.map((phase) => (
-                  <div key={phase.name} className="flex items-center gap-3 p-2 rounded border">
+                  <div key={phase.name} className="flex items-center gap-3 p-3 rounded-lg border transition-all duration-300 hover:shadow-md">
                     {completedTests.includes(phase.name) ? (
-                      <CheckCircle className="w-5 h-5 text-green-600" />
+                      <CheckCircle className="w-5 h-5 text-emerald-600 animate-bounce" />
                     ) : currentPhase === phase.name ? (
                       <Clock className="w-5 h-5 text-blue-600 animate-spin" />
                     ) : (
                       <div className="w-5 h-5 rounded-full border-2 border-gray-300" />
                     )}
                     <span className={
-                      completedTests.includes(phase.name) ? 'text-green-700 font-medium' :
+                      completedTests.includes(phase.name) ? 'text-emerald-700 font-medium' :
                       currentPhase === phase.name ? 'text-blue-700 font-medium' :
                       'text-gray-600'
                     }>
@@ -322,10 +322,10 @@ const TestExecution = ({ onNext, onBack, setResults, selectedTestSuiteId }: Test
 
           {/* Completion Message */}
           {isComplete && (
-            <div className="p-6 bg-green-50 border border-green-200 rounded-lg text-center">
-              <CheckCircle className="w-8 h-8 text-green-600 mx-auto mb-2" />
-              <h3 className="text-lg font-semibold text-green-900 mb-2">Test Execution Complete!</h3>
-              <p className="text-green-700">
+            <div className="p-6 bg-gradient-to-r from-emerald-50 to-green-50 border border-emerald-200 rounded-lg text-center animate-fade-in">
+              <CheckCircle className="w-8 h-8 text-emerald-600 mx-auto mb-2 animate-bounce" />
+              <h3 className="text-lg font-semibold text-emerald-900 mb-2">Test Execution Complete!</h3>
+              <p className="text-emerald-700">
                 All evaluation tests have been completed successfully. View detailed results in the next step.
               </p>
             </div>
@@ -333,12 +333,12 @@ const TestExecution = ({ onNext, onBack, setResults, selectedTestSuiteId }: Test
 
           {/* Warning Messages */}
           {!isRunning && !isComplete && (
-            <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+            <div className="p-4 bg-gradient-to-r from-yellow-50 to-orange-50 border border-yellow-200 rounded-lg">
               <div className="flex items-start gap-2">
-                <AlertCircle className="w-5 h-5 text-yellow-600 mt-0.5" />
+                <AlertCircle className="w-5 h-5 text-orange-600 mt-0.5" />
                 <div>
-                  <h4 className="font-semibold text-yellow-800">Before Starting</h4>
-                  <ul className="text-sm text-yellow-700 mt-1 space-y-1">
+                  <h4 className="font-semibold text-orange-800">Before Starting</h4>
+                  <ul className="text-sm text-orange-700 mt-1 space-y-1">
                     <li>• Enter a valid OrionAI endpoint URL</li>
                     <li>• Ensure OrionAI system is accessible and running</li>
                     <li>• Test execution may take several minutes to complete</li>
@@ -353,13 +353,13 @@ const TestExecution = ({ onNext, onBack, setResults, selectedTestSuiteId }: Test
 
       {/* Navigation */}
       <div className="flex justify-between">
-        <Button variant="outline" onClick={onBack} disabled={isRunning && !isPaused}>
+        <Button variant="outline" onClick={onBack} disabled={isRunning && !isPaused} className="transform transition-transform hover:scale-105">
           Back
         </Button>
         <Button 
           onClick={onNext} 
           disabled={!isComplete}
-          className="bg-blue-600 hover:bg-blue-700"
+          className="bg-blue-600 hover:bg-blue-700 transform transition-transform hover:scale-105"
         >
           View Results <ArrowRight className="ml-2 w-4 h-4" />
         </Button>
