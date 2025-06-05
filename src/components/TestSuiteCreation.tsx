@@ -19,9 +19,10 @@ interface TestSuiteCreationProps {
   setTestSuites: (suites: TestSuite[]) => void;
   onNext: () => void;
   onBack: () => void;
+  setSelectedTestSuiteId: (id: string) => void;
 }
 
-const TestSuiteCreation = ({ testSuites, setTestSuites, onNext, onBack }: TestSuiteCreationProps) => {
+const TestSuiteCreation = ({ testSuites, setTestSuites, onNext, onBack, setSelectedTestSuiteId }: TestSuiteCreationProps) => {
   const [newSuite, setNewSuite] = useState({ 
     name: '', 
     type: 'Excel' as 'Excel' | 'Custom',
@@ -43,6 +44,7 @@ const TestSuiteCreation = ({ testSuites, setTestSuites, onNext, onBack }: TestSu
     };
 
     setTestSuites([...testSuites, testSuite]);
+    setSelectedTestSuiteId(testSuite.id); // Set the newly created test suite as selected
     setNewSuite({ name: '', type: 'Excel', confidentialityStatus: false });
     setErrors({ name: '' });
   };

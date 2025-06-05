@@ -18,6 +18,7 @@ interface ModelSelectionProps {
 
 const ModelSelection = ({ selectedModel, setSelectedModel, onNext, onBack, testSuites, selectedTestSuiteId }: ModelSelectionProps) => {
   const [customEndpoint, setCustomEndpoint] = useState('');
+  const [endpointError, setEndpointError] = useState('');
 
   const selectedTestSuite = testSuites.find(suite => suite.id === selectedTestSuiteId);
   const isConfidential = selectedTestSuite?.confidentialityStatus || false;
@@ -49,12 +50,37 @@ const ModelSelection = ({ selectedModel, setSelectedModel, onNext, onBack, testS
     }
   ];
 
-  // Auto-select Custom if confidential and no model selected yet
-  useState(() => {
-    if (isConfidential && (selectedModel === 'OpenAI' || selectedModel === 'Claude' || !selectedModel)) {
-      setSelectedModel('Custom');
+  const validateCustomEndpoint = () => {
+    if (selectedModel === 'Custom' && !customEndpoint.trim()) {
+      setEndpointError('Custom LLM endpoint is required');
+      return false;
     }
-  });
+    
+    if (selectedModel === 'Custom') {
+      try {
+        new URL(customEndpoint);
+        setEndpointError('');
+        return true;
+      } catch {
+        setEndpointError('Please enter a valid URL');
+        return false;
+      }
+    }
+    
+    return true;
+  };
+
+  const handleNext = () => {
+    if (!validateCustomEndpoint()) {
+      return;
+    }
+    onNext();
+  };
+
+  // Auto-select Custom if confidential and no valid model selected
+  if (isConfidential && (selectedModel === 'OpenAI' || selectedModel === 'Claude' || !selectedModel)) {
+    setSelectedModel('Custom');
+  }
 
   return (
     <div className="max-w-4xl mx-auto space-y-6">
@@ -127,15 +153,22 @@ const ModelSelection = ({ selectedModel, setSelectedModel, onNext, onBack, testS
             <div className="mt-6 p-4 border rounded-lg bg-gray-50">
               <div className="space-y-3">
                 <Label htmlFor="customEndpoint" className="text-sm font-medium">
-                  Custom LLM Endpoint URL
+                  Custom LLM Endpoint URL *
                 </Label>
                 <Input
                   id="customEndpoint"
                   placeholder="https://your-custom-llm-endpoint.com/api/v1"
                   value={customEndpoint}
-                  onChange={(e) => setCustomEndpoint(e.target.value)}
-                  className="w-full"
+                  onChange={(e) => {
+                    setCustomEndpoint(e.target.value);
+                    if (endpointError) setEndpointError('');
+                  }}
+                  className={endpointError ? 'border-red-500' : ''}
+                  required
                 />
+                {endpointError && (
+                  <p className="text-sm text-red-500">{endpointError}</p>
+                )}
                 <p className="text-xs text-gray-600">
                   Enter the API endpoint URL for your custom language model. Make sure it follows OpenAI-compatible API format.
                 </p>
@@ -163,7 +196,7 @@ const ModelSelection = ({ selectedModel, setSelectedModel, onNext, onBack, testS
         <Button variant="outline" onClick={onBack}>
           Back
         </Button>
-        <Button onClick={onNext} className="bg-blue-600 hover:bg-blue-700">
+        <Button onClick={handleNext} className="bg-blue-600 hover:bg-blue-700">
           Start Test Execution <ArrowRight className="ml-2 w-4 h-4" />
         </Button>
       </div>

@@ -43,7 +43,7 @@ const Index = () => {
 
   const handleRegisterTestSuite = () => {
     setCurrentView('workflow');
-    setCurrentStep(1); // Go to Test Suites page (was 2, now 1)
+    setCurrentStep(1); // Go to Test Suites page
   };
 
   const handleDisplayTestSuites = () => {
@@ -53,7 +53,17 @@ const Index = () => {
   const handleSelectTestSuite = (suiteId: string) => {
     console.log('Selected test suite:', suiteId);
     setSelectedTestSuiteId(suiteId);
-    setCurrentView('testRuns');
+    
+    // Check if there are any test runs for this suite
+    const suiteResults = testSuiteResults[suiteId];
+    if (!suiteResults || !suiteResults.testRuns || suiteResults.testRuns.length === 0) {
+      // No test runs, go directly to test execution
+      setCurrentView('workflow');
+      setCurrentStep(2); // Go to Configuration step
+    } else {
+      // Has test runs, show test runs page
+      setCurrentView('testRuns');
+    }
   };
 
   const handleSelectTestRun = (runId: string) => {
@@ -67,7 +77,7 @@ const Index = () => {
       if (testRun) {
         setEvaluationResults(testRun);
         setCurrentView('workflow');
-        setCurrentStep(5); // Go to Results page (was 6, now 5)
+        setCurrentStep(5); // Go to Results page
       }
     }
   };
@@ -195,7 +205,7 @@ const Index = () => {
           </div>
         );
       case 1:
-        return <TestSuiteCreation testSuites={testSuites} setTestSuites={setTestSuites} onNext={() => setCurrentStep(2)} onBack={() => setCurrentStep(0)} />;
+        return <TestSuiteCreation testSuites={testSuites} setTestSuites={setTestSuites} onNext={() => setCurrentStep(2)} onBack={() => setCurrentStep(0)} setSelectedTestSuiteId={setSelectedTestSuiteId} />;
       case 2:
         return <MetricsConfiguration config={metricsConfig} setConfig={setMetricsConfig} testSuites={testSuites} onNext={() => setCurrentStep(3)} onBack={() => setCurrentStep(1)} />;
       case 3:
