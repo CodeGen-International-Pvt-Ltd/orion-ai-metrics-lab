@@ -1,9 +1,9 @@
+
 import { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { ArrowRight, Brain, BarChart3, FileText } from "lucide-react";
-import UserProfile from '@/components/UserProfile';
 import TestSuiteCreation from '@/components/TestSuiteCreation';
 import MetricsConfiguration from '@/components/MetricsConfiguration';
 import ModelSelection from '@/components/ModelSelection';
@@ -17,7 +17,11 @@ import TestRunsDisplay from '@/components/TestRunsDisplay';
 const Index = () => {
   const [currentStep, setCurrentStep] = useState(0);
   const [currentView, setCurrentView] = useState('workflow'); // 'workflow', 'displaySuites', or 'testRuns'
-  const [userData, setUserData] = useState({ name: '', email: '' });
+  // Set default user data as logged in
+  const [userData, setUserData] = useState({ 
+    name: 'John Doe', 
+    email: 'john.doe@company.com' 
+  });
   const [testSuites, setTestSuites] = useState([]);
   const [metricsConfig, setMetricsConfig] = useState({});
   const [selectedModel, setSelectedModel] = useState('OpenAI');
@@ -29,7 +33,6 @@ const Index = () => {
 
   const steps = [
     'Welcome',
-    'User Profile',
     'Test Suites',
     'Configuration',
     'Model Selection',
@@ -40,7 +43,7 @@ const Index = () => {
 
   const handleRegisterTestSuite = () => {
     setCurrentView('workflow');
-    setCurrentStep(2); // Go to Test Suites page
+    setCurrentStep(1); // Go to Test Suites page (was 2, now 1)
   };
 
   const handleDisplayTestSuites = () => {
@@ -64,7 +67,7 @@ const Index = () => {
       if (testRun) {
         setEvaluationResults(testRun);
         setCurrentView('workflow');
-        setCurrentStep(6); // Go to Results page
+        setCurrentStep(5); // Go to Results page (was 6, now 5)
       }
     }
   };
@@ -77,13 +80,8 @@ const Index = () => {
     setCurrentView('displaySuites');
   };
 
-  const handleUserProfileClick = () => {
-    setCurrentView('workflow');
-    setCurrentStep(1); // Go to User Profile page
-  };
-
   const getStepIcon = (stepIndex: number) => {
-    const icons = [null, Brain, FileText, BarChart3, Brain, Brain, BarChart3, FileText];
+    const icons = [null, FileText, BarChart3, Brain, Brain, BarChart3, FileText];
     return icons[stepIndex];
   };
 
@@ -197,19 +195,17 @@ const Index = () => {
           </div>
         );
       case 1:
-        return <UserProfile userData={userData} setUserData={setUserData} onNext={() => setCurrentStep(2)} />;
+        return <TestSuiteCreation testSuites={testSuites} setTestSuites={setTestSuites} onNext={() => setCurrentStep(2)} onBack={() => setCurrentStep(0)} />;
       case 2:
-        return <TestSuiteCreation testSuites={testSuites} setTestSuites={setTestSuites} onNext={() => setCurrentStep(3)} onBack={() => setCurrentStep(1)} />;
+        return <MetricsConfiguration config={metricsConfig} setConfig={setMetricsConfig} testSuites={testSuites} onNext={() => setCurrentStep(3)} onBack={() => setCurrentStep(1)} />;
       case 3:
-        return <MetricsConfiguration config={metricsConfig} setConfig={setMetricsConfig} testSuites={testSuites} onNext={() => setCurrentStep(4)} onBack={() => setCurrentStep(2)} />;
+        return <ModelSelection selectedModel={selectedModel} setSelectedModel={setSelectedModel} onNext={() => setCurrentStep(4)} onBack={() => setCurrentStep(2)} />;
       case 4:
-        return <ModelSelection selectedModel={selectedModel} setSelectedModel={setSelectedModel} onNext={() => setCurrentStep(5)} onBack={() => setCurrentStep(3)} />;
+        return <TestExecution onNext={() => setCurrentStep(5)} onBack={() => setCurrentStep(3)} setResults={handleTestExecutionComplete} selectedTestSuiteId={selectedTestSuiteId} />;
       case 5:
-        return <TestExecution onNext={() => setCurrentStep(6)} onBack={() => setCurrentStep(4)} setResults={handleTestExecutionComplete} selectedTestSuiteId={selectedTestSuiteId} />;
+        return <ResultsDashboard results={evaluationResults} onNext={() => setCurrentStep(6)} onBack={() => setCurrentStep(4)} />;
       case 6:
-        return <ResultsDashboard results={evaluationResults} onNext={() => setCurrentStep(7)} onBack={() => setCurrentStep(5)} />;
-      case 7:
-        return <ReportGeneration results={evaluationResults} onBack={() => setCurrentStep(6)} />;
+        return <ReportGeneration results={evaluationResults} onBack={() => setCurrentStep(5)} />;
       default:
         return null;
     }
@@ -228,7 +224,7 @@ const Index = () => {
           onDisplayTestSuites={handleDisplayTestSuites}
         />
         
-        <div className="flex-1 bg-gray-50 ml-0">
+        <div className="flex-1 bg-gray-50">
           {/* Progress Header - only show for workflow */}
           {currentView === 'workflow' && (
             <div className="bg-white shadow-sm border-b">

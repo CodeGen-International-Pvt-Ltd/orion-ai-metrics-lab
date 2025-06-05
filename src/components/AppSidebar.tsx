@@ -1,5 +1,11 @@
+
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
+import {
+  HoverCard,
+  HoverCardContent,
+  HoverCardTrigger,
+} from "@/components/ui/hover-card";
 import {
   Sidebar,
   SidebarContent,
@@ -70,22 +76,44 @@ const AppSidebar = ({ userData, onRegisterTestSuite, onDisplayTestSuites }: AppS
 
       <SidebarFooter>
         <div className="p-4 border-t">
-          <div className="flex items-center gap-3 p-2">
-            <Avatar className="w-10 h-10">
-              <AvatarImage src="" />
-              <AvatarFallback className="bg-blue-100 text-blue-600">
-                <User className="w-5 h-5" />
-              </AvatarFallback>
-            </Avatar>
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-gray-900 truncate">
-                {userData.name || 'User'}
-              </p>
-              <p className="text-xs text-gray-600 truncate">
-                {userData.email || 'user@example.com'}
-              </p>
-            </div>
-          </div>
+          <HoverCard>
+            <HoverCardTrigger asChild>
+              <div className="flex items-center gap-3 p-2 rounded-lg hover:bg-gray-100 cursor-pointer transition-colors">
+                <Avatar className="w-10 h-10">
+                  <AvatarImage src="" />
+                  <AvatarFallback className="bg-blue-100 text-blue-600">
+                    <User className="w-5 h-5" />
+                  </AvatarFallback>
+                </Avatar>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-gray-900 truncate">
+                    {userData.name || 'User'}
+                  </p>
+                  <p className="text-xs text-gray-600 truncate">
+                    {userData.email || 'user@example.com'}
+                  </p>
+                </div>
+              </div>
+            </HoverCardTrigger>
+            <HoverCardContent className="w-80" side="right" align="end">
+              <div className="flex items-start space-x-4">
+                <Avatar className="w-12 h-12">
+                  <AvatarImage src="" />
+                  <AvatarFallback className="bg-blue-100 text-blue-600">
+                    <User className="w-6 h-6" />
+                  </AvatarFallback>
+                </Avatar>
+                <div className="space-y-1">
+                  <h4 className="text-sm font-semibold">{userData.name}</h4>
+                  <p className="text-sm text-gray-600">{userData.email}</p>
+                  <div className="flex items-center pt-2">
+                    <div className="w-2 h-2 bg-green-500 rounded-full mr-2"></div>
+                    <span className="text-xs text-gray-500">Online</span>
+                  </div>
+                </div>
+              </div>
+            </HoverCardContent>
+          </HoverCard>
         </div>
       </SidebarFooter>
     </Sidebar>
