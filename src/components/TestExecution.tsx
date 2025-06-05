@@ -1,6 +1,8 @@
 
 import { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Play, Pause, ArrowRight, CheckCircle, Clock, AlertCircle } from "lucide-react";
@@ -19,66 +21,107 @@ const TestExecution = ({ onNext, onBack, setResults, selectedTestSuiteId }: Test
   const [currentPhase, setCurrentPhase] = useState('');
   const [completedTests, setCompletedTests] = useState([]);
   const [isComplete, setIsComplete] = useState(false);
+  const [orionEndpoint, setOrionEndpoint] = useState('');
+  const [endpointError, setEndpointError] = useState('');
 
   const testPhases = [
     { name: 'Initializing Test Environment', duration: 1000 },
     { name: 'Loading Test Suites', duration: 1500 },
-    { name: 'Running Correctness Tests', duration: 3000 },
-    { name: 'Evaluating Answer Relevancy', duration: 2500 },
-    { name: 'Checking for Hallucinations', duration: 2000 },
-    { name: 'Analyzing Contextual Relevance', duration: 2000 },
-    { name: 'Running Statistical Analysis', duration: 1500 },
-    { name: 'Generating Evaluation Scores', duration: 1000 },
+    { name: 'Executing Test Run', duration: 8000 },
     { name: 'Finalizing Results', duration: 500 }
   ];
 
-  // Generate unique results based on test suite ID
+  // Generate comprehensive results with new structure
   const generateMockResults = (suiteId: string) => {
     const seed = suiteId ? parseInt(suiteId.slice(-3)) || 123 : 123;
     const random = (min: number, max: number) => min + ((seed * 9301 + 49297) % 233280) / 233280 * (max - min);
     
-    const correctnessScore = 85 + random(0, 15);
-    const hallucinationScore = random(1, 8);
-    const relevancyScore = 88 + random(0, 12);
-    const contextualScore = 82 + random(0, 18);
+    // Content Evaluation
+    const contentEvaluation = {
+      correctness: Math.round((85 + random(0, 15)) * 10) / 10,
+      hallucination: Math.round((1 + random(0, 8)) * 10) / 10,
+      answer_relevancy: Math.round((88 + random(0, 12)) * 10) / 10,
+      contextual_relevance: Math.round((82 + random(0, 18)) * 10) / 10
+    };
+
+    // Retrieval and Generation Evaluation
+    const retrievalGeneration = {
+      summarization: {
+        fluency: Math.round((80 + random(0, 20)) * 10) / 10,
+        conciseness: Math.round((75 + random(0, 25)) * 10) / 10,
+        relevance: Math.round((85 + random(0, 15)) * 10) / 10
+      },
+      retrieving_same_content: Math.round((90 + random(0, 10)) * 10) / 10,
+      retrieving_similar_content: Math.round((85 + random(0, 15)) * 10) / 10
+    };
+
+    // Functional Testing
+    const functionalTesting = {
+      leading_questions: {
+        biasness: Math.round((70 + random(0, 30)) * 10) / 10,
+        consistency: Math.round((80 + random(0, 20)) * 10) / 10,
+        factuality: Math.round((85 + random(0, 15)) * 10) / 10
+      },
+      edge_cases: {
+        fluency: Math.round((75 + random(0, 25)) * 10) / 10,
+        conciseness: Math.round((70 + random(0, 30)) * 10) / 10,
+        relevance: Math.round((80 + random(0, 20)) * 10) / 10,
+        correctness: Math.round((85 + random(0, 15)) * 10) / 10,
+        hallucination: Math.round((2 + random(0, 8)) * 10) / 10
+      },
+      unnecessary_context: {
+        fluency: Math.round((80 + random(0, 20)) * 10) / 10,
+        conciseness: Math.round((75 + random(0, 25)) * 10) / 10,
+        relevance: Math.round((85 + random(0, 15)) * 10) / 10,
+        correctness: Math.round((90 + random(0, 10)) * 10) / 10,
+        hallucination: Math.round((1 + random(0, 5)) * 10) / 10
+      }
+    };
+
+    // Non-Functional Testing
+    const nonFunctionalTesting = {
+      repetitive_loops: Math.round((95 + random(0, 5)) * 10) / 10,
+      spam_flooding: Math.round((90 + random(0, 10)) * 10) / 10,
+      intentional_misdirection: Math.round((85 + random(0, 15)) * 10) / 10,
+      prompt_overloading: Math.round((80 + random(0, 20)) * 10) / 10,
+      susceptibility_prompt_tuning: Math.round((75 + random(0, 25)) * 10) / 10
+    };
+
+    // Calculate overall scores for each category
+    const contentScore = (contentEvaluation.correctness + (100 - contentEvaluation.hallucination) + 
+                         contentEvaluation.answer_relevancy + contentEvaluation.contextual_relevance) / 4;
     
-    const overallScore = (correctnessScore + (100 - hallucinationScore) + relevancyScore + contextualScore) / 4;
-    
-    const totalTests = Math.floor(120 + random(0, 80));
-    const passRate = 0.85 + random(0, 0.15);
-    const passed = Math.floor(totalTests * passRate);
-    const failed = Math.floor(totalTests * (1 - passRate) * 0.7);
-    const warnings = totalTests - passed - failed;
+    const retrievalScore = (retrievalGeneration.summarization.fluency + retrievalGeneration.summarization.conciseness + 
+                           retrievalGeneration.summarization.relevance + retrievalGeneration.retrieving_same_content + 
+                           retrievalGeneration.retrieving_similar_content) / 5;
+
+    const functionalScore = (functionalTesting.leading_questions.biasness + functionalTesting.leading_questions.consistency + 
+                            functionalTesting.leading_questions.factuality + functionalTesting.edge_cases.fluency + 
+                            functionalTesting.edge_cases.conciseness + functionalTesting.edge_cases.relevance + 
+                            functionalTesting.edge_cases.correctness + (100 - functionalTesting.edge_cases.hallucination) + 
+                            functionalTesting.unnecessary_context.fluency + functionalTesting.unnecessary_context.conciseness + 
+                            functionalTesting.unnecessary_context.relevance + functionalTesting.unnecessary_context.correctness + 
+                            (100 - functionalTesting.unnecessary_context.hallucination)) / 13;
+
+    const nonFunctionalScore = (nonFunctionalTesting.repetitive_loops + nonFunctionalTesting.spam_flooding + 
+                               nonFunctionalTesting.intentional_misdirection + nonFunctionalTesting.prompt_overloading + 
+                               nonFunctionalTesting.susceptibility_prompt_tuning) / 5;
+
+    const overallScore = (contentScore + retrievalScore + functionalScore + nonFunctionalScore) / 4;
 
     return {
       overall_score: Math.round(overallScore * 10) / 10,
-      metrics: {
-        correctness: { 
-          score: Math.round(correctnessScore * 10) / 10, 
-          threshold: 95, 
-          status: correctnessScore >= 95 ? 'passed' : 'warning' 
-        },
-        hallucination: { 
-          score: Math.round(hallucinationScore * 10) / 10, 
-          threshold: 5, 
-          status: hallucinationScore <= 5 ? 'passed' : 'warning' 
-        },
-        answer_relevancy: { 
-          score: Math.round(relevancyScore * 10) / 10, 
-          threshold: 95, 
-          status: relevancyScore >= 95 ? 'passed' : 'warning' 
-        },
-        contextual_relevance: { 
-          score: Math.round(contextualScore * 10) / 10, 
-          threshold: 95, 
-          status: contextualScore >= 95 ? 'passed' : 'warning' 
-        }
+      category_scores: {
+        content_evaluation: Math.round(contentScore * 10) / 10,
+        retrieval_generation: Math.round(retrievalScore * 10) / 10,
+        functional_testing: Math.round(functionalScore * 10) / 10,
+        non_functional_testing: Math.round(nonFunctionalScore * 10) / 10
       },
       detailed_results: {
-        total_tests: totalTests,
-        passed: passed,
-        warnings: warnings,
-        failed: failed
+        content_evaluation: contentEvaluation,
+        retrieval_generation: retrievalGeneration,
+        functional_testing: functionalTesting,
+        non_functional_testing: nonFunctionalTesting
       },
       execution_time: `${Math.floor(3 + random(0, 4))}m ${Math.floor(10 + random(0, 50))}s`,
       timestamp: new Date().toISOString()
@@ -128,7 +171,26 @@ const TestExecution = ({ onNext, onBack, setResults, selectedTestSuiteId }: Test
     }
   }, [isRunning, isPaused, setResults, selectedTestSuiteId]);
 
+  const validateEndpoint = () => {
+    if (!orionEndpoint.trim()) {
+      setEndpointError('OrionAI endpoint is required');
+      return false;
+    }
+    
+    try {
+      new URL(orionEndpoint);
+      setEndpointError('');
+      return true;
+    } catch {
+      setEndpointError('Please enter a valid URL');
+      return false;
+    }
+  };
+
   const startTest = () => {
+    if (!validateEndpoint()) {
+      return;
+    }
     setIsRunning(true);
     setIsPaused(false);
   };
@@ -159,10 +221,40 @@ const TestExecution = ({ onNext, onBack, setResults, selectedTestSuiteId }: Test
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
+          {/* OrionAI Endpoint Input */}
+          {!isRunning && (
+            <div className="space-y-3">
+              <Label htmlFor="orionEndpoint" className="text-sm font-medium">
+                OrionAI Endpoint URL *
+              </Label>
+              <Input
+                id="orionEndpoint"
+                placeholder="https://your-orionai-endpoint.com/api/v1"
+                value={orionEndpoint}
+                onChange={(e) => {
+                  setOrionEndpoint(e.target.value);
+                  if (endpointError) setEndpointError('');
+                }}
+                className={endpointError ? 'border-red-500' : ''}
+                required
+              />
+              {endpointError && (
+                <p className="text-sm text-red-500">{endpointError}</p>
+              )}
+              <p className="text-xs text-gray-600">
+                Enter the API endpoint URL for your OrionAI system that will be evaluated.
+              </p>
+            </div>
+          )}
+
           {/* Control Buttons */}
           <div className="flex gap-4">
             {!isRunning ? (
-              <Button onClick={startTest} className="bg-green-600 hover:bg-green-700">
+              <Button 
+                onClick={startTest} 
+                className="bg-green-600 hover:bg-green-700"
+                disabled={!orionEndpoint.trim()}
+              >
                 <Play className="w-4 h-4 mr-2" />
                 Start Test Execution
               </Button>
@@ -247,6 +339,7 @@ const TestExecution = ({ onNext, onBack, setResults, selectedTestSuiteId }: Test
                 <div>
                   <h4 className="font-semibold text-yellow-800">Before Starting</h4>
                   <ul className="text-sm text-yellow-700 mt-1 space-y-1">
+                    <li>• Enter a valid OrionAI endpoint URL</li>
                     <li>• Ensure OrionAI system is accessible and running</li>
                     <li>• Test execution may take several minutes to complete</li>
                     <li>• Do not close this window during test execution</li>

@@ -1,9 +1,8 @@
-
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { BarChart3, TrendingUp, AlertTriangle, CheckCircle, ArrowRight, Download } from "lucide-react";
+import { BarChart3, TrendingUp, AlertTriangle, CheckCircle, ArrowRight } from "lucide-react";
 
 interface ResultsDashboardProps {
   results: any;
@@ -14,30 +13,31 @@ interface ResultsDashboardProps {
 const ResultsDashboard = ({ results, onNext, onBack }: ResultsDashboardProps) => {
   if (!results) return null;
 
-  const getStatusIcon = (status: string) => {
-    switch (status) {
-      case 'passed':
-        return <CheckCircle className="w-5 h-5 text-green-600" />;
-      case 'warning':
-        return <AlertTriangle className="w-5 h-5 text-yellow-600" />;
-      case 'failed':
-        return <AlertTriangle className="w-5 h-5 text-red-600" />;
-      default:
-        return <CheckCircle className="w-5 h-5 text-gray-400" />;
+  const getStatusIcon = (score: number, threshold: number = 85) => {
+    if (score >= threshold) {
+      return <CheckCircle className="w-5 h-5 text-green-600" />;
+    } else if (score >= threshold * 0.8) {
+      return <AlertTriangle className="w-5 h-5 text-yellow-600" />;
+    } else {
+      return <AlertTriangle className="w-5 h-5 text-red-600" />;
     }
   };
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'passed':
-        return 'text-green-700 bg-green-50 border-green-200';
-      case 'warning':
-        return 'text-yellow-700 bg-yellow-50 border-yellow-200';
-      case 'failed':
-        return 'text-red-700 bg-red-50 border-red-200';
-      default:
-        return 'text-gray-700 bg-gray-50 border-gray-200';
+  const getStatusColor = (score: number, threshold: number = 85) => {
+    if (score >= threshold) {
+      return 'text-green-700 bg-green-50 border-green-200';
+    } else if (score >= threshold * 0.8) {
+      return 'text-yellow-700 bg-yellow-50 border-yellow-200';
+    } else {
+      return 'text-red-700 bg-red-50 border-red-200';
     }
+  };
+
+  const categoryTitles = {
+    content_evaluation: 'Content Evaluation',
+    retrieval_generation: 'Retrieval and Generation Evaluation',
+    functional_testing: 'Functional Testing',
+    non_functional_testing: 'Non-Functional Testing'
   };
 
   return (
@@ -58,129 +58,50 @@ const ResultsDashboard = ({ results, onNext, onBack }: ResultsDashboardProps) =>
         </CardHeader>
       </Card>
 
-      {/* Metrics Overview */}
+      {/* Category Overview Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        {Object.entries(results.metrics).map(([key, metric]: [string, any]) => (
-          <Card key={key} className={`border ${getStatusColor(metric.status)}`}>
+        {Object.entries(results.category_scores).map(([key, score]: [string, any]) => (
+          <Card key={key} className={`border ${getStatusColor(score)}`}>
             <CardContent className="p-4">
               <div className="flex items-center justify-between mb-2">
-                <h3 className="font-semibold capitalize">
-                  {key.replace('_', ' ')}
+                <h3 className="font-semibold text-sm">
+                  {categoryTitles[key]}
                 </h3>
-                {getStatusIcon(metric.status)}
+                {getStatusIcon(score)}
               </div>
               <div className="space-y-2">
-                <div className="flex justify-between text-sm">
-                  <span>Score:</span>
-                  <span className="font-medium">{metric.score}%</span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span>Threshold:</span>
-                  <span>{metric.threshold}%</span>
-                </div>
-                <Progress 
-                  value={metric.score} 
-                  className="h-2"
-                />
+                <div className="text-2xl font-bold">{score}%</div>
+                <Progress value={score} className="h-2" />
               </div>
             </CardContent>
           </Card>
         ))}
       </div>
 
-      {/* Detailed Results */}
-      <Tabs defaultValue="summary" className="space-y-4">
-        <TabsList className="grid w-full grid-cols-3">
-          <TabsTrigger value="summary">Summary</TabsTrigger>
-          <TabsTrigger value="detailed">Detailed Analysis</TabsTrigger>
-          <TabsTrigger value="recommendations">Recommendations</TabsTrigger>
+      {/* Detailed Results Tabs */}
+      <Tabs defaultValue="content_evaluation" className="space-y-4">
+        <TabsList className="grid w-full grid-cols-4">
+          <TabsTrigger value="content_evaluation">Content Evaluation</TabsTrigger>
+          <TabsTrigger value="retrieval_generation">Retrieval & Generation</TabsTrigger>
+          <TabsTrigger value="functional_testing">Functional Testing</TabsTrigger>
+          <TabsTrigger value="non_functional_testing">Non-Functional Testing</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="summary">
-          <div className="grid md:grid-cols-2 gap-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Test Execution Summary</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="flex justify-between py-2 border-b">
-                  <span>Total Tests:</span>
-                  <span className="font-medium">{results.detailed_results.total_tests}</span>
-                </div>
-                <div className="flex justify-between py-2 border-b">
-                  <span>Passed:</span>
-                  <span className="font-medium text-green-600">{results.detailed_results.passed}</span>
-                </div>
-                <div className="flex justify-between py-2 border-b">
-                  <span>Warnings:</span>
-                  <span className="font-medium text-yellow-600">{results.detailed_results.warnings}</span>
-                </div>
-                <div className="flex justify-between py-2 border-b">
-                  <span>Failed:</span>
-                  <span className="font-medium text-red-600">{results.detailed_results.failed}</span>
-                </div>
-                <div className="flex justify-between py-2">
-                  <span>Execution Time:</span>
-                  <span className="font-medium">{results.execution_time}</span>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle>Performance Metrics</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <div className="text-center p-4 bg-green-50 rounded-lg">
-                    <TrendingUp className="w-6 h-6 text-green-600 mx-auto mb-2" />
-                    <p className="text-sm text-green-700">
-                      <strong>Strong Performance</strong> in answer relevancy and hallucination control
-                    </p>
-                  </div>
-                  <div className="text-center p-4 bg-yellow-50 rounded-lg">
-                    <AlertTriangle className="w-6 h-6 text-yellow-600 mx-auto mb-2" />
-                    <p className="text-sm text-yellow-700">
-                      <strong>Areas for Improvement</strong> in correctness and contextual relevance
-                    </p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        </TabsContent>
-
-        <TabsContent value="detailed">
+        <TabsContent value="content_evaluation">
           <Card>
             <CardHeader>
-              <CardTitle>Detailed Analysis</CardTitle>
-              <CardDescription>
-                In-depth breakdown of evaluation results
-              </CardDescription>
+              <CardTitle>Content Evaluation Metrics</CardTitle>
+              <CardDescription>Core content quality and accuracy metrics</CardDescription>
             </CardHeader>
-            <CardContent className="space-y-6">
-              {Object.entries(results.metrics).map(([key, metric]: [string, any]) => (
-                <div key={key} className="p-4 border rounded-lg">
-                  <h4 className="font-semibold capitalize mb-3">{key.replace('_', ' ')} Analysis</h4>
-                  <div className="grid md:grid-cols-3 gap-4 text-sm">
-                    <div>
-                      <p className="text-gray-600">Current Score</p>
-                      <p className="text-2xl font-bold">{metric.score}%</p>
-                    </div>
-                    <div>
-                      <p className="text-gray-600">Target Threshold</p>
-                      <p className="text-2xl font-bold">{metric.threshold}%</p>
-                    </div>
-                    <div>
-                      <p className="text-gray-600">Status</p>
-                      <div className="flex items-center gap-2 mt-1">
-                        {getStatusIcon(metric.status)}
-                        <span className="capitalize font-medium">{metric.status}</span>
-                      </div>
-                    </div>
+            <CardContent className="space-y-4">
+              {Object.entries(results.detailed_results.content_evaluation).map(([key, score]: [string, any]) => (
+                <div key={key} className="flex items-center justify-between p-4 border rounded-lg">
+                  <div>
+                    <h4 className="font-medium capitalize">{key.replace('_', ' ')}</h4>
+                    <p className="text-sm text-gray-600">Score: {score}%</p>
                   </div>
-                  <div className="mt-3">
-                    <Progress value={metric.score} className="h-3" />
+                  <div className="w-32">
+                    <Progress value={score} className="h-2" />
                   </div>
                 </div>
               ))}
@@ -188,40 +109,137 @@ const ResultsDashboard = ({ results, onNext, onBack }: ResultsDashboardProps) =>
           </Card>
         </TabsContent>
 
-        <TabsContent value="recommendations">
+        <TabsContent value="retrieval_generation">
           <Card>
             <CardHeader>
-              <CardTitle>Improvement Recommendations</CardTitle>
-              <CardDescription>
-                Actionable insights to enhance OrionAI performance
-              </CardDescription>
+              <CardTitle>Retrieval and Generation Evaluation</CardTitle>
+              <CardDescription>Information retrieval and content generation metrics</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="p-4 border-l-4 border-yellow-400 bg-yellow-50">
-                <h4 className="font-semibold text-yellow-800">Correctness (94.2% - Target: 95%)</h4>
-                <ul className="mt-2 text-sm text-yellow-700 space-y-1">
-                  <li>• Review and expand training data for edge cases</li>
-                  <li>• Implement additional fact-checking mechanisms</li>
-                  <li>• Consider ensemble methods for improved accuracy</li>
-                </ul>
+              {/* Summarization */}
+              <div className="border rounded-lg p-4">
+                <h4 className="font-semibold mb-3">Summarization</h4>
+                <div className="space-y-2">
+                  {Object.entries(results.detailed_results.retrieval_generation.summarization).map(([key, score]: [string, any]) => (
+                    <div key={key} className="flex items-center justify-between">
+                      <span className="text-sm capitalize">{key}</span>
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm font-medium">{score}%</span>
+                        <div className="w-20">
+                          <Progress value={score} className="h-1" />
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+              
+              {/* Other retrieval metrics */}
+              <div className="flex items-center justify-between p-4 border rounded-lg">
+                <div>
+                  <h4 className="font-medium">Retrieving Same Content</h4>
+                  <p className="text-sm text-gray-600">Score: {results.detailed_results.retrieval_generation.retrieving_same_content}%</p>
+                </div>
+                <div className="w-32">
+                  <Progress value={results.detailed_results.retrieval_generation.retrieving_same_content} className="h-2" />
+                </div>
+              </div>
+              
+              <div className="flex items-center justify-between p-4 border rounded-lg">
+                <div>
+                  <h4 className="font-medium">Retrieving Similar Content</h4>
+                  <p className="text-sm text-gray-600">Score: {results.detailed_results.retrieval_generation.retrieving_similar_content}%</p>
+                </div>
+                <div className="w-32">
+                  <Progress value={results.detailed_results.retrieval_generation.retrieving_similar_content} className="h-2" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="functional_testing">
+          <Card>
+            <CardHeader>
+              <CardTitle>Functional Testing</CardTitle>
+              <CardDescription>Functional behavior and edge case handling</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {/* Leading Questions */}
+              <div className="border rounded-lg p-4">
+                <h4 className="font-semibold mb-3">Leading Questions</h4>
+                <div className="space-y-2">
+                  {Object.entries(results.detailed_results.functional_testing.leading_questions).map(([key, score]: [string, any]) => (
+                    <div key={key} className="flex items-center justify-between">
+                      <span className="text-sm capitalize">{key}</span>
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm font-medium">{score}%</span>
+                        <div className="w-20">
+                          <Progress value={score} className="h-1" />
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
               </div>
 
-              <div className="p-4 border-l-4 border-yellow-400 bg-yellow-50">
-                <h4 className="font-semibold text-yellow-800">Contextual Relevance (91.5% - Target: 95%)</h4>
-                <ul className="mt-2 text-sm text-yellow-700 space-y-1">
-                  <li>• Enhance context window processing capabilities</li>
-                  <li>• Improve attention mechanisms for better context understanding</li>
-                  <li>• Add context validation layers</li>
-                </ul>
+              {/* Edge Cases */}
+              <div className="border rounded-lg p-4">
+                <h4 className="font-semibold mb-3">Edge Cases</h4>
+                <div className="space-y-2">
+                  {Object.entries(results.detailed_results.functional_testing.edge_cases).map(([key, score]: [string, any]) => (
+                    <div key={key} className="flex items-center justify-between">
+                      <span className="text-sm capitalize">{key.replace('_', ' ')}</span>
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm font-medium">{score}%</span>
+                        <div className="w-20">
+                          <Progress value={score} className="h-1" />
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
               </div>
 
-              <div className="p-4 border-l-4 border-green-400 bg-green-50">
-                <h4 className="font-semibold text-green-800">Strong Areas to Maintain</h4>
-                <ul className="mt-2 text-sm text-green-700 space-y-1">
-                  <li>• Answer Relevancy (96.8%) - Excellent performance</li>
-                  <li>• Hallucination Control (3.1%) - Well below threshold</li>
-                </ul>
+              {/* Unnecessary Context */}
+              <div className="border rounded-lg p-4">
+                <h4 className="font-semibold mb-3">Unnecessary Context</h4>
+                <div className="space-y-2">
+                  {Object.entries(results.detailed_results.functional_testing.unnecessary_context).map(([key, score]: [string, any]) => (
+                    <div key={key} className="flex items-center justify-between">
+                      <span className="text-sm capitalize">{key.replace('_', ' ')}</span>
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm font-medium">{score}%</span>
+                        <div className="w-20">
+                          <Progress value={score} className="h-1" />
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
               </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="non_functional_testing">
+          <Card>
+            <CardHeader>
+              <CardTitle>Non-Functional Testing</CardTitle>
+              <CardDescription>Security and robustness evaluation</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {Object.entries(results.detailed_results.non_functional_testing).map(([key, score]: [string, any]) => (
+                <div key={key} className="flex items-center justify-between p-4 border rounded-lg">
+                  <div>
+                    <h4 className="font-medium capitalize">{key.replace('_', ' ')}</h4>
+                    <p className="text-sm text-gray-600">Score: {score}%</p>
+                  </div>
+                  <div className="w-32">
+                    <Progress value={score} className="h-2" />
+                  </div>
+                </div>
+              ))}
             </CardContent>
           </Card>
         </TabsContent>

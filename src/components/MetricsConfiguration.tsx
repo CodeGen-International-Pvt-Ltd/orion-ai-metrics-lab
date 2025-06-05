@@ -1,12 +1,11 @@
+
 import { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Slider } from "@/components/ui/slider";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Settings, BarChart3, ArrowRight, Save } from "lucide-react";
+import { Settings, ArrowRight, Save } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 interface MetricsConfigurationProps {
@@ -22,32 +21,35 @@ const MetricsConfiguration = ({ config, setConfig, testSuites, onNext, onBack }:
   const [isSaving, setIsSaving] = useState(false);
   const { toast } = useToast();
 
-  const predefinedMetrics = [
-    { id: 'correctness', name: 'Correctness', defaultThreshold: 95, description: 'Accuracy of responses', defaultEnabled: true },
-    { id: 'hallucination', name: 'Hallucination Rate', defaultThreshold: 5, description: 'Rate of false information', inverted: true, defaultEnabled: true },
-    { id: 'answer_relevancy', name: 'Answer Relevancy', defaultThreshold: 95, description: 'Relevance to the question', defaultEnabled: true },
-    { id: 'contextual_relevance', name: 'Contextual Relevance', defaultThreshold: 95, description: 'Context appropriateness', defaultEnabled: true }
+  const modelBasedScores = [
+    { 
+      id: 'nli', 
+      name: 'NLI', 
+      defaultThreshold: 85,
+      subScores: [
+        { id: 'bart', name: 'BART', defaultThreshold: 85 },
+        { id: 'roberta', name: 'RoBERTa', defaultThreshold: 85 }
+      ]
+    },
+    { id: 'bleurt', name: 'BLEURT', defaultThreshold: 80 },
+    { 
+      id: 'g_eval', 
+      name: 'G-Eval', 
+      defaultThreshold: 85,
+      subScores: [
+        { id: 'fluency', name: 'Fluency', defaultThreshold: 85 },
+        { id: 'conciseness', name: 'Conciseness', defaultThreshold: 80 },
+        { id: 'relevance', name: 'Relevance', defaultThreshold: 85 },
+        { id: 'correctness', name: 'Correctness', defaultThreshold: 90 },
+        { id: 'hallucination', name: 'Hallucination', defaultThreshold: 5, inverted: true }
+      ]
+    }
   ];
 
-  const evaluationTypes = [
-    'Summarization',
-    'Retrieval of identical or similar content',
-    'Retrieval across multiple templates/formats',
-    'Retrieval across time series',
-    'Graph generation',
-    'Arithmetic accuracy',
-    'Logical reasoning',
-    'Counterfactual reasoning',
-    'Inference tasks',
-    'Interactive question/answering'
-  ];
-
-  const statisticalMethods = [
-    'BLEU', 'ROUGE', 'METEOR', 'Levenshtein distance', 'R-Precision'
-  ];
-
-  const modelBasedMethods = [
-    'BERT', 'BART', 'DistilBERT', 'RoBERTa', 'BLEURT', 'G-Eval', 'BERTScore', 'SPICE', 'WMD', 'ELMO'
+  const statisticalScores = [
+    { id: 'rouge', name: 'ROUGE', defaultThreshold: 75 },
+    { id: 'bleu', name: 'BLEU', defaultThreshold: 70 },
+    { id: 'meteor', name: 'METEOR', defaultThreshold: 75 }
   ];
 
   const initializeDefaults = (testSuiteId: string) => {
@@ -56,30 +58,25 @@ const MetricsConfiguration = ({ config, setConfig, testSuites, onNext, onBack }:
     }
     
     if (!config.testSuiteConfigs?.[testSuiteId]) {
-      const defaultMetrics = {};
-      predefinedMetrics.forEach(metric => {
-        defaultMetrics[metric.id] = {
-          enabled: true, // Auto-select all metrics
-          threshold: metric.defaultThreshold
+      const defaultModelBased = {};
+      modelBasedScores.forEach(score => {
+        defaultModelBased[score.id] = {
+          threshold: score.defaultThreshold
         };
+        if (score.subScores) {
+          score.subScores.forEach(subScore => {
+            defaultModelBased[`${score.id}_${subScore.id}`] = {
+              threshold: subScore.defaultThreshold
+            };
+          });
+        }
       });
 
-      // Auto-select all evaluation types
-      const defaultEvaluationTypes = {};
-      evaluationTypes.forEach(type => {
-        defaultEvaluationTypes[type] = true;
-      });
-
-      // Auto-select all statistical methods
-      const defaultStatisticalMethods = {};
-      statisticalMethods.forEach(method => {
-        defaultStatisticalMethods[method] = true;
-      });
-
-      // Auto-select all model-based methods
-      const defaultModelBasedMethods = {};
-      modelBasedMethods.forEach(method => {
-        defaultModelBasedMethods[method] = true;
+      const defaultStatistical = {};
+      statisticalScores.forEach(score => {
+        defaultStatistical[score.id] = {
+          threshold: score.defaultThreshold
+        };
       });
       
       setConfig({
@@ -87,10 +84,8 @@ const MetricsConfiguration = ({ config, setConfig, testSuites, onNext, onBack }:
         testSuiteConfigs: {
           ...config.testSuiteConfigs,
           [testSuiteId]: {
-            metrics: defaultMetrics,
-            evaluationTypes: defaultEvaluationTypes,
-            statisticalMethods: defaultStatisticalMethods,
-            modelBasedMethods: defaultModelBasedMethods
+            modelBasedScores: defaultModelBased,
+            statisticalScores: defaultStatistical
           }
         }
       });
@@ -107,36 +102,28 @@ const MetricsConfiguration = ({ config, setConfig, testSuites, onNext, onBack }:
     return config.testSuiteConfigs?.[selectedTestSuiteId] || {};
   };
 
-  const updateTestSuiteConfig = (field: string, value: any) => {
+  const updateScoreConfig = (category: string, scoreId: string, value: number) => {
+    const currentConfig = getCurrentConfig();
     setConfig({
       ...config,
       testSuiteConfigs: {
         ...config.testSuiteConfigs,
         [selectedTestSuiteId]: {
-          ...getCurrentConfig(),
-          [field]: value
+          ...currentConfig,
+          [category]: {
+            ...currentConfig[category],
+            [scoreId]: {
+              threshold: value
+            }
+          }
         }
-      }
-    });
-  };
-
-  const updateMetricConfig = (metricId: string, field: string, value: any) => {
-    const currentConfig = getCurrentConfig();
-    updateTestSuiteConfig('metrics', {
-      ...currentConfig.metrics,
-      [metricId]: {
-        ...currentConfig.metrics?.[metricId],
-        [field]: value
       }
     });
   };
 
   const handleSaveConfiguration = async () => {
     setIsSaving(true);
-    
-    // Simulate saving process
     await new Promise(resolve => setTimeout(resolve, 1000));
-    
     setIsSaving(false);
     toast({
       title: "Configuration Saved",
@@ -166,6 +153,8 @@ const MetricsConfiguration = ({ config, setConfig, testSuites, onNext, onBack }:
     );
   }
 
+  const currentConfig = getCurrentConfig();
+
   return (
     <div className="max-w-6xl mx-auto space-y-6">
       <Card>
@@ -177,7 +166,7 @@ const MetricsConfiguration = ({ config, setConfig, testSuites, onNext, onBack }:
                 Metrics Configuration
               </CardTitle>
               <CardDescription>
-                Configure evaluation metrics and thresholds for your test suites (All options are pre-selected)
+                Configure scoring methods and thresholds for your test suites
               </CardDescription>
             </div>
             <Button 
@@ -219,142 +208,92 @@ const MetricsConfiguration = ({ config, setConfig, testSuites, onNext, onBack }:
             )}
           </div>
 
-          <Tabs defaultValue="predefined" className="space-y-6">
-            <TabsList className="grid w-full grid-cols-3">
-              <TabsTrigger value="predefined">Core Metrics</TabsTrigger>
-              <TabsTrigger value="evaluation">Evaluation Types</TabsTrigger>
-              <TabsTrigger value="scoring">Scoring Methods</TabsTrigger>
-            </TabsList>
-
-            <TabsContent value="predefined" className="space-y-4">
-              <h3 className="text-lg font-semibold">Predefined Metrics</h3>
-              <p className="text-sm text-gray-600 mb-4">All metrics are pre-selected. You can customize which metrics to include in your evaluation.</p>
-              <div className="grid gap-4">
-                {predefinedMetrics.map((metric) => {
-                  const currentConfig = getCurrentConfig();
-                  const isEnabled = currentConfig.metrics?.[metric.id]?.enabled ?? true;
-                  const threshold = currentConfig.metrics?.[metric.id]?.threshold ?? metric.defaultThreshold;
-                  
-                  return (
-                    <Card key={metric.id} className="p-4">
-                      <div className="flex items-start justify-between mb-4">
-                        <div className="flex items-center space-x-3">
-                          <Checkbox
-                            checked={isEnabled}
-                            onCheckedChange={(checked) => updateMetricConfig(metric.id, 'enabled', checked)}
-                          />
-                          <div>
-                            <Label className="text-base font-medium">{metric.name}</Label>
-                            <p className="text-sm text-gray-600">{metric.description}</p>
+          <div className="space-y-6">
+            <h3 className="text-lg font-semibold">Scoring Methods</h3>
+            <p className="text-sm text-gray-600">All scoring methods are automatically selected with default thresholds. You can adjust thresholds as needed.</p>
+            
+            <div className="grid md:grid-cols-2 gap-6">
+              {/* Model Based Scores */}
+              <div>
+                <h4 className="text-lg font-semibold mb-4">Model Based Scoring</h4>
+                <div className="space-y-4">
+                  {modelBasedScores.map((score) => (
+                    <Card key={score.id} className="p-4">
+                      <div className="space-y-4">
+                        <div>
+                          <Label className="text-base font-medium">{score.name}</Label>
+                          <div className="mt-2">
+                            <Label className="text-sm">Threshold: {currentConfig.modelBasedScores?.[score.id]?.threshold ?? score.defaultThreshold}%</Label>
+                            <Slider
+                              value={[currentConfig.modelBasedScores?.[score.id]?.threshold ?? score.defaultThreshold]}
+                              onValueChange={([value]) => updateScoreConfig('modelBasedScores', score.id, value)}
+                              min={0}
+                              max={100}
+                              step={1}
+                              className="w-full mt-1"
+                            />
                           </div>
                         </div>
-                        <BarChart3 className="w-5 h-5 text-gray-400" />
+                        
+                        {score.subScores && (
+                          <div className="pl-4 border-l-2 border-gray-200 space-y-3">
+                            {score.subScores.map((subScore) => {
+                              const subScoreKey = `${score.id}_${subScore.id}`;
+                              const threshold = currentConfig.modelBasedScores?.[subScoreKey]?.threshold ?? subScore.defaultThreshold;
+                              return (
+                                <div key={subScore.id}>
+                                  <Label className="text-sm font-medium">{subScore.name}</Label>
+                                  <div className="mt-1">
+                                    <Label className="text-xs">Threshold: {threshold}%</Label>
+                                    <Slider
+                                      value={[threshold]}
+                                      onValueChange={([value]) => updateScoreConfig('modelBasedScores', subScoreKey, value)}
+                                      min={0}
+                                      max={100}
+                                      step={1}
+                                      className="w-full mt-1"
+                                    />
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        )}
                       </div>
-                      
-                      {isEnabled && (
-                        <div className="space-y-3">
-                          <Label>Threshold: {threshold}%</Label>
-                          <Slider
-                            value={[threshold]}
-                            onValueChange={([value]) => updateMetricConfig(metric.id, 'threshold', value)}
-                            min={0}
-                            max={100}
-                            step={1}
-                            className="w-full"
-                          />
-                        </div>
-                      )}
                     </Card>
-                  );
-                })}
-              </div>
-            </TabsContent>
-
-            <TabsContent value="evaluation" className="space-y-4">
-              <h3 className="text-lg font-semibold">Evaluation Types</h3>
-              <p className="text-sm text-gray-600 mb-4">All evaluation types are pre-selected.</p>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                {evaluationTypes.map((type) => {
-                  const currentConfig = getCurrentConfig();
-                  const isChecked = currentConfig.evaluationTypes?.[type] ?? true;
-                  
-                  return (
-                    <div key={type} className="flex items-center space-x-2 p-3 border rounded-lg">
-                      <Checkbox
-                        checked={isChecked}
-                        onCheckedChange={(checked) => {
-                          const currentConfig = getCurrentConfig();
-                          updateTestSuiteConfig('evaluationTypes', {
-                            ...currentConfig.evaluationTypes,
-                            [type]: checked
-                          });
-                        }}
-                      />
-                      <Label className="text-sm">{type}</Label>
-                    </div>
-                  );
-                })}
-              </div>
-            </TabsContent>
-
-            <TabsContent value="scoring" className="space-y-6">
-              <div className="grid md:grid-cols-2 gap-6">
-                <div>
-                  <h3 className="text-lg font-semibold mb-4">Statistical Methods</h3>
-                  <p className="text-sm text-gray-600 mb-4">All statistical methods are pre-selected.</p>
-                  <div className="space-y-3">
-                    {statisticalMethods.map((method) => {
-                      const currentConfig = getCurrentConfig();
-                      const isChecked = currentConfig.statisticalMethods?.[method] ?? true;
-                      
-                      return (
-                        <div key={method} className="flex items-center space-x-2 p-3 border rounded-lg">
-                          <Checkbox
-                            checked={isChecked}
-                            onCheckedChange={(checked) => {
-                              const currentConfig = getCurrentConfig();
-                              updateTestSuiteConfig('statisticalMethods', {
-                                ...currentConfig.statisticalMethods,
-                                [method]: checked
-                              });
-                            }}
-                          />
-                          <Label className="text-sm">{method}</Label>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-
-                <div>
-                  <h3 className="text-lg font-semibold mb-4">Model-Based Methods</h3>
-                  <p className="text-sm text-gray-600 mb-4">All model-based methods are pre-selected.</p>
-                  <div className="space-y-3">
-                    {modelBasedMethods.map((method) => {
-                      const currentConfig = getCurrentConfig();
-                      const isChecked = currentConfig.modelBasedMethods?.[method] ?? true;
-                      
-                      return (
-                        <div key={method} className="flex items-center space-x-2 p-3 border rounded-lg">
-                          <Checkbox
-                            checked={isChecked}
-                            onCheckedChange={(checked) => {
-                              const currentConfig = getCurrentConfig();
-                              updateTestSuiteConfig('modelBasedMethods', {
-                                ...currentConfig.modelBasedMethods,
-                                [method]: checked
-                              });
-                            }}
-                          />
-                          <Label className="text-sm">{method}</Label>
-                        </div>
-                      );
-                    })}
-                  </div>
+                  ))}
                 </div>
               </div>
-            </TabsContent>
-          </Tabs>
+
+              {/* Statistical Scores */}
+              <div>
+                <h4 className="text-lg font-semibold mb-4">Statistical Scoring</h4>
+                <div className="space-y-4">
+                  {statisticalScores.map((score) => {
+                    const threshold = currentConfig.statisticalScores?.[score.id]?.threshold ?? score.defaultThreshold;
+                    return (
+                      <Card key={score.id} className="p-4">
+                        <div>
+                          <Label className="text-base font-medium">{score.name}</Label>
+                          <div className="mt-2">
+                            <Label className="text-sm">Threshold: {threshold}%</Label>
+                            <Slider
+                              value={[threshold]}
+                              onValueChange={([value]) => updateScoreConfig('statisticalScores', score.id, value)}
+                              min={0}
+                              max={100}
+                              step={1}
+                              className="w-full mt-1"
+                            />
+                          </div>
+                        </div>
+                      </Card>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+          </div>
         </CardContent>
       </Card>
 

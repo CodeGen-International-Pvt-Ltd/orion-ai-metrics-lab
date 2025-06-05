@@ -12,10 +12,15 @@ interface ModelSelectionProps {
   setSelectedModel: (model: string) => void;
   onNext: () => void;
   onBack: () => void;
+  testSuites: any[];
+  selectedTestSuiteId: string | null;
 }
 
-const ModelSelection = ({ selectedModel, setSelectedModel, onNext, onBack }: ModelSelectionProps) => {
+const ModelSelection = ({ selectedModel, setSelectedModel, onNext, onBack, testSuites, selectedTestSuiteId }: ModelSelectionProps) => {
   const [customEndpoint, setCustomEndpoint] = useState('');
+
+  const selectedTestSuite = testSuites.find(suite => suite.id === selectedTestSuiteId);
+  const isConfidential = selectedTestSuite?.confidentialityStatus || false;
 
   const models = [
     {
@@ -23,23 +28,33 @@ const ModelSelection = ({ selectedModel, setSelectedModel, onNext, onBack }: Mod
       name: 'OpenAI GPT-4',
       description: 'Advanced language model with excellent reasoning capabilities',
       features: ['High accuracy', 'Complex reasoning', 'Broad knowledge base'],
-      recommended: true
+      recommended: true,
+      disabled: isConfidential
     },
     {
       id: 'Claude',
       name: 'Anthropic Claude',
       description: 'Constitutional AI model focused on helpfulness and safety',
       features: ['Safety-focused', 'Nuanced responses', 'Ethical reasoning'],
-      recommended: false
+      recommended: false,
+      disabled: isConfidential
     },
     {
       id: 'Custom',
       name: 'Custom LLM Endpoint',
       description: 'Connect to your own custom language model endpoint',
       features: ['Full control', 'Custom configuration', 'Private deployment'],
-      recommended: false
+      recommended: false,
+      disabled: false
     }
   ];
+
+  // Auto-select Custom if confidential and no model selected yet
+  useState(() => {
+    if (isConfidential && (selectedModel === 'OpenAI' || selectedModel === 'Claude' || !selectedModel)) {
+      setSelectedModel('Custom');
+    }
+  });
 
   return (
     <div className="max-w-4xl mx-auto space-y-6">
@@ -51,24 +66,45 @@ const ModelSelection = ({ selectedModel, setSelectedModel, onNext, onBack }: Mod
           </CardTitle>
           <CardDescription>
             Choose the AI model that will evaluate your OrionAI system
+            {isConfidential && (
+              <span className="block mt-2 text-yellow-600 font-medium">
+                ⚠️ Confidential test suite detected - External models are disabled
+              </span>
+            )}
           </CardDescription>
         </CardHeader>
         <CardContent>
           <RadioGroup value={selectedModel} onValueChange={setSelectedModel} className="space-y-4">
             {models.map((model) => (
               <div key={model.id} className="relative">
-                <div className={`flex items-center space-x-4 p-6 border rounded-lg cursor-pointer transition-all hover:bg-gray-50 ${
-                  selectedModel === model.id ? 'border-blue-500 bg-blue-50' : 'border-gray-200'
+                <div className={`flex items-center space-x-4 p-6 border rounded-lg transition-all ${
+                  model.disabled 
+                    ? 'opacity-50 cursor-not-allowed bg-gray-100 border-gray-300' 
+                    : `cursor-pointer hover:bg-gray-50 ${
+                        selectedModel === model.id ? 'border-blue-500 bg-blue-50' : 'border-gray-200'
+                      }`
                 }`}>
-                  <RadioGroupItem value={model.id} id={model.id} />
+                  <RadioGroupItem 
+                    value={model.id} 
+                    id={model.id} 
+                    disabled={model.disabled}
+                  />
                   <div className="flex-1">
                     <div className="flex items-center gap-2 mb-2">
-                      <Label htmlFor={model.id} className="text-lg font-semibold cursor-pointer">
+                      <Label 
+                        htmlFor={model.id} 
+                        className={`text-lg font-semibold ${model.disabled ? 'cursor-not-allowed' : 'cursor-pointer'}`}
+                      >
                         {model.name}
                       </Label>
-                      {model.recommended && (
+                      {model.recommended && !model.disabled && (
                         <span className="px-2 py-1 text-xs font-medium bg-blue-100 text-blue-700 rounded-full">
                           Recommended
+                        </span>
+                      )}
+                      {model.disabled && (
+                        <span className="px-2 py-1 text-xs font-medium bg-red-100 text-red-700 rounded-full">
+                          Disabled (Confidential)
                         </span>
                       )}
                     </div>
@@ -112,6 +148,11 @@ const ModelSelection = ({ selectedModel, setSelectedModel, onNext, onBack }: Mod
             <p className="text-sm text-yellow-700">
               The selected model will be used to evaluate OrionAI's responses against your configured metrics. 
               Different models may produce varying evaluation results based on their training and capabilities.
+              {isConfidential && (
+                <span className="block mt-2 font-medium">
+                  For confidential test suites, only custom endpoints are allowed to ensure data privacy.
+                </span>
+              )}
             </p>
           </div>
         </CardContent>

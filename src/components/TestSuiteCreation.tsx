@@ -11,6 +11,7 @@ interface TestSuite {
   id: string;
   name: string;
   type: 'Excel' | 'Custom';
+  confidentialityStatus: boolean;
 }
 
 interface TestSuiteCreationProps {
@@ -21,7 +22,11 @@ interface TestSuiteCreationProps {
 }
 
 const TestSuiteCreation = ({ testSuites, setTestSuites, onNext, onBack }: TestSuiteCreationProps) => {
-  const [newSuite, setNewSuite] = useState({ name: '', type: 'Excel' as 'Excel' | 'Custom' });
+  const [newSuite, setNewSuite] = useState({ 
+    name: '', 
+    type: 'Excel' as 'Excel' | 'Custom',
+    confidentialityStatus: false
+  });
   const [errors, setErrors] = useState({ name: '' });
 
   const addTestSuite = () => {
@@ -33,11 +38,12 @@ const TestSuiteCreation = ({ testSuites, setTestSuites, onNext, onBack }: TestSu
     const testSuite: TestSuite = {
       id: Date.now().toString(),
       name: newSuite.name,
-      type: newSuite.type
+      type: newSuite.type,
+      confidentialityStatus: newSuite.confidentialityStatus
     };
 
     setTestSuites([...testSuites, testSuite]);
-    setNewSuite({ name: '', type: 'Excel' });
+    setNewSuite({ name: '', type: 'Excel', confidentialityStatus: false });
     setErrors({ name: '' });
   };
 
@@ -61,7 +67,7 @@ const TestSuiteCreation = ({ testSuites, setTestSuites, onNext, onBack }: TestSu
         </CardHeader>
         <CardContent className="space-y-6">
           {/* Add New Test Suite */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="space-y-2">
               <Label htmlFor="suiteName">Test Suite Name</Label>
               <Input
@@ -88,6 +94,21 @@ const TestSuiteCreation = ({ testSuites, setTestSuites, onNext, onBack }: TestSu
                 </SelectContent>
               </Select>
             </div>
+            <div className="space-y-2">
+              <Label>Confidentiality Status</Label>
+              <Select
+                value={newSuite.confidentialityStatus.toString()}
+                onValueChange={(value) => setNewSuite({ ...newSuite, confidentialityStatus: value === 'true' })}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="false">False</SelectItem>
+                  <SelectItem value="true">True</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
           
           <Button onClick={addTestSuite} className="w-full md:w-auto">
@@ -104,7 +125,9 @@ const TestSuiteCreation = ({ testSuites, setTestSuites, onNext, onBack }: TestSu
                   <div key={suite.id} className="flex items-center justify-between p-4 border rounded-lg bg-gray-50">
                     <div>
                       <h4 className="font-medium">{suite.name}</h4>
-                      <p className="text-sm text-gray-600">Format: {suite.type}</p>
+                      <p className="text-sm text-gray-600">
+                        Format: {suite.type} | Confidential: {suite.confidentialityStatus ? 'True' : 'False'}
+                      </p>
                     </div>
                     <Button
                       variant="outline"
