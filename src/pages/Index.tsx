@@ -164,38 +164,38 @@ const Index = () => {
     switch (currentStep) {
       case 0:
         return (
-          <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
-            <Card className="w-full max-w-2xl">
+          <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-slate-900 dark:to-slate-800 flex items-center justify-center p-4 transition-colors duration-300">
+            <Card className="w-full max-w-2xl bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700">
               <CardHeader className="text-center">
-                <div className="mx-auto mb-4 w-16 h-16 bg-blue-600 rounded-full flex items-center justify-center">
+                <div className="mx-auto mb-4 w-16 h-16 bg-blue-600 dark:bg-blue-500 rounded-full flex items-center justify-center">
                   <Brain className="w-8 h-8 text-white" />
                 </div>
-                <CardTitle className="text-3xl font-bold text-gray-900">AI Evaluator Platform</CardTitle>
-                <CardDescription className="text-lg">
+                <CardTitle className="text-3xl font-bold text-gray-900 dark:text-gray-100">AI Evaluator Platform</CardTitle>
+                <CardDescription className="text-lg text-gray-600 dark:text-gray-400">
                   Comprehensive evaluation framework for OrionAI performance testing
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div className="text-center p-4">
-                    <BarChart3 className="w-8 h-8 mx-auto mb-2 text-blue-600" />
-                    <h3 className="font-semibold">Advanced Metrics</h3>
-                    <p className="text-sm text-gray-600">BLEU, ROUGE, METEOR, and more</p>
+                    <BarChart3 className="w-8 h-8 mx-auto mb-2 text-blue-600 dark:text-blue-400" />
+                    <h3 className="font-semibold text-gray-900 dark:text-gray-100">Advanced Metrics</h3>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">BLEU, ROUGE, METEOR, and more</p>
                   </div>
                   <div className="text-center p-4">
-                    <Brain className="w-8 h-8 mx-auto mb-2 text-blue-600" />
-                    <h3 className="font-semibold">AI Model Selection</h3>
-                    <p className="text-sm text-gray-600">Choose your evaluation model</p>
+                    <Brain className="w-8 h-8 mx-auto mb-2 text-blue-600 dark:text-blue-400" />
+                    <h3 className="font-semibold text-gray-900 dark:text-gray-100">AI Model Selection</h3>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">Choose your evaluation model</p>
                   </div>
                   <div className="text-center p-4">
-                    <FileText className="w-8 h-8 mx-auto mb-2 text-blue-600" />
-                    <h3 className="font-semibold">Detailed Reports</h3>
-                    <p className="text-sm text-gray-600">Comprehensive evaluation results</p>
+                    <FileText className="w-8 h-8 mx-auto mb-2 text-blue-600 dark:text-blue-400" />
+                    <h3 className="font-semibold text-gray-900 dark:text-gray-100">Detailed Reports</h3>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">Comprehensive evaluation results</p>
                   </div>
                 </div>
                 <Button 
                   onClick={() => setCurrentStep(1)} 
-                  className="w-full bg-blue-600 hover:bg-blue-700"
+                  className="w-full bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600"
                   size="lg"
                 >
                   Get Started <ArrowRight className="ml-2 w-4 h-4" />
@@ -234,14 +234,14 @@ const Index = () => {
           onDisplayTestSuites={handleDisplayTestSuites}
         />
         
-        <div className="flex-1 bg-gray-50">
+        <div className="flex-1 bg-gray-50 dark:bg-gray-900 transition-colors duration-300">
           {/* Progress Header - only show for workflow */}
           {currentView === 'workflow' && (
-            <div className="bg-white shadow-sm border-b">
+            <div className="bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700">
               <div className="max-w-6xl mx-auto px-6 py-4">
                 <div className="flex items-center justify-between mb-4">
-                  <h1 className="text-2xl font-bold text-gray-900">AI Evaluator Platform</h1>
-                  <div className="text-sm text-gray-600">
+                  <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">AI Evaluator Platform</h1>
+                  <div className="text-sm text-gray-600 dark:text-gray-400">
                     Step {currentStep} of {steps.length - 1}
                   </div>
                 </div>
@@ -252,22 +252,22 @@ const Index = () => {
                       <div key={step} className="flex items-center">
                         <div 
                           className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium cursor-pointer transition-colors ${
-                            index + 1 < currentStep ? 'bg-blue-600 text-white hover:bg-blue-700' : 
-                            index + 1 === currentStep ? 'bg-blue-100 text-blue-600 border-2 border-blue-600' : 
-                            'bg-gray-200 text-gray-600'
+                            index + 1 < currentStep ? 'bg-blue-600 dark:bg-blue-500 text-white hover:bg-blue-700 dark:hover:bg-blue-600' : 
+                            index + 1 === currentStep ? 'bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-400 border-2 border-blue-600 dark:border-blue-400' : 
+                            'bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-400'
                           }`}
                           onClick={() => handleStepIconClick(index + 1)}
                         >
                           {StepIcon && <StepIcon className="w-4 h-4" />}
                         </div>
                         <div className={`ml-2 text-sm font-medium ${
-                          index + 1 <= currentStep ? 'text-gray-900' : 'text-gray-400'
+                          index + 1 <= currentStep ? 'text-gray-900 dark:text-gray-100' : 'text-gray-400 dark:text-gray-500'
                         }`}>
                           {step}
                         </div>
                         {index < steps.length - 2 && (
                           <div className={`w-8 h-0.5 mx-4 ${
-                            index + 1 < currentStep ? 'bg-blue-600' : 'bg-gray-200'
+                            index + 1 < currentStep ? 'bg-blue-600 dark:bg-blue-500' : 'bg-gray-200 dark:bg-gray-700'
                           }`} />
                         )}
                       </div>
