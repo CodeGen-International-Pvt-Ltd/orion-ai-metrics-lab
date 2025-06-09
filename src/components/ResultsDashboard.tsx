@@ -51,6 +51,14 @@ const ResultsDashboard = ({ results, onNext, onBack }: ResultsDashboardProps) =>
     return Math.round((percentage / 100) * total);
   };
 
+  // Calculate average past count for each category
+  const getAveragePastCount = (scores: any) => {
+    const totalCounts = Object.values(scores).reduce((sum: number, score: any) => {
+      return sum + getCountFromPercentage(score, 25);
+    }, 0);
+    return Math.round(totalCounts / Object.keys(scores).length);
+  };
+
   const categoryTitles = {
     content_evaluation: 'Content Evaluation',
     retrieval_generation: 'Retrieval and Generation Evaluation',
@@ -69,7 +77,7 @@ const ResultsDashboard = ({ results, onNext, onBack }: ResultsDashboardProps) =>
             <BarChart3 className="w-8 h-8 text-blue-600 dark:text-blue-400" />
             Overall Evaluation Score
           </CardTitle>
-          <div className={`text-4xl font-bold mt-2 ${getScoreTextColor(results.overall_score)}`}>
+          <div className={`text-4xl font-bold mt-2 ${getScoreTextColor(results.overall_score).color}`}>
             {results.overall_score}%
           </div>
           <div className="text-lg font-medium text-gray-700 dark:text-gray-300 mt-2">
@@ -82,10 +90,10 @@ const ResultsDashboard = ({ results, onNext, onBack }: ResultsDashboardProps) =>
       </Card>
 
       {/* Category Overview Cards */}
-{/* Category Overview Cards */}
 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
   {Object.entries(results.category_scores).map(([key, score]: [string, any]) => {
     const { color, label } = getScoreTextColor(score);
+    const averagePastCount = getAveragePastCount(results.detailed_results[key]);
 
     return (
       <Card
@@ -107,7 +115,7 @@ const ResultsDashboard = ({ results, onNext, onBack }: ResultsDashboardProps) =>
           <div className="space-y-2">
             <div className={`text-2xl font-bold ${color}`}>{score}%</div>
             <div className="text-sm font-medium text-gray-700 dark:text-gray-300">
-              {getCountFromPercentage(score, 25)}/25 correct
+              Average Past Count: {averagePastCount}
             </div>
             <Progress value={score} variant="score" className="h-2" />
           </div>
@@ -116,8 +124,6 @@ const ResultsDashboard = ({ results, onNext, onBack }: ResultsDashboardProps) =>
     );
   })}
 </div>
-
-
 
       {/* Detailed Results Tabs */}
       <Tabs defaultValue="content_evaluation" className="space-y-4">
@@ -155,7 +161,7 @@ const ResultsDashboard = ({ results, onNext, onBack }: ResultsDashboardProps) =>
             <div>
               <h4 className="font-medium capitalize text-gray-800 dark:text-gray-100">{key.replace('_', ' ')}</h4>
               <p className={`text-sm font-semibold ${color}`}>Score: {score}%</p>
-              <p className="text-xs text-gray-600 dark:text-gray-400">{getCountFromPercentage(score, 25)}/25 correct predictions</p>
+              <p className="text-xs text-gray-600 dark:text-gray-400">Past Count: {getCountFromPercentage(score, 25)}</p>
             </div>
             <div className="w-32">
               <Progress value={score} variant="score" className="h-2" />
@@ -166,7 +172,6 @@ const ResultsDashboard = ({ results, onNext, onBack }: ResultsDashboardProps) =>
     </CardContent>
   </Card>
 </TabsContent>
-
 
         <TabsContent value="retrieval_generation">
           <Card className="transform transition-all duration-300 hover:shadow-lg bg-white dark:bg-gray-800">
@@ -179,33 +184,49 @@ const ResultsDashboard = ({ results, onNext, onBack }: ResultsDashboardProps) =>
               <div className="border rounded-lg p-4 transition-all duration-200 hover:shadow-md bg-gray-50 dark:bg-gray-700 border-gray-200 dark:border-gray-600">
                 <h4 className="font-semibold mb-3 text-gray-800 dark:text-gray-100">Summarization</h4>
                 <div className="space-y-2">
-                  {Object.entries(results.detailed_results.retrieval_generation.summarization).map(([key, score]: [string, any]) => (
-                    <div key={key} className="flex items-center justify-between">
-                      
-                      <div>
-                        <span className="text-sm capitalize text-gray-700 dark:text-gray-300">{key}</span>
-                        <p className="text-xs text-gray-600 dark:text-gray-400">{getCountFromPercentage(score, 10)}/10 correct</p>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <span className={`text-sm font-medium ${getScoreTextColor(score)}`}>{score}%</span>
-                        <div className="w-20">
-                          <Progress value={score} variant="score" className="h-1" />
+                  {Object.entries(results.detailed_results.retrieval_generation.summarization).map(([key, score]: [string, any]) => {
+                    const { color, label } = getScoreTextColor(score);
+                    return (
+                      <div key={key} className="relative flex items-center justify-between">
+                        {/* Label bubble */}
+                        <span
+                          className={`absolute top-8 right-2 px-2 py-0.5 text-xs rounded-full bg-white dark:bg-gray-800 shadow-sm ${color}`}
+                        >
+                          {label}
+                        </span>
+                        
+                        <div>
+                          <span className="text-sm capitalize text-gray-700 dark:text-gray-300">{key}</span>
+                          <p className="text-xs text-gray-600 dark:text-gray-400">Past Count: {getCountFromPercentage(score, 10)}</p>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span className={`text-sm font-medium ${color}`}>{score}%</span>
+                          <div className="w-20">
+                            <Progress value={score} variant="score" className="h-1" />
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </div>
               
               {/* Other retrieval metrics */}
-              <div className="flex items-center justify-between p-4 border rounded-lg transition-all duration-200 hover:shadow-md hover:scale-102 bg-gray-50 dark:bg-gray-700 border-gray-200 dark:border-gray-600">
+              <div className="relative flex items-center justify-between p-4 border rounded-lg transition-all duration-200 hover:shadow-md hover:scale-102 bg-gray-50 dark:bg-gray-700 border-gray-200 dark:border-gray-600">
+                {/* Label bubble */}
+                <span
+                  className={`absolute top-14 right-2 px-2 py-0.5 text-xs rounded-full bg-white dark:bg-gray-800 shadow-sm ${getScoreTextColor(results.detailed_results.retrieval_generation.retrieving_same_content).color}`}
+                >
+                  {getScoreTextColor(results.detailed_results.retrieval_generation.retrieving_same_content).label}
+                </span>
+                
                 <div>
                   <h4 className="font-medium text-gray-800 dark:text-gray-100">Retrieving Same Content</h4>
-                  <p className={`text-sm font-semibold ${getScoreTextColor(results.detailed_results.retrieval_generation.retrieving_same_content)}`}>
+                  <p className={`text-sm font-semibold ${getScoreTextColor(results.detailed_results.retrieval_generation.retrieving_same_content).color}`}>
                     Score: {results.detailed_results.retrieval_generation.retrieving_same_content}%
                   </p>
                   <p className="text-xs text-gray-600 dark:text-gray-400">
-                    {getCountFromPercentage(results.detailed_results.retrieval_generation.retrieving_same_content, 15)}/15 correct
+                    Past Count: {getCountFromPercentage(results.detailed_results.retrieval_generation.retrieving_same_content, 15)}
                   </p>
                 </div>
                 <div className="w-32">
@@ -213,14 +234,21 @@ const ResultsDashboard = ({ results, onNext, onBack }: ResultsDashboardProps) =>
                 </div>
               </div>
               
-              <div className="flex items-center justify-between p-4 border rounded-lg transition-all duration-200 hover:shadow-md hover:scale-102 bg-gray-50 dark:bg-gray-700 border-gray-200 dark:border-gray-600">
+              <div className="relative flex items-center justify-between p-4 border rounded-lg transition-all duration-200 hover:shadow-md hover:scale-102 bg-gray-50 dark:bg-gray-700 border-gray-200 dark:border-gray-600">
+                {/* Label bubble */}
+                <span
+                  className={`absolute top-14 right-2 px-2 py-0.5 text-xs rounded-full bg-white dark:bg-gray-800 shadow-sm ${getScoreTextColor(results.detailed_results.retrieval_generation.retrieving_similar_content).color}`}
+                >
+                  {getScoreTextColor(results.detailed_results.retrieval_generation.retrieving_similar_content).label}
+                </span>
+                
                 <div>
                   <h4 className="font-medium text-gray-800 dark:text-gray-100">Retrieving Similar Content</h4>
-                  <p className={`text-sm font-semibold ${getScoreTextColor(results.detailed_results.retrieval_generation.retrieving_similar_content)}`}>
+                  <p className={`text-sm font-semibold ${getScoreTextColor(results.detailed_results.retrieval_generation.retrieving_similar_content).color}`}>
                     Score: {results.detailed_results.retrieval_generation.retrieving_similar_content}%
                   </p>
                   <p className="text-xs text-gray-600 dark:text-gray-400">
-                    {getCountFromPercentage(results.detailed_results.retrieval_generation.retrieving_similar_content, 15)}/15 correct
+                    Past Count: {getCountFromPercentage(results.detailed_results.retrieval_generation.retrieving_similar_content, 15)}
                   </p>
                 </div>
                 <div className="w-32">
@@ -242,20 +270,30 @@ const ResultsDashboard = ({ results, onNext, onBack }: ResultsDashboardProps) =>
               <div className="border rounded-lg p-4 transition-all duration-200 hover:shadow-md bg-gray-50 dark:bg-gray-700 border-gray-200 dark:border-gray-600">
                 <h4 className="font-semibold mb-3 text-gray-800 dark:text-gray-100">Leading Questions</h4>
                 <div className="space-y-2">
-                  {Object.entries(results.detailed_results.functional_testing.leading_questions).map(([key, score]: [string, any]) => (
-                    <div key={key} className="flex items-center justify-between">
-                      <div>
-                        <span className="text-sm capitalize text-gray-700 dark:text-gray-300">{key}</span>
-                        <p className="text-xs text-gray-600 dark:text-gray-400">{getCountFromPercentage(score, 8)}/8 correct</p>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <span className={`text-sm font-medium ${getScoreTextColor(score)}`}>{score}%</span>
-                        <div className="w-20">
-                          <Progress value={score} variant="score" className="h-1" />
+                  {Object.entries(results.detailed_results.functional_testing.leading_questions).map(([key, score]: [string, any]) => {
+                    const { color, label } = getScoreTextColor(score);
+                    return (
+                      <div key={key} className="relative flex items-center justify-between">
+                        {/* Label bubble */}
+                        <span
+                          className={`absolute top-8 right-2 px-2 py-0.5 text-xs rounded-full bg-white dark:bg-gray-800 shadow-sm ${color}`}
+                        >
+                          {label}
+                        </span>
+                        
+                        <div>
+                          <span className="text-sm capitalize text-gray-700 dark:text-gray-300">{key}</span>
+                          <p className="text-xs text-gray-600 dark:text-gray-400">Past Count: {getCountFromPercentage(score, 8)}</p>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span className={`text-sm font-medium ${color}`}>{score}%</span>
+                          <div className="w-20">
+                            <Progress value={score} variant="score" className="h-1" />
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </div>
 
@@ -263,20 +301,30 @@ const ResultsDashboard = ({ results, onNext, onBack }: ResultsDashboardProps) =>
               <div className="border rounded-lg p-4 transition-all duration-200 hover:shadow-md bg-gray-50 dark:bg-gray-700 border-gray-200 dark:border-gray-600">
                 <h4 className="font-semibold mb-3 text-gray-800 dark:text-gray-100">Edge Cases</h4>
                 <div className="space-y-2">
-                  {Object.entries(results.detailed_results.functional_testing.edge_cases).map(([key, score]: [string, any]) => (
-                    <div key={key} className="flex items-center justify-between">
-                      <div>
-                        <span className="text-sm capitalize text-gray-700 dark:text-gray-300">{key.replace('_', ' ')}</span>
-                        <p className="text-xs text-gray-600 dark:text-gray-400">{getCountFromPercentage(score, 5)}/5 correct</p>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <span className={`text-sm font-medium ${getScoreTextColor(score)}`}>{score}%</span>
-                        <div className="w-20">
-                          <Progress value={score} variant="score" className="h-1" />
+                  {Object.entries(results.detailed_results.functional_testing.edge_cases).map(([key, score]: [string, any]) => {
+                    const { color, label } = getScoreTextColor(score);
+                    return (
+                      <div key={key} className="relative flex items-center justify-between">
+                        {/* Label bubble */}
+                        <span
+                          className={`absolute top-8 right-2 px-2 py-0.5 text-xs rounded-full bg-white dark:bg-gray-800 shadow-sm ${color}`}
+                        >
+                          {label}
+                        </span>
+                        
+                        <div>
+                          <span className="text-sm capitalize text-gray-700 dark:text-gray-300">{key.replace('_', ' ')}</span>
+                          <p className="text-xs text-gray-600 dark:text-gray-400">Past Count: {getCountFromPercentage(score, 5)}</p>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span className={`text-sm font-medium ${color}`}>{score}%</span>
+                          <div className="w-20">
+                            <Progress value={score} variant="score" className="h-1" />
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </div>
 
@@ -284,20 +332,30 @@ const ResultsDashboard = ({ results, onNext, onBack }: ResultsDashboardProps) =>
               <div className="border rounded-lg p-4 transition-all duration-200 hover:shadow-md bg-gray-50 dark:bg-gray-700 border-gray-200 dark:border-gray-600">
                 <h4 className="font-semibold mb-3 text-gray-800 dark:text-gray-100">Unnecessary Context</h4>
                 <div className="space-y-2">
-                  {Object.entries(results.detailed_results.functional_testing.unnecessary_context).map(([key, score]: [string, any]) => (
-                    <div key={key} className="flex items-center justify-between">
-                      <div>
-                        <span className="text-sm capitalize text-gray-700 dark:text-gray-300">{key.replace('_', ' ')}</span>
-                        <p className="text-xs text-gray-600 dark:text-gray-400">{getCountFromPercentage(score, 7)}/7 correct</p>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <span className={`text-sm font-medium ${getScoreTextColor(score)}`}>{score}%</span>
-                        <div className="w-20">
-                          <Progress value={score} variant="score" className="h-1" />
+                  {Object.entries(results.detailed_results.functional_testing.unnecessary_context).map(([key, score]: [string, any]) => {
+                    const { color, label } = getScoreTextColor(score);
+                    return (
+                      <div key={key} className="relative flex items-center justify-between">
+                        {/* Label bubble */}
+                        <span
+                          className={`absolute top-8 right-2 px-2 py-0.5 text-xs rounded-full bg-white dark:bg-gray-800 shadow-sm ${color}`}
+                        >
+                          {label}
+                        </span>
+                        
+                        <div>
+                          <span className="text-sm capitalize text-gray-700 dark:text-gray-300">{key.replace('_', ' ')}</span>
+                          <p className="text-xs text-gray-600 dark:text-gray-400">Past Count: {getCountFromPercentage(score, 7)}</p>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span className={`text-sm font-medium ${color}`}>{score}%</span>
+                          <div className="w-20">
+                            <Progress value={score} variant="score" className="h-1" />
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </div>
             </CardContent>
@@ -311,18 +369,28 @@ const ResultsDashboard = ({ results, onNext, onBack }: ResultsDashboardProps) =>
               <CardDescription className="text-gray-600 dark:text-gray-400">Repetitive Loops, Spam/Flooding, Intentional Misdirection, Prompt Overloading, Susceptibility to Prompt Tuning Attacks</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              {Object.entries(results.detailed_results.non_functional_testing).map(([key, score]: [string, any]) => (
-                <div key={key} className="flex items-center justify-between p-4 border rounded-lg transition-all duration-200 hover:shadow-md hover:scale-102 bg-gray-50 dark:bg-gray-700 border-gray-200 dark:border-gray-600">
-                  <div>
-                    <h4 className="font-medium capitalize text-gray-800 dark:text-gray-100">{key.replace('_', ' ')}</h4>
-                    <p className={`text-sm font-semibold ${getScoreTextColor(score)}`}>Score: {score}%</p>
-                    <p className="text-xs text-gray-600 dark:text-gray-400">{getCountFromPercentage(score, 25)}/25 correct predictions</p>
+              {Object.entries(results.detailed_results.non_functional_testing).map(([key, score]: [string, any]) => {
+                const { color, label } = getScoreTextColor(score);
+                return (
+                  <div key={key} className="relative flex items-center justify-between p-4 border rounded-lg transition-all duration-200 hover:shadow-md hover:scale-102 bg-gray-50 dark:bg-gray-700 border-gray-200 dark:border-gray-600">
+                    {/* Label bubble */}
+                    <span
+                      className={`absolute top-14 right-2 px-2 py-0.5 text-xs rounded-full bg-white dark:bg-gray-800 shadow-sm ${color}`}
+                    >
+                      {label}
+                    </span>
+                    
+                    <div>
+                      <h4 className="font-medium capitalize text-gray-800 dark:text-gray-100">{key.replace('_', ' ')}</h4>
+                      <p className={`text-sm font-semibold ${color}`}>Score: {score}%</p>
+                      <p className="text-xs text-gray-600 dark:text-gray-400">Past Count: {getCountFromPercentage(score, 25)}</p>
+                    </div>
+                    <div className="w-32">
+                      <Progress value={score} variant="score" className="h-2" />
+                    </div>
                   </div>
-                  <div className="w-32">
-                    <Progress value={score} variant="score" className="h-2" />
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </CardContent>
           </Card>
         </TabsContent>

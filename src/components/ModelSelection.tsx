@@ -91,7 +91,7 @@ const ModelSelection = ({ selectedModel, setSelectedModel, onNext, onBack, testS
             Select Evaluation Model
           </CardTitle>
           <CardDescription>
-            Choose the AI model that will evaluate your OrionAI system
+            Choose the AI model that will generate modified questions—such as biased, noisy, ambiguous, or edge-case variants—based on your original Q&A pairs. These generated questions help evaluate the robustness of the OrionAI system
             {isConfidential && (
               <span className="block mt-2 text-yellow-600 font-medium">
                 ⚠️ Confidential test suite detected - External models are disabled
