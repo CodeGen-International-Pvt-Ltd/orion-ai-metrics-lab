@@ -134,7 +134,7 @@ const ResultsDashboard = ({ results, onNext, onBack }: ResultsDashboardProps) =>
           <div className="space-y-2">
             <div className={`text-2xl font-bold ${color}`}>{score}%</div>
             <div className="text-sm font-medium text-gray-700 dark:text-gray-300">
-  Average Past Count: {averagePastCount}/25
+  Average Past Count: {averagePastCount}
 </div>
 
             <Progress value={score} variant="score" className="h-2" />
