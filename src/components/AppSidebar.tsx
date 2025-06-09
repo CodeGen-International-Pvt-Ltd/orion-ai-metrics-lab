@@ -97,7 +97,7 @@ const AppSidebar = ({ userData, onRegisterTestSuite, onDisplayTestSuites, onLogo
                     <User className="w-5 h-5" />
                   </AvatarFallback>
                 </Avatar>
-                <div className="flex-1 min-w-0">
+                <div className="flex-1 min-w-0 text-left">
                   <p className="text-sm font-medium text-gray-800 dark:text-gray-100 truncate">
                     {userData.name || 'User'}
                   </p>
@@ -111,30 +111,30 @@ const AppSidebar = ({ userData, onRegisterTestSuite, onDisplayTestSuites, onLogo
             <DropdownMenuContent className="w-56 bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700" side="top" align="end">
               <DropdownMenuLabel className="text-gray-800 dark:text-gray-100">My Account</DropdownMenuLabel>
               <DropdownMenuSeparator className="bg-gray-200 dark:bg-gray-700" />
-              <DropdownMenuItem onClick={onDashboard} className="text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer">
+              <DropdownMenuItem onClick={onDashboard} className="text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer transition-colors duration-200">
                 <LayoutGrid className="w-4 h-4 mr-2" />
-                Dashboard
+                <span className="truncate">Dashboard</span>
               </DropdownMenuItem>
-              <DropdownMenuItem className="text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer">
+              <DropdownMenuItem className="text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer transition-colors duration-200">
                 <Settings className="w-4 h-4 mr-2" />
-                Settings
+                <span className="truncate">Settings</span>
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={toggleTheme} className="text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer">
+              <DropdownMenuItem onClick={toggleTheme} className="text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer transition-colors duration-200">
                 {theme === "light" ? (
                   <Moon className="w-4 h-4 mr-2" />
                 ) : (
                   <Sun className="w-4 h-4 mr-2" />
                 )}
-                Appearance
+                <span className="truncate">Appearance</span>
               </DropdownMenuItem>
-              <DropdownMenuItem className="text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer">
+              <DropdownMenuItem className="text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer transition-colors duration-200">
                 <HelpCircle className="w-4 h-4 mr-2" />
-                Help
+                <span className="truncate">Help</span>
               </DropdownMenuItem>
               <DropdownMenuSeparator className="bg-gray-200 dark:bg-gray-700" />
-              <DropdownMenuItem onClick={onLogout} className="text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 cursor-pointer">
+              <DropdownMenuItem onClick={onLogout} className="text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 cursor-pointer transition-colors duration-200">
                 <LogOut className="w-4 h-4 mr-2" />
-                Logout
+                <span className="truncate">Logout</span>
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
