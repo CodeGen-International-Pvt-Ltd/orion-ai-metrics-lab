@@ -101,21 +101,34 @@ const ModelSelection = ({ selectedModel, setSelectedModel, onNext, onBack, testS
         </CardHeader>
         <CardContent>
           <RadioGroup value={selectedModel} onValueChange={setSelectedModel} className="space-y-4">
-            {models.map((model) => (
-              <div key={model.id} className="relative">
-                <div className={`flex items-center space-x-4 p-6 border rounded-lg transition-all ${
-                  model.disabled 
-                    ? 'opacity-50 cursor-not-allowed bg-gray-100 border-gray-300' 
-                    : `cursor-pointer hover:bg-gray-50 ${
-                        selectedModel === model.id ? 'border-blue-500 bg-blue-50' : 'border-gray-200'
-                      }`
-                }`}>
-                  <RadioGroupItem
-  value={model.id}
-  id={model.id}
-  disabled={model.disabled}
-  className="radio-blue-border"
-/>
+  {models.map((model) => (
+    <div key={model.id} className="relative">
+      <div
+        className={`flex items-center space-x-4 p-6 border rounded-lg transition-all
+          ${model.disabled 
+            ? 'opacity-50 cursor-not-allowed bg-gray-100 border-gray-300'
+            : `cursor-pointer hover:bg-gray-50 ${
+                selectedModel === model.id 
+                  ? 'border-blue-500 bg-blue-50'  // ✅ Blue highlight for selected
+                  : 'border-gray-200 bg-white'    // ⚪ Default for unselected
+              }`
+          }`
+        }
+      >
+        <RadioGroupItem
+          value={model.id}
+          id={model.id}
+          disabled={model.disabled}
+          className="w-4 h-4 text-blue-600 border-blue-500 focus:ring-blue-500" // ✅ Blue ring like <input type="radio">
+        />
+        <label htmlFor={model.id} className="text-sm font-medium">
+          {model.label}
+        </label>
+      </div>
+    </div>
+  ))}
+</RadioGroup>
+
 
 
 
