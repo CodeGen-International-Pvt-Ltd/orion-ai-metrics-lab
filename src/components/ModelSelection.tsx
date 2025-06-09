@@ -110,11 +110,18 @@ const ModelSelection = ({ selectedModel, setSelectedModel, onNext, onBack, testS
                         selectedModel === model.id ? 'border-blue-500 bg-blue-50' : 'border-gray-200'
                       }`
                 }`}>
-                  <RadioGroupItem 
-                    value={model.id} 
-                    id={model.id} 
-                    disabled={model.disabled}
-                  />
+                  <RadioGroupItem
+  value={model.id}
+  id={model.id}
+  disabled={model.disabled}
+  className="radio-blue-border"
+/>
+
+
+
+
+
+
                   <div className="flex-1">
                     <div className="flex items-center gap-2 mb-2">
                       <Label 
