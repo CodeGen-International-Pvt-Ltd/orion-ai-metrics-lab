@@ -5,7 +5,7 @@
   text-align: center;
 }
 
-/* Override the small dot inside RadioGroupItem */
+/* Override the small dot inside RadioGroupItem */Add commentMore actions
 .radio-blue-border {
   border-width: 2px;
   border-color: #2563eb; /* Tailwind's blue-600 */
