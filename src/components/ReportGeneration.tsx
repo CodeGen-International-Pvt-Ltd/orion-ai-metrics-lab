@@ -167,7 +167,8 @@ const ReportGeneration = ({ results, onBack }: ReportGenerationProps) => {
                   <CardContent className="p-4 text-center">
                     <Download className="w-8 h-8 text-blue-600 mx-auto mb-2" />
                     <h4 className="font-semibold mb-2">Download Report</h4>
-                    <Button onClick={downloadReport} className="w-full">
+                    <Button onClick={downloadReport} className="w-full bg-blue-600 hover:bg-blue-700 text-white"
+                    >
                       Download {reportFormat}
                     </Button>
                   </CardContent>
