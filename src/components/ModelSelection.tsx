@@ -110,12 +110,7 @@ const ModelSelection = ({ selectedModel, setSelectedModel, onNext, onBack, testS
                         selectedModel === model.id ? 'border-blue-500 bg-blue-50' : 'border-gray-200'
                       }`
                 }`}>
-                  <RadioGroupItem Add commentMore actions
-                    value={model.id} 
-                    id={model.id} 
-                    disabled={model.disabled}
-                  />
-                  <RadioGroupItem
+                  <RadioGroupItemAdd commentMore actions
   value={model.id}
   id={model.id}
   disabled={model.disabled}
