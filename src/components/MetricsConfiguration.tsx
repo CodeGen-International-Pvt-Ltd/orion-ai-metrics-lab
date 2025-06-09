@@ -308,11 +308,6 @@ const MetricsConfiguration = ({ config, setConfig, testSuites, onNext, onBack }:
                                  getMetricColor(score.id, currentConfig.modelBasedScores?.[score.id]?.threshold ?? score.defaultThreshold).includes('orange') ? 'Poor' : 'Critical'}
                               </div>
                             </div>
-                            <Progress 
-                              value={currentConfig.modelBasedScores?.[score.id]?.threshold ?? score.defaultThreshold} 
-                              variant="score" 
-                              className="h-3 animate-fade-in" 
-                            />
                             <Slider
                               value={[currentConfig.modelBasedScores?.[score.id]?.threshold ?? score.defaultThreshold]}
                               onValueChange={([value]) => updateScoreConfig('modelBasedScores', score.id, value)}
@@ -350,11 +345,6 @@ const MetricsConfiguration = ({ config, setConfig, testSuites, onNext, onBack }:
                                          getMetricColor(subScore.id, threshold).includes('orange') ? 'Poor' : 'Critical'}
                                       </div>
                                     </div>
-                                    <Progress 
-                                      value={threshold} 
-                                      variant="score" 
-                                      className="h-2" 
-                                    />
                                     <Slider
                                       value={[threshold]}
                                       onValueChange={([value]) => updateScoreConfig('modelBasedScores', subScoreKey, value)}
@@ -403,11 +393,6 @@ const MetricsConfiguration = ({ config, setConfig, testSuites, onNext, onBack }:
                                  getMetricColor(score.id, threshold).includes('orange') ? 'Poor' : 'Critical'}
                               </div>
                             </div>
-                            <Progress 
-                              value={threshold} 
-                              variant="score" 
-                              className="h-3 animate-fade-in" 
-                            />
                             <Slider
                               value={[threshold]}
                               onValueChange={([value]) => updateScoreConfig('statisticalScores', score.id, value)}
