@@ -54,7 +54,8 @@ const ResultsDashboard = ({ results, onNext, onBack }: ResultsDashboardProps) =>
   // Calculate average past count for each category
   const getAveragePastCount = (scores: any) => {
     const totalCounts = Object.values(scores).reduce((sum: number, score: any) => {
-      return sum + getCountFromPercentage(score, 25);
+      const scoreValue = typeof score === 'number' ? score : 0;
+      return sum + getCountFromPercentage(scoreValue, 25);
     }, 0);
     return Math.round(totalCounts / Object.keys(scores).length);
   };
