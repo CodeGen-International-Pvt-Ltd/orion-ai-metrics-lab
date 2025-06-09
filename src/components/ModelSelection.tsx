@@ -128,11 +128,12 @@ const ModelSelection = ({
                   }`}
                 >
                   <RadioGroupItem
-                    value={model.id}
-                    id={model.id}
-                    disabled={model.disabled}
-                    className="mt-1 w-4 h-4 text-blue-600 border-blue-500 focus:ring-blue-500"
-                  />
+  value={model.id}
+  id={model.id}
+  disabled={model.disabled}
+  className="w-4 h-4 accent-blue-600"
+/>
+
                   <div className="flex-1">
                     <div className="flex items-center gap-2 mb-2">
                       <Label

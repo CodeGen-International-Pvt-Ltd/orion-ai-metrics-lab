@@ -39,7 +39,9 @@ const Index = () => {
 
   const handleLogin = (loginData: { name: string; email: string }) => {
     setUserData(loginData);
+    setCurrentStep(1); // Skip the welcome step
   };
+  
 
   const handleLogout = () => {
     setUserData(null);
@@ -177,48 +179,6 @@ const Index = () => {
     }
 
     switch (currentStep) {
-      case 0:
-        return (
-          <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-slate-900 dark:to-slate-800 flex items-center justify-center p-4 transition-colors duration-300">
-            <Card className="w-full max-w-2xl bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700">
-              <CardHeader className="text-center">
-                <div className="mx-auto mb-4 w-16 h-16 bg-blue-600 dark:bg-blue-500 rounded-full flex items-center justify-center">
-                  <Brain className="w-8 h-8 text-white" />
-                </div>
-                <CardTitle className="text-3xl font-bold text-gray-800 dark:text-gray-100">AI Evaluator Platform</CardTitle>
-                <CardDescription className="text-lg text-gray-600 dark:text-gray-400">
-                  Comprehensive evaluation framework for OrionAI performance testing
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div className="text-center p-4">
-                    <BarChart3 className="w-8 h-8 mx-auto mb-2 text-blue-600 dark:text-blue-400" />
-                    <h3 className="font-semibold text-gray-800 dark:text-gray-100">Advanced Metrics</h3>
-                    <p className="text-sm text-gray-600 dark:text-gray-400">BLEU, ROUGE, METEOR, and more</p>
-                  </div>
-                  <div className="text-center p-4">
-                    <Brain className="w-8 h-8 mx-auto mb-2 text-blue-600 dark:text-blue-400" />
-                    <h3 className="font-semibold text-gray-800 dark:text-gray-100">AI Model Selection</h3>
-                    <p className="text-sm text-gray-600 dark:text-gray-400">Choose your evaluation model</p>
-                  </div>
-                  <div className="text-center p-4">
-                    <FileText className="w-8 h-8 mx-auto mb-2 text-blue-600 dark:text-blue-400" />
-                    <h3 className="font-semibold text-gray-800 dark:text-gray-100">Detailed Reports</h3>
-                    <p className="text-sm text-gray-600 dark:text-gray-400">Comprehensive evaluation results</p>
-                  </div>
-                </div>
-                <Button 
-                  onClick={() => setCurrentStep(1)} 
-                  className="w-full bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600"
-                  size="lg"
-                >
-                  Get Started <ArrowRight className="ml-2 w-4 h-4" />
-                </Button>
-              </CardContent>
-            </Card>
-          </div>
-        );
       case 1:
         return <TestSuiteCreation testSuites={testSuites} setTestSuites={setTestSuites} onNext={() => setCurrentStep(2)} onBack={() => setCurrentStep(0)} setSelectedTestSuiteId={setSelectedTestSuiteId} />;
       case 2:
