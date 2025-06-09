@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -15,18 +16,11 @@ interface ModelSelectionProps {
   selectedTestSuiteId: string | null;
 }
 
-const ModelSelection = ({
-  selectedModel,
-  setSelectedModel,
-  onNext,
-  onBack,
-  testSuites,
-  selectedTestSuiteId,
-}: ModelSelectionProps) => {
+const ModelSelection = ({ selectedModel, setSelectedModel, onNext, onBack, testSuites, selectedTestSuiteId }: ModelSelectionProps) => {
   const [customEndpoint, setCustomEndpoint] = useState('');
   const [endpointError, setEndpointError] = useState('');
 
-  const selectedTestSuite = testSuites.find((suite) => suite.id === selectedTestSuiteId);
+  const selectedTestSuite = testSuites.find(suite => suite.id === selectedTestSuiteId);
   const isConfidential = selectedTestSuite?.confidentialityStatus || false;
 
   const models = [
@@ -36,7 +30,7 @@ const ModelSelection = ({
       description: 'Advanced language model with excellent reasoning capabilities',
       features: ['High accuracy', 'Complex reasoning', 'Broad knowledge base'],
       recommended: true,
-      disabled: isConfidential,
+      disabled: isConfidential
     },
     {
       id: 'Claude',
@@ -44,7 +38,7 @@ const ModelSelection = ({
       description: 'Constitutional AI model focused on helpfulness and safety',
       features: ['Safety-focused', 'Nuanced responses', 'Ethical reasoning'],
       recommended: false,
-      disabled: isConfidential,
+      disabled: isConfidential
     },
     {
       id: 'Custom',
@@ -52,8 +46,8 @@ const ModelSelection = ({
       description: 'Connect to your own custom language model endpoint',
       features: ['Full control', 'Custom configuration', 'Private deployment'],
       recommended: false,
-      disabled: false,
-    },
+      disabled: false
+    }
   ];
 
   const validateCustomEndpoint = () => {
@@ -61,7 +55,7 @@ const ModelSelection = ({
       setEndpointError('Custom LLM endpoint is required');
       return false;
     }
-
+    
     if (selectedModel === 'Custom') {
       try {
         new URL(customEndpoint);
@@ -72,7 +66,7 @@ const ModelSelection = ({
         return false;
       }
     }
-
+    
     return true;
   };
 
@@ -83,11 +77,8 @@ const ModelSelection = ({
     onNext();
   };
 
-  // Auto-select Custom if confidential
-  if (
-    isConfidential &&
-    (selectedModel === 'OpenAI' || selectedModel === 'Claude' || !selectedModel)
-  ) {
+  // Auto-select Custom if confidential and no valid model selected
+  if (isConfidential && (selectedModel === 'OpenAI' || selectedModel === 'Claude' || !selectedModel)) {
     setSelectedModel('Custom');
   }
 
@@ -100,7 +91,7 @@ const ModelSelection = ({
             Select Evaluation Model
           </CardTitle>
           <CardDescription>
-            Choose the AI model that will evaluate your OrionAI system.
+            Choose the AI model that will evaluate your OrionAI system
             {isConfidential && (
               <span className="block mt-2 text-yellow-600 font-medium">
                 ⚠️ Confidential test suite detected - External models are disabled
@@ -109,38 +100,33 @@ const ModelSelection = ({
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <RadioGroup
-            value={selectedModel}
-            onValueChange={setSelectedModel}
-            className="space-y-4"
-          >
+          <RadioGroup value={selectedModel} onValueChange={setSelectedModel} className="space-y-4">
             {models.map((model) => (
-              <div key={model.id}>
-                <div
-                  className={`flex items-start gap-4 p-6 border rounded-lg transition-all ${
-                    model.disabled
-                      ? 'opacity-50 cursor-not-allowed bg-gray-100 border-gray-300'
-                      : `cursor-pointer hover:bg-gray-50 ${
-                          selectedModel === model.id
-                            ? 'border-blue-500 bg-blue-50'
-                            : 'border-gray-200 bg-white'
-                        }`
-                  }`}
-                >
+              <div key={model.id} className="relative">
+                <div className={`flex items-center space-x-4 p-6 border rounded-lg transition-all ${
+                  model.disabled 
+                    ? 'opacity-50 cursor-not-allowed bg-gray-100 border-gray-300' 
+                    : `cursor-pointer hover:bg-gray-50 ${
+                        selectedModel === model.id ? 'border-blue-500 bg-blue-50' : 'border-gray-200'
+                      }`
+                }`}>
                   <RadioGroupItem
   value={model.id}
   id={model.id}
   disabled={model.disabled}
-  className="w-4 h-4 accent-blue-600"
+  className="radio-blue-border"
 />
+
+
+
+
+
 
                   <div className="flex-1">
                     <div className="flex items-center gap-2 mb-2">
-                      <Label
-                        htmlFor={model.id}
-                        className={`text-lg font-semibold ${
-                          model.disabled ? 'cursor-not-allowed' : 'cursor-pointer'
-                        }`}
+                      <Label 
+                        htmlFor={model.id} 
+                        className={`text-lg font-semibold ${model.disabled ? 'cursor-not-allowed' : 'cursor-pointer'}`}
                       >
                         {model.name}
                       </Label>
@@ -158,10 +144,7 @@ const ModelSelection = ({
                     <p className="text-gray-600 mb-3">{model.description}</p>
                     <div className="flex flex-wrap gap-2">
                       {model.features.map((feature) => (
-                        <span
-                          key={feature}
-                          className="px-2 py-1 text-xs bg-gray-100 text-gray-700 rounded"
-                        >
+                        <span key={feature} className="px-2 py-1 text-xs bg-gray-100 text-gray-700 rounded">
                           {feature}
                         </span>
                       ))}
@@ -215,7 +198,7 @@ const ModelSelection = ({
         </CardContent>
       </Card>
 
-      {/* Navigation Buttons */}
+      {/* Navigation */}
       <div className="flex justify-between">
         <Button variant="outline" onClick={onBack}>
           Back
