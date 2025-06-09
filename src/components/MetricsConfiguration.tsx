@@ -384,18 +384,18 @@ const MetricsConfiguration = ({ config, setConfig, testSuites, onNext, onBack }:
             
             <div className="grid lg:grid-cols-2 gap-6">
               {/* Content Evaluation */}
-              {renderScoreSection(contentEvaluation, 'contentEvaluation', '1) Content Evaluation', 'text-indigo-700')}
+              {renderScoreSection(contentEvaluation, 'contentEvaluation', 'Content Evaluation', 'text-indigo-700')}
               
               {/* Retrieval and Generation Evaluation */}
-              {renderScoreSection(retrievalGeneration, 'retrievalGeneration', '2) Retrieval and Generation Evaluation', 'text-purple-700')}
+              {renderScoreSection(retrievalGeneration, 'retrievalGeneration', 'Retrieval and Generation Evaluation', 'text-purple-700')}
             </div>
             
             <div className="grid lg:grid-cols-2 gap-6">
               {/* Functional Testing */}
-              {renderScoreSection(functionalTesting, 'functionalTesting', '3) Functional Testing', 'text-green-700')}
+              {renderScoreSection(functionalTesting, 'functionalTesting', 'Functional Testing', 'text-green-700')}
               
               {/* Non-Functional Testing */}
-              {renderScoreSection(nonFunctionalTesting, 'nonFunctionalTesting', '4) Non-Functional Testing', 'text-orange-700')}
+              {renderScoreSection(nonFunctionalTesting, 'nonFunctionalTesting', 'Non-Functional Testing', 'text-orange-700')}
             </div>
           </div>
         </CardContent>
