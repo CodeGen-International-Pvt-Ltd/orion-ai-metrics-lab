@@ -33,16 +33,18 @@ const ResultsDashboard = ({ results, onNext, onBack }: ResultsDashboardProps) =>
     }
   };
 
-  const getScoreTextColor = (score: number) => {
-    if (score >= 90) return 'text-emerald-600 dark:text-emerald-400';
-    if (score >= 80) return 'text-green-500 dark:text-green-400';
-    if (score >= 70) return 'text-lime-500 dark:text-lime-400';
-    if (score >= 60) return 'text-yellow-500 dark:text-yellow-400';
-    if (score >= 50) return 'text-orange-500 dark:text-orange-400';
-    if (score >= 40) return 'text-red-400 dark:text-red-300';
-    if (score >= 30) return 'text-red-600 dark:text-red-500';
-    return 'text-blue-600 dark:text-blue-400';
-  };
+  const getScoreTextColor = (score: number): { color: string; label: string } => {
+  if (score >= 90) return { color: 'text-emerald-600 dark:text-emerald-400', label: 'Excellent' };
+  if (score >= 80) return { color: 'text-green-500 dark:text-green-400', label: 'Good' };
+  if (score >= 70) return { color: 'text-lime-500 dark:text-lime-400', label: 'Fair' };
+  if (score >= 60) return { color: 'text-yellow-500 dark:text-yellow-400', label: 'Warning' };
+  if (score >= 50) return { color: 'text-orange-500 dark:text-orange-400', label: 'Poor' };
+  if (score >= 40) return { color: 'text-red-400 dark:text-red-300', label: 'Critical' };
+  if (score >= 30) return { color: 'text-red-600 dark:text-red-500', label: 'Critical' };
+  return { color: 'text-blue-600 dark:text-blue-400', label: 'Critical' };
+};
+
+  
 
   // Generate realistic count data based on score percentages
   const getCountFromPercentage = (percentage: number, total: number = 100) => {
@@ -80,27 +82,42 @@ const ResultsDashboard = ({ results, onNext, onBack }: ResultsDashboardProps) =>
       </Card>
 
       {/* Category Overview Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        {Object.entries(results.category_scores).map(([key, score]: [string, any]) => (
-          <Card key={key} className={`border transform transition-all duration-300 hover:scale-105 hover:shadow-lg ${getStatusColor(score)}`}>
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between mb-2">
-                <h3 className="font-semibold text-sm">
-                  {categoryTitles[key]}
-                </h3>
-                {getStatusIcon(score)}
-              </div>
-              <div className="space-y-2">
-                <div className={`text-2xl font-bold ${getScoreTextColor(score)}`}>{score}%</div>
-                <div className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                  {getCountFromPercentage(score, 25)}/25 correct
-                </div>
-                <Progress value={score} variant="score" className="h-2" />
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
+{/* Category Overview Cards */}
+<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+  {Object.entries(results.category_scores).map(([key, score]: [string, any]) => {
+    const { color, label } = getScoreTextColor(score);
+
+    return (
+      <Card
+        key={key}
+        className={`relative border transform transition-all duration-300 hover:scale-105 hover:shadow-lg ${getStatusColor(score)}`}
+      >
+        {/* Top-right bubble */}
+        <span
+          className={`absolute top-14 right-2 px-2 py-0.5 text-xs rounded-full bg-white dark:bg-gray-800 shadow-sm ${color}`}
+        >
+          {label}
+        </span>
+
+        <CardContent className="p-4">
+          <div className="flex items-center justify-between mb-2">
+            <h3 className="font-semibold text-sm">{categoryTitles[key]}</h3>
+            {getStatusIcon(score)}
+          </div>
+          <div className="space-y-2">
+            <div className={`text-2xl font-bold ${color}`}>{score}%</div>
+            <div className="text-sm font-medium text-gray-700 dark:text-gray-300">
+              {getCountFromPercentage(score, 25)}/25 correct
+            </div>
+            <Progress value={score} variant="score" className="h-2" />
+          </div>
+        </CardContent>
+      </Card>
+    );
+  })}
+</div>
+
+
 
       {/* Detailed Results Tabs */}
       <Tabs defaultValue="content_evaluation" className="space-y-4">
@@ -112,27 +129,44 @@ const ResultsDashboard = ({ results, onNext, onBack }: ResultsDashboardProps) =>
         </TabsList>
 
         <TabsContent value="content_evaluation">
-          <Card className="transform transition-all duration-300 hover:shadow-lg bg-white dark:bg-gray-800">
-            <CardHeader>
-              <CardTitle className="text-gray-800 dark:text-gray-100">Content Evaluation Metrics</CardTitle>
-              <CardDescription className="text-gray-600 dark:text-gray-400">Correctness, Hallucination, Answer Relevancy, Contextual Relevancy</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {Object.entries(results.detailed_results.content_evaluation).map(([key, score]: [string, any]) => (
-                <div key={key} className="flex items-center justify-between p-4 border rounded-lg transition-all duration-200 hover:shadow-md hover:scale-102 bg-gray-50 dark:bg-gray-700 border-gray-200 dark:border-gray-600">
-                  <div>
-                    <h4 className="font-medium capitalize text-gray-800 dark:text-gray-100">{key.replace('_', ' ')}</h4>
-                    <p className={`text-sm font-semibold ${getScoreTextColor(score)}`}>Score: {score}%</p>
-                    <p className="text-xs text-gray-600 dark:text-gray-400">{getCountFromPercentage(score, 25)}/25 correct predictions</p>
-                  </div>
-                  <div className="w-32">
-                    <Progress value={score} variant="score" className="h-2" />
-                  </div>
-                </div>
-              ))}
-            </CardContent>
-          </Card>
-        </TabsContent>
+  <Card className="transform transition-all duration-300 hover:shadow-lg bg-white dark:bg-gray-800">
+    <CardHeader>
+      <CardTitle className="text-gray-800 dark:text-gray-100">Content Evaluation Metrics</CardTitle>
+      <CardDescription className="text-gray-600 dark:text-gray-400">
+        Correctness, Hallucination, Answer Relevancy, Contextual Relevancy
+      </CardDescription>
+    </CardHeader>
+    <CardContent className="space-y-4">
+      {Object.entries(results.detailed_results.content_evaluation).map(([key, score]: [string, any]) => {
+        const { color, label } = getScoreTextColor(score);
+
+        return (
+          <div
+            key={key}
+            className={`relative flex items-center justify-between p-4 border rounded-lg transition-all duration-200 hover:shadow-md hover:scale-102 bg-gray-50 dark:bg-gray-700 border-gray-200 dark:border-gray-600`}
+          >
+            {/* Top-right bubble */}
+            <span
+              className={`absolute top-14 right-2 px-2 py-0.5 text-xs rounded-full bg-white dark:bg-gray-800 shadow-sm ${color}`}
+            >
+              {label}
+            </span>
+
+            <div>
+              <h4 className="font-medium capitalize text-gray-800 dark:text-gray-100">{key.replace('_', ' ')}</h4>
+              <p className={`text-sm font-semibold ${color}`}>Score: {score}%</p>
+              <p className="text-xs text-gray-600 dark:text-gray-400">{getCountFromPercentage(score, 25)}/25 correct predictions</p>
+            </div>
+            <div className="w-32">
+              <Progress value={score} variant="score" className="h-2" />
+            </div>
+          </div>
+        );
+      })}
+    </CardContent>
+  </Card>
+</TabsContent>
+
 
         <TabsContent value="retrieval_generation">
           <Card className="transform transition-all duration-300 hover:shadow-lg bg-white dark:bg-gray-800">
@@ -147,6 +181,7 @@ const ResultsDashboard = ({ results, onNext, onBack }: ResultsDashboardProps) =>
                 <div className="space-y-2">
                   {Object.entries(results.detailed_results.retrieval_generation.summarization).map(([key, score]: [string, any]) => (
                     <div key={key} className="flex items-center justify-between">
+                      
                       <div>
                         <span className="text-sm capitalize text-gray-700 dark:text-gray-300">{key}</span>
                         <p className="text-xs text-gray-600 dark:text-gray-400">{getCountFromPercentage(score, 10)}/10 correct</p>
