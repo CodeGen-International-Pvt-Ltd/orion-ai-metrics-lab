@@ -113,10 +113,14 @@ const TestSuiteCreation = ({ testSuites, setTestSuites, onNext, onBack, setSelec
             </div>
           </div>
           
-          <Button onClick={addTestSuite} className="w-full md:w-auto">
-            <Plus className="w-4 h-4 mr-2" />
-            Add Test Suite
-          </Button>
+          <Button 
+  onClick={addTestSuite} 
+  className="w-full md:w-auto bg-blue-600 hover:bg-blue-700 text-white"
+>
+  <Plus className="w-4 h-4 mr-2" />
+  Add Test Suite
+</Button>
+
 
           {/* Existing Test Suites */}
           {testSuites.length > 0 && (
