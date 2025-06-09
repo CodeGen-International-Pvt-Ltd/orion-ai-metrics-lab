@@ -5,6 +5,23 @@
   text-align: center;
 }
 
+/* Override the small dot inside RadioGroupItem */
+.radio-blue-border {
+  border-width: 2px;
+  border-color: #2563eb; /* Tailwind's blue-600 */
+  background-color: white;
+  position: relative;
+}
+
+/* Remove hover color changes */
+.radio-blue-border:hover {
+  background-color: white !important;
+  border-color: #2563eb !important;
+}
+
+
+
+
 .logo {
   height: 6em;
   padding: 1.5em;
