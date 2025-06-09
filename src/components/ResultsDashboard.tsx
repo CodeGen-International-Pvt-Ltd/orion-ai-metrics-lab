@@ -52,13 +52,31 @@ const ResultsDashboard = ({ results, onNext, onBack }: ResultsDashboardProps) =>
   };
 
   // Calculate average past count for each category
-  const getAveragePastCount = (scores: any) => {
-    const totalCounts = Object.values(scores).reduce((sum: number, score: any) => {
-      const scoreValue = typeof score === 'number' ? score : 0;
-      return sum + getCountFromPercentage(scoreValue, 25);
-    }, 0);
-    return Math.round(totalCounts / Object.keys(scores).length);
+  const getAveragePastCount = (scores: Record<string, any>) => {
+    let subScores: number[] = [];
+  
+    for (const key in scores) {
+      const value = scores[key];
+  
+      if (typeof value === 'number') {
+        subScores.push(getCountFromPercentage(value, 25));
+      } else if (typeof value === 'object' && value !== null) {
+        for (const nestedKey in value) {
+          const nestedValue = value[nestedKey];
+          if (typeof nestedValue === 'number') {
+            subScores.push(getCountFromPercentage(nestedValue, 25));
+          }
+        }
+      }
+    }
+  
+    const total = subScores.reduce((sum, count) => sum + count, 0);
+    return subScores.length > 0 ? (total / subScores.length) : 0;
   };
+  
+  
+  
+  
 
   const categoryTitles = {
     content_evaluation: 'Content Evaluation',
@@ -116,8 +134,9 @@ const ResultsDashboard = ({ results, onNext, onBack }: ResultsDashboardProps) =>
           <div className="space-y-2">
             <div className={`text-2xl font-bold ${color}`}>{score}%</div>
             <div className="text-sm font-medium text-gray-700 dark:text-gray-300">
-              Average Past Count: {averagePastCount}
-            </div>
+  Average Past Count: {averagePastCount}/25
+</div>
+
             <Progress value={score} variant="score" className="h-2" />
           </div>
         </CardContent>

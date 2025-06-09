@@ -252,20 +252,7 @@ const MetricsConfiguration = ({ config, setConfig, testSuites, onNext, onBack }:
                 <div className="mt-3 space-y-2">
                   <div className="flex justify-between items-center">
                     <Label className="text-sm text-gray-600">Threshold: {currentConfig[category]?.[score.id]?.threshold ?? score.defaultThreshold}%</Label>
-                    <div className={`px-2 py-1 rounded text-xs font-medium ${
-                      getMetricColor(score.id, currentConfig[category]?.[score.id]?.threshold ?? score.defaultThreshold).includes('emerald') ? 'bg-emerald-100 text-emerald-800' :
-                      getMetricColor(score.id, currentConfig[category]?.[score.id]?.threshold ?? score.defaultThreshold).includes('green') ? 'bg-green-100 text-green-800' :
-                      getMetricColor(score.id, currentConfig[category]?.[score.id]?.threshold ?? score.defaultThreshold).includes('lime') ? 'bg-lime-100 text-lime-800' :
-                      getMetricColor(score.id, currentConfig[category]?.[score.id]?.threshold ?? score.defaultThreshold).includes('yellow') ? 'bg-yellow-100 text-yellow-800' :
-                      getMetricColor(score.id, currentConfig[category]?.[score.id]?.threshold ?? score.defaultThreshold).includes('orange') ? 'bg-orange-100 text-orange-800' :
-                      'bg-red-100 text-red-800'
-                    }`}>
-                      {getMetricColor(score.id, currentConfig[category]?.[score.id]?.threshold ?? score.defaultThreshold).includes('emerald') ? 'Excellent' :
-                       getMetricColor(score.id, currentConfig[category]?.[score.id]?.threshold ?? score.defaultThreshold).includes('green') ? 'Good' :
-                       getMetricColor(score.id, currentConfig[category]?.[score.id]?.threshold ?? score.defaultThreshold).includes('lime') ? 'Fair' :
-                       getMetricColor(score.id, currentConfig[category]?.[score.id]?.threshold ?? score.defaultThreshold).includes('yellow') ? 'Warning' :
-                       getMetricColor(score.id, currentConfig[category]?.[score.id]?.threshold ?? score.defaultThreshold).includes('orange') ? 'Poor' : 'Critical'}
-                    </div>
+                    
                   </div>
                   <Slider
                     value={[currentConfig[category]?.[score.id]?.threshold ?? score.defaultThreshold]}
@@ -289,20 +276,7 @@ const MetricsConfiguration = ({ config, setConfig, testSuites, onNext, onBack }:
                         <div className="mt-2 space-y-2">
                           <div className="flex justify-between items-center">
                             <Label className="text-xs text-gray-600">Threshold: {threshold}%</Label>
-                            <div className={`px-1.5 py-0.5 rounded text-xs font-medium ${
-                              getMetricColor(subScore.id, threshold).includes('emerald') ? 'bg-emerald-100 text-emerald-700' :
-                              getMetricColor(subScore.id, threshold).includes('green') ? 'bg-green-100 text-green-700' :
-                              getMetricColor(subScore.id, threshold).includes('lime') ? 'bg-lime-100 text-lime-700' :
-                              getMetricColor(subScore.id, threshold).includes('yellow') ? 'bg-yellow-100 text-yellow-700' :
-                              getMetricColor(subScore.id, threshold).includes('orange') ? 'bg-orange-100 text-orange-700' :
-                              'bg-red-100 text-red-700'
-                            }`}>
-                              {getMetricColor(subScore.id, threshold).includes('emerald') ? 'Excellent' :
-                               getMetricColor(subScore.id, threshold).includes('green') ? 'Good' :
-                               getMetricColor(subScore.id, threshold).includes('lime') ? 'Fair' :
-                               getMetricColor(subScore.id, threshold).includes('yellow') ? 'Warning' :
-                               getMetricColor(subScore.id, threshold).includes('orange') ? 'Poor' : 'Critical'}
-                            </div>
+                            
                           </div>
                           <Slider
                             value={[threshold]}
