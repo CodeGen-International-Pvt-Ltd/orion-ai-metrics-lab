@@ -13,7 +13,19 @@ import {
 } from "@/components/ui/sidebar"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
-import { FileText, BarChart3, LogOut, Brain } from "lucide-react"
+import { 
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+import { FileText, BarChart3, LogOut, Brain, Settings, Help, Monitor, Moon, Sun } from "lucide-react"
+import { useTheme } from "@/components/ThemeProvider"
 import EditUserProfile from "./EditUserProfile"
 
 interface AppSidebarProps {
@@ -33,6 +45,8 @@ const AppSidebar = ({
   onDashboard,
   onUpdateUser = () => {}
 }: AppSidebarProps) => {
+  const { setTheme, theme } = useTheme();
+
   const menuItems = [
     {
       title: "Dashboard",
@@ -86,33 +100,70 @@ const AppSidebar = ({
 
       <SidebarFooter>
         <div className="p-4 border-t border-gray-200 dark:border-gray-700">
-          <div className="flex items-center gap-3 mb-3">
-            <Avatar className="w-8 h-8">
-              <AvatarFallback className="bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-400">
-                {userData.name.charAt(0).toUpperCase()}
-              </AvatarFallback>
-            </Avatar>
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
-                {userData.name}
-              </p>
-              <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
-                {userData.email}
-              </p>
-            </div>
-          </div>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button className="flex items-center gap-3 mb-3 w-full text-left hover:bg-gray-50 dark:hover:bg-gray-800 p-2 rounded-lg transition-colors">
+                <Avatar className="w-8 h-8">
+                  <AvatarFallback className="bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-400">
+                    {userData.name.charAt(0).toUpperCase()}
+                  </AvatarFallback>
+                </Avatar>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
+                    {userData.name}
+                  </p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
+                    {userData.email}
+                  </p>
+                </div>
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-56">
+              <DropdownMenuLabel>My Account</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              
+              <DropdownMenuSub>
+                <DropdownMenuSubTrigger>
+                  <Monitor className="mr-2 h-4 w-4" />
+                  <span>Appearance</span>
+                </DropdownMenuSubTrigger>
+                <DropdownMenuSubContent>
+                  <DropdownMenuItem onClick={() => setTheme("light")}>
+                    <Sun className="mr-2 h-4 w-4" />
+                    <span>Light</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => setTheme("dark")}>
+                    <Moon className="mr-2 h-4 w-4" />
+                    <span>Dark</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => setTheme("system")}>
+                    <Monitor className="mr-2 h-4 w-4" />
+                    <span>System</span>
+                  </DropdownMenuItem>
+                </DropdownMenuSubContent>
+              </DropdownMenuSub>
+              
+              <DropdownMenuItem>
+                <Settings className="mr-2 h-4 w-4" />
+                <span>Settings</span>
+              </DropdownMenuItem>
+              
+              <DropdownMenuItem>
+                <Help className="mr-2 h-4 w-4" />
+                <span>Help</span>
+              </DropdownMenuItem>
+              
+              <DropdownMenuSeparator />
+              
+              <DropdownMenuItem onClick={onLogout}>
+                <LogOut className="mr-2 h-4 w-4" />
+                <span>Logout</span>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
           
           <div className="flex gap-2">
             <EditUserProfile userData={userData} onUpdateUser={onUpdateUser} />
-            <Button 
-              variant="outline" 
-              size="sm" 
-              onClick={onLogout}
-              className="flex-1 gap-2"
-            >
-              <LogOut className="w-4 h-4" />
-              Logout
-            </Button>
           </div>
         </div>
       </SidebarFooter>

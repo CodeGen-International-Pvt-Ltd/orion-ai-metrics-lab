@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { SidebarProvider } from "@/components/ui/sidebar";
+import { ThemeProvider } from "@/components/ThemeProvider";
 import { ArrowRight, Brain, BarChart3, FileText } from "lucide-react";
 import TestSuiteCreation from '@/components/TestSuiteCreation';
 import MetricsConfiguration from '@/components/MetricsConfiguration';
@@ -158,7 +159,11 @@ const Index = () => {
 
   // Show login page if user is not logged in
   if (!userData) {
-    return <LoginPage onLogin={handleLogin} />;
+    return (
+      <ThemeProvider defaultTheme="system" storageKey="ui-theme">
+        <LoginPage onLogin={handleLogin} />
+      </ThemeProvider>
+    );
   }
 
   const renderCurrentStep = () => {
@@ -207,72 +212,78 @@ const Index = () => {
   };
 
   if (currentStep === 0) {
-    return renderCurrentStep();
+    return (
+      <ThemeProvider defaultTheme="system" storageKey="ui-theme">
+        {renderCurrentStep()}
+      </ThemeProvider>
+    );
   }
 
   return (
-    <SidebarProvider>
-      <div className="min-h-screen flex w-full">
-        <AppSidebar 
-          userData={userData}
-          onRegisterTestSuite={handleRegisterTestSuite}
-          onDisplayTestSuites={handleDisplayTestSuites}
-          onLogout={handleLogout}
-          onDashboard={handleDashboard}
-          onUpdateUser={handleUpdateUser}
-        />
-        
-        <div className="flex-1 bg-gray-50 dark:bg-gray-900 transition-colors duration-300">
-          {/* Progress Header - only show for workflow */}
-          {currentView === 'workflow' && (
-            <div className="bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700">
-              <div className="max-w-6xl mx-auto px-6 py-4">
-                <div className="flex items-center justify-between mb-4">
-                  <h1 className="text-2xl font-bold text-gray-800 dark:text-gray-100">AI Evaluator Platform</h1>
-                  <div className="text-sm text-gray-600 dark:text-gray-400">
-                    Step {currentStep} of {steps.length - 1}
+    <ThemeProvider defaultTheme="system" storageKey="ui-theme">
+      <SidebarProvider>
+        <div className="min-h-screen flex w-full">
+          <AppSidebar 
+            userData={userData}
+            onRegisterTestSuite={handleRegisterTestSuite}
+            onDisplayTestSuites={handleDisplayTestSuites}
+            onLogout={handleLogout}
+            onDashboard={handleDashboard}
+            onUpdateUser={handleUpdateUser}
+          />
+          
+          <div className="flex-1 bg-gray-50 dark:bg-gray-900 transition-colors duration-300">
+            {/* Progress Header - only show for workflow */}
+            {currentView === 'workflow' && (
+              <div className="bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700">
+                <div className="max-w-6xl mx-auto px-6 py-4">
+                  <div className="flex items-center justify-between mb-4">
+                    <h1 className="text-2xl font-bold text-gray-800 dark:text-gray-100">AI Evaluator Platform</h1>
+                    <div className="text-sm text-gray-600 dark:text-gray-400">
+                      Step {currentStep} of {steps.length - 1}
+                    </div>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    {steps.slice(1).map((step, index) => {
+                      const StepIcon = getStepIcon(index + 1);
+                      return (
+                        <div key={step} className="flex items-center">
+                          <div 
+                            className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium cursor-pointer transition-colors ${
+                              index + 1 < currentStep ? 'bg-blue-600 dark:bg-blue-500 text-white hover:bg-blue-700 dark:hover:bg-blue-600' : 
+                              index + 1 === currentStep ? 'bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-400 border-2 border-blue-600 dark:border-blue-400' : 
+                              'bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-400'
+                            }`}
+                            onClick={() => handleStepIconClick(index + 1)}
+                          >
+                            {StepIcon && <StepIcon className="w-4 h-4" />}
+                          </div>
+                          <div className={`ml-2 text-sm font-medium ${
+                            index + 1 <= currentStep ? 'text-gray-800 dark:text-gray-100' : 'text-gray-400 dark:text-gray-500'
+                          }`}>
+                            {step}
+                          </div>
+                          {index < steps.length - 2 && (
+                            <div className={`w-8 h-0.5 mx-4 ${
+                              index + 1 < currentStep ? 'bg-blue-600 dark:bg-blue-500' : 'bg-gray-200 dark:bg-gray-700'
+                            }`} />
+                          )}
+                        </div>
+                      );
+                    })}
                   </div>
                 </div>
-                <div className="flex items-center space-x-2">
-                  {steps.slice(1).map((step, index) => {
-                    const StepIcon = getStepIcon(index + 1);
-                    return (
-                      <div key={step} className="flex items-center">
-                        <div 
-                          className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium cursor-pointer transition-colors ${
-                            index + 1 < currentStep ? 'bg-blue-600 dark:bg-blue-500 text-white hover:bg-blue-700 dark:hover:bg-blue-600' : 
-                            index + 1 === currentStep ? 'bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-400 border-2 border-blue-600 dark:border-blue-400' : 
-                            'bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-400'
-                          }`}
-                          onClick={() => handleStepIconClick(index + 1)}
-                        >
-                          {StepIcon && <StepIcon className="w-4 h-4" />}
-                        </div>
-                        <div className={`ml-2 text-sm font-medium ${
-                          index + 1 <= currentStep ? 'text-gray-800 dark:text-gray-100' : 'text-gray-400 dark:text-gray-500'
-                        }`}>
-                          {step}
-                        </div>
-                        {index < steps.length - 2 && (
-                          <div className={`w-8 h-0.5 mx-4 ${
-                            index + 1 < currentStep ? 'bg-blue-600 dark:bg-blue-500' : 'bg-gray-200 dark:bg-gray-700'
-                          }`} />
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
               </div>
-            </div>
-          )}
+            )}
 
-          {/* Main Content */}
-          <div className="max-w-6xl mx-auto px-6 py-8">
-            {renderCurrentStep()}
+            {/* Main Content */}
+            <div className="max-w-6xl mx-auto px-6 py-8">
+              {renderCurrentStep()}
+            </div>
           </div>
         </div>
-      </div>
-    </SidebarProvider>
+      </SidebarProvider>
+    </ThemeProvider>
   );
 };
 
