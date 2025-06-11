@@ -24,7 +24,7 @@ import {
   DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { FileText, BarChart3, LogOut, Brain, Settings, Help, Monitor, Moon, Sun } from "lucide-react"
+import { FileText, BarChart3, LogOut, Brain, Settings, HelpCircle, Monitor, Moon, Sun } from "lucide-react"
 import { useTheme } from "@/components/ThemeProvider"
 import EditUserProfile from "./EditUserProfile"
 
@@ -149,7 +149,7 @@ const AppSidebar = ({
               </DropdownMenuItem>
               
               <DropdownMenuItem>
-                <Help className="mr-2 h-4 w-4" />
+                <HelpCircle className="mr-2 h-4 w-4" />
                 <span>Help</span>
               </DropdownMenuItem>
               
