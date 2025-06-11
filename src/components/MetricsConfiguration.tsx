@@ -22,53 +22,6 @@ const MetricsConfiguration = ({ config, setConfig, testSuites, onNext, onBack }:
   const [isSaving, setIsSaving] = useState(false);
   const { toast } = useToast();
 
-  // Define metric color logic based on their nature
-  const getMetricColor = (metricId: string, value: number) => {
-    // For inverted metrics (lower is better)
-    const invertedMetrics = ['hallucination', 'biasness', 'repetitive_loops', 'spam_flooding', 'intentional_misdirection', 'prompt_overloading', 'prompt_tuning_attacks'];
-    
-    if (invertedMetrics.some(metric => metricId.toLowerCase().includes(metric))) {
-      // For hallucination and other negative metrics: lower is better
-      if (value <= 10) return "bg-emerald-600"; // Very low - excellent
-      if (value <= 20) return "bg-green-500"; // Low - good
-      if (value <= 30) return "bg-lime-500"; // Moderate - acceptable
-      if (value <= 40) return "bg-yellow-500"; // High - concerning
-      if (value <= 60) return "bg-orange-500"; // Very high - poor
-      if (value <= 80) return "bg-red-400"; // Extremely high - bad
-      return "bg-red-600"; // Critical levels
-    }
-    
-    // For correctness - high standards required
-    if (metricId.toLowerCase().includes('correctness')) {
-      if (value >= 90) return "bg-emerald-600"; // Excellent
-      if (value >= 80) return "bg-green-500"; // Good
-      if (value >= 70) return "bg-yellow-500"; // Acceptable but concerning
-      if (value >= 60) return "bg-orange-500"; // Poor
-      if (value >= 50) return "bg-red-400"; // Bad
-      return "bg-red-600"; // Very bad
-    }
-    
-    // For fluency, conciseness, relevance, consistency, factuality
-    if (['fluency', 'conciseness', 'relevance', 'consistency', 'factuality', 'answer_relevancy', 'contextual_relevancy'].some(metric => metricId.toLowerCase().includes(metric))) {
-      if (value >= 85) return "bg-emerald-600"; // Excellent
-      if (value >= 75) return "bg-green-500"; // Good
-      if (value >= 65) return "bg-lime-500"; // Acceptable
-      if (value >= 55) return "bg-yellow-500"; // Needs improvement
-      if (value >= 45) return "bg-orange-500"; // Poor
-      if (value >= 35) return "bg-red-400"; // Bad
-      return "bg-red-600"; // Very bad
-    }
-    
-    // Default color scheme for other metrics
-    if (value >= 85) return "bg-emerald-600";
-    if (value >= 75) return "bg-green-500";
-    if (value >= 65) return "bg-lime-500";
-    if (value >= 55) return "bg-yellow-500";
-    if (value >= 45) return "bg-orange-500";
-    if (value >= 35) return "bg-red-400";
-    return "bg-red-600";
-  };
-
   const contentEvaluation = [
     { id: 'correctness', name: 'Correctness', defaultThreshold: 90 },
     { id: 'hallucination', name: 'Hallucination', defaultThreshold: 5, inverted: true },
@@ -77,31 +30,12 @@ const MetricsConfiguration = ({ config, setConfig, testSuites, onNext, onBack }:
   ];
 
   const retrievalGeneration = [
-    { 
-      id: 'summarization', 
-      name: 'Summarization', 
-      defaultThreshold: 80,
-      subScores: [
-        { id: 'fluency', name: 'Fluency', defaultThreshold: 85 },
-        { id: 'conciseness', name: 'Conciseness', defaultThreshold: 80 },
-        { id: 'relevance', name: 'Relevance', defaultThreshold: 85 }
-      ]
-    },
-    { id: 'retrieving_same_content', name: 'Retrieving Same Content', defaultThreshold: 80 },
-    { id: 'retrieving_similar_content', name: 'Retrieving Similar Content', defaultThreshold: 75 }
+    { id: 'summarization', name: 'Summarization', defaultThreshold: 80 },
+    { id: 'retrieving_content', name: 'Retrieving Content', defaultThreshold: 75 }
   ];
 
   const functionalTesting = [
-    { 
-      id: 'leading_questions', 
-      name: 'Leading Questions', 
-      defaultThreshold: 85,
-      subScores: [
-        { id: 'biasness', name: 'Biasness', defaultThreshold: 10, inverted: true },
-        { id: 'consistency', name: 'Consistency', defaultThreshold: 85 },
-        { id: 'factuality', name: 'Factuality', defaultThreshold: 90 }
-      ]
-    },
+    { id: 'leading_questions', name: 'Leading Questions', defaultThreshold: 85 },
     { id: 'edge_cases', name: 'Edge Cases', defaultThreshold: 80 },
     { id: 'unnecessary_context', name: 'Unnecessary Context', defaultThreshold: 75 }
   ];
@@ -132,13 +66,6 @@ const MetricsConfiguration = ({ config, setConfig, testSuites, onNext, onBack }:
         defaultRetrievalGen[score.id] = {
           threshold: score.defaultThreshold
         };
-        if (score.subScores) {
-          score.subScores.forEach(subScore => {
-            defaultRetrievalGen[`${score.id}_${subScore.id}`] = {
-              threshold: subScore.defaultThreshold
-            };
-          });
-        }
       });
 
       const defaultFunctional = {};
@@ -146,13 +73,6 @@ const MetricsConfiguration = ({ config, setConfig, testSuites, onNext, onBack }:
         defaultFunctional[score.id] = {
           threshold: score.defaultThreshold
         };
-        if (score.subScores) {
-          score.subScores.forEach(subScore => {
-            defaultFunctional[`${score.id}_${subScore.id}`] = {
-              threshold: subScore.defaultThreshold
-            };
-          });
-        }
       });
 
       const defaultNonFunctional = {};
@@ -221,16 +141,16 @@ const MetricsConfiguration = ({ config, setConfig, testSuites, onNext, onBack }:
   if (testSuites.length === 0) {
     return (
       <div className="max-w-6xl mx-auto space-y-6">
-        <Card>
+        <Card className="bg-card dark:bg-card border-border dark:border-border">
           <CardHeader>
-            <CardTitle>No Test Suites Available</CardTitle>
-            <CardDescription>
+            <CardTitle className="text-foreground">No Test Suites Available</CardTitle>
+            <CardDescription className="text-muted-foreground">
               Please create at least one test suite before configuring metrics.
             </CardDescription>
           </CardHeader>
         </Card>
         <div className="flex justify-between">
-          <Button variant="outline" onClick={onBack}>
+          <Button variant="outline" onClick={onBack} className="border-border hover:bg-accent">
             Back to Test Suites
           </Button>
         </div>
@@ -245,14 +165,13 @@ const MetricsConfiguration = ({ config, setConfig, testSuites, onNext, onBack }:
       <h4 className={`text-lg font-semibold mb-4 ${color} text-left`}>{title}</h4>
       <div className="space-y-4">
         {scores.map((score) => (
-          <Card key={score.id} className={`p-4 transform transition-all duration-300 hover:shadow-lg hover:scale-102 border-l-4 ${color.includes('indigo') ? 'border-l-indigo-500' : color.includes('purple') ? 'border-l-purple-500' : color.includes('green') ? 'border-l-green-500' : 'border-l-orange-500'}`}>
+          <Card key={score.id} className={`p-4 transform transition-all duration-300 hover:shadow-lg hover:scale-102 border-l-4 bg-card dark:bg-card/80 backdrop-blur-sm border-border dark:border-border/60 ${color.includes('indigo') ? 'border-l-indigo-500 dark:border-l-indigo-400' : color.includes('purple') ? 'border-l-purple-500 dark:border-l-purple-400' : color.includes('green') ? 'border-l-green-500 dark:border-l-green-400' : 'border-l-orange-500 dark:border-l-orange-400'}`}>
             <div className="space-y-4">
               <div>
-                <Label className="text-base font-medium text-white-800 text-left block">{score.name}</Label>
+                <Label className="text-base font-medium text-foreground text-left block">{score.name}</Label>
                 <div className="mt-3 space-y-2">
                   <div className="flex justify-between items-center">
-                    <Label className="text-sm text-gray-600">Threshold: {currentConfig[category]?.[score.id]?.threshold ?? score.defaultThreshold}%</Label>
-                    
+                    <Label className="text-sm text-muted-foreground">Threshold: {currentConfig[category]?.[score.id]?.threshold ?? score.defaultThreshold}%</Label>
                   </div>
                   <Slider
                     value={[currentConfig[category]?.[score.id]?.threshold ?? score.defaultThreshold]}
@@ -264,34 +183,6 @@ const MetricsConfiguration = ({ config, setConfig, testSuites, onNext, onBack }:
                   />
                 </div>
               </div>
-              
-              {score.subScores && (
-                <div className="pl-4 border-l-2 border-gray-200 space-y-3 animate-fade-in">
-                  {score.subScores.map((subScore) => {
-                    const subScoreKey = `${score.id}_${subScore.id}`;
-                    const threshold = currentConfig[category]?.[subScoreKey]?.threshold ?? subScore.defaultThreshold;
-                    return (
-                      <div key={subScore.id} className="transform transition-all duration-200 hover:scale-102">
-                        <Label className="text-sm font-medium text-white-700 text-left block">{subScore.name}</Label>
-                        <div className="mt-2 space-y-2">
-                          <div className="flex justify-between items-center">
-                            <Label className="text-xs text-gray-600">Threshold: {threshold}%</Label>
-                            
-                          </div>
-                          <Slider
-                            value={[threshold]}
-                            onValueChange={([value]) => updateScoreConfig(category, subScoreKey, value)}
-                            min={0}
-                            max={100}
-                            step={1}
-                            className="w-full mt-1"
-                          />
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
             </div>
           </Card>
         ))}
@@ -301,22 +192,22 @@ const MetricsConfiguration = ({ config, setConfig, testSuites, onNext, onBack }:
 
   return (
     <div className="max-w-6xl mx-auto space-y-6">
-      <Card className="transform transition-all duration-300 hover:shadow-lg">
+      <Card className="transform transition-all duration-300 hover:shadow-lg bg-card dark:bg-card/90 backdrop-blur-lg border-border dark:border-border/60">
         <CardHeader>
           <div className="flex items-center justify-between">
             <div>
-              <CardTitle className="flex items-center gap-2">
-                <Settings className="w-5 h-5 text-blue-600" />
+              <CardTitle className="flex items-center gap-2 text-foreground">
+                <Settings className="w-5 h-5 text-primary" />
                 Metrics Configuration
               </CardTitle>
-              <CardDescription>
+              <CardDescription className="text-muted-foreground">
                 Configure scoring methods and thresholds for your test suites
               </CardDescription>
             </div>
             <Button 
               onClick={handleSaveConfiguration}
               disabled={isSaving || !selectedTestSuiteId}
-              className="bg-blue-600 hover:bg-blue-700 transform transition-all duration-200 hover:scale-105"
+              className="bg-primary hover:bg-primary/90 text-primary-foreground transform transition-all duration-200 hover:scale-105"
             >
               <Save className="w-4 h-4 mr-2" />
               {isSaving ? 'Saving...' : 'Save Configuration'}
@@ -326,7 +217,7 @@ const MetricsConfiguration = ({ config, setConfig, testSuites, onNext, onBack }:
         <CardContent className="space-y-6">
           {/* Test Suite Selection */}
           <div className="space-y-2">
-            <Label>Select Test Suite to Configure</Label>
+            <Label className="text-foreground">Select Test Suite to Configure</Label>
             <Select
               value={selectedTestSuiteId}
               onValueChange={(value) => {
@@ -334,42 +225,42 @@ const MetricsConfiguration = ({ config, setConfig, testSuites, onNext, onBack }:
                 initializeDefaults(value);
               }}
             >
-              <SelectTrigger className="transform transition-all duration-200 hover:scale-102">
+              <SelectTrigger className="transform transition-all duration-200 hover:scale-102 bg-background dark:bg-background/80 border-border">
                 <SelectValue placeholder="Select a test suite" />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className="bg-background dark:bg-background/95 backdrop-blur-lg border-border">
                 {testSuites.map((suite) => (
-                  <SelectItem key={suite.id} value={suite.id}>
+                  <SelectItem key={suite.id} value={suite.id} className="hover:bg-accent focus:bg-accent">
                     {suite.name} ({suite.type})
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
             {selectedTestSuite && (
-              <p className="text-sm text-gray-600 animate-fade-in">
-                Configuring: <span className="font-medium text-blue-600">{selectedTestSuite.name}</span>
+              <p className="text-sm text-muted-foreground animate-fade-in">
+                Configuring: <span className="font-medium text-primary">{selectedTestSuite.name}</span>
               </p>
             )}
           </div>
 
           <div className="space-y-6">
-            <h3 className="text-lg font-semibold text-white-800">Scoring Methods</h3>
-            <p className="text-sm text-gray-600">All scoring methods are automatically selected with default thresholds. You can adjust thresholds as needed.</p>
+            <h3 className="text-lg font-semibold text-foreground">Scoring Methods</h3>
+            <p className="text-sm text-muted-foreground">All scoring methods are automatically selected with default thresholds. You can adjust thresholds as needed.</p>
             
             <div className="grid lg:grid-cols-2 gap-6">
               {/* Content Evaluation */}
-              {renderScoreSection(contentEvaluation, 'contentEvaluation', 'Content Evaluation', 'text-indigo-700')}
+              {renderScoreSection(contentEvaluation, 'contentEvaluation', 'Content Evaluation', 'text-indigo-700 dark:text-indigo-300')}
               
               {/* Retrieval and Generation Evaluation */}
-              {renderScoreSection(retrievalGeneration, 'retrievalGeneration', 'Retrieval and Generation Evaluation', 'text-purple-700')}
+              {renderScoreSection(retrievalGeneration, 'retrievalGeneration', 'Retrieval and Generation Evaluation', 'text-purple-700 dark:text-purple-300')}
             </div>
             
             <div className="grid lg:grid-cols-2 gap-6">
               {/* Functional Testing */}
-              {renderScoreSection(functionalTesting, 'functionalTesting', 'Functional Testing', 'text-green-700')}
+              {renderScoreSection(functionalTesting, 'functionalTesting', 'Functional Testing', 'text-green-700 dark:text-green-300')}
               
               {/* Non-Functional Testing */}
-              {renderScoreSection(nonFunctionalTesting, 'nonFunctionalTesting', 'Non-Functional Testing', 'text-orange-700')}
+              {renderScoreSection(nonFunctionalTesting, 'nonFunctionalTesting', 'Non-Functional Testing', 'text-orange-700 dark:text-orange-300')}
             </div>
           </div>
         </CardContent>
@@ -377,10 +268,10 @@ const MetricsConfiguration = ({ config, setConfig, testSuites, onNext, onBack }:
 
       {/* Navigation */}
       <div className="flex justify-between">
-        <Button variant="outline" onClick={onBack} className="transform transition-all duration-200 hover:scale-105">
+        <Button variant="outline" onClick={onBack} className="transform transition-all duration-200 hover:scale-105 border-border hover:bg-accent">
           Back
         </Button>
-        <Button onClick={onNext} className="bg-blue-600 hover:bg-blue-700 transform transition-all duration-200 hover:scale-105">
+        <Button onClick={onNext} className="bg-primary hover:bg-primary/90 text-primary-foreground transform transition-all duration-200 hover:scale-105">
           Continue to Model Selection <ArrowRight className="ml-2 w-4 h-4" />
         </Button>
       </div>

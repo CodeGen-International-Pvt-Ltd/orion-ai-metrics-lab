@@ -1,28 +1,26 @@
-
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { FileText, ArrowLeft, AlertCircle, CheckCircle, Clock } from "lucide-react";
+import EditTestSuite from "./EditTestSuite";
 
 interface TestSuite {
-  test_suite_id: number;
-  user_id: number;
-  suite_name: string;
-  suite_type: 'excel' | 'custom'; // use lowercase to match actual API data
-  created_at: string;
-  confidential_status: boolean;
+  id: string;
+  name: string;
+  type: 'Excel' | 'Custom';
+  confidentialityStatus: boolean;
 }
-
 
 interface DisplayTestSuitesProps {
   testSuites: TestSuite[];
   testSuiteResults: Record<string, any>;
-  onSelectTestSuite: (suiteId: number) => void;
+  onSelectTestSuite: (suiteId: string) => void;
+  onUpdateTestSuite: (testSuite: TestSuite) => void;
   onBack: () => void;
 }
 
-const DisplayTestSuites = ({ testSuites, testSuiteResults, onSelectTestSuite, onBack }: DisplayTestSuitesProps) => {
-  const getTestSuiteStatus = (suiteId: number) => {
+const DisplayTestSuites = ({ testSuites, testSuiteResults, onSelectTestSuite, onUpdateTestSuite, onBack }: DisplayTestSuitesProps) => {
+  const getTestSuiteStatus = (suiteId: string) => {
     const results = testSuiteResults[suiteId];
     if (!results || !results.testRuns || results.testRuns.length === 0) {
       return { status: 'not-run', icon: AlertCircle, color: 'bg-gray-100 text-gray-700', label: 'Not Run' };
@@ -41,8 +39,8 @@ const DisplayTestSuites = ({ testSuites, testSuiteResults, onSelectTestSuite, on
     }
   };
 
-  const formatLastRun = (suiteId: number) => {
-    const results = testSuiteResults[suiteId.toString()];
+  const formatLastRun = (suiteId: string) => {
+    const results = testSuiteResults[suiteId];
     if (!results || !results.testRuns || results.testRuns.length === 0) return 'Never';
     
     const latestRun = results.testRuns[results.testRuns.length - 1];
@@ -50,8 +48,8 @@ const DisplayTestSuites = ({ testSuites, testSuiteResults, onSelectTestSuite, on
     return date.toLocaleDateString() + ' ' + date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   };
 
-  const getLatestResults = (suiteId: number) => {
-    const results = testSuiteResults[suiteId.toString()];
+  const getLatestResults = (suiteId: string) => {
+    const results = testSuiteResults[suiteId];
     if (!results || !results.testRuns || results.testRuns.length === 0) return null;
     return results.testRuns[results.testRuns.length - 1];
   };
@@ -83,26 +81,22 @@ const DisplayTestSuites = ({ testSuites, testSuiteResults, onSelectTestSuite, on
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {testSuites.map((suite) => {
-            const status = getTestSuiteStatus(suite.test_suite_id);
-            const latestResults = getLatestResults(suite.test_suite_id);
+            const status = getTestSuiteStatus(suite.id);
+            const latestResults = getLatestResults(suite.id);
             const StatusIcon = status.icon;
             
             return (
-              <Card 
-                key={suite.test_suite_id} 
-                className="hover:shadow-lg transition-shadow cursor-pointer group"
-                onClick={() => onSelectTestSuite(suite.test_suite_id)}
-              >
+              <Card key={suite.id} className="hover:shadow-lg transition-shadow group">
                 <CardHeader>
                   <div className="flex items-center justify-between">
                     <FileText className="w-8 h-8 text-blue-600" />
                     <div className="flex gap-2">
                       <Badge variant="outline" className={
-                        suite.suite_type === 'excel' 
+                        suite.type === 'Excel' 
                           ? 'bg-green-100 text-green-700 border-green-200' 
                           : 'bg-purple-100 text-purple-700 border-purple-200'
                       }>
-                        {suite.suite_type}
+                        {suite.type}
                       </Badge>
                       <Badge variant="outline" className={status.color}>
                         <StatusIcon className="w-3 h-3 mr-1" />
@@ -110,16 +104,21 @@ const DisplayTestSuites = ({ testSuites, testSuiteResults, onSelectTestSuite, on
                       </Badge>
                     </div>
                   </div>
-                  <CardTitle className="text-lg">{suite.suite_name}</CardTitle>
-                  <CardDescription>
-                    Input Format: {suite.suite_type}
-                  </CardDescription>
+                  <div className="flex items-center justify-between">
+                    <div className="flex-1">
+                      <CardTitle className="text-lg">{suite.name}</CardTitle>
+                      <CardDescription>
+                        Input Format: {suite.type}
+                      </CardDescription>
+                    </div>
+                    <EditTestSuite testSuite={suite} onUpdateTestSuite={onUpdateTestSuite} />
+                  </div>
                 </CardHeader>
                 <CardContent>
-                  <div className="space-y-4">
+                  <div className="space-y-4" onClick={() => onSelectTestSuite(suite.id)}>
                     {/* Test Results Summary */}
                     {latestResults ? (
-                      <div className="space-y-2">
+                      <div className="space-y-2 cursor-pointer">
                         <div className="flex justify-between items-center">
                           <span className="text-sm font-medium text-gray-600">Latest Score</span>
                           <span className="text-lg font-bold text-blue-600">{latestResults.overall_score}%</span>
@@ -127,7 +126,7 @@ const DisplayTestSuites = ({ testSuites, testSuiteResults, onSelectTestSuite, on
                         <div className="grid grid-cols-2 gap-2 text-xs">
                           <div className="flex justify-between">
                             <span className="text-gray-500">Total Runs:</span>
-                            <span className="text-blue-600 font-medium">{testSuiteResults[suite.test_suite_id]?.testRuns?.length || 0}</span>
+                            <span className="text-blue-600 font-medium">{testSuiteResults[suite.id]?.testRuns?.length || 0}</span>
                           </div>
                           <div className="flex justify-between">
                             <span className="text-gray-500">Passed:</span>
@@ -137,12 +136,12 @@ const DisplayTestSuites = ({ testSuites, testSuiteResults, onSelectTestSuite, on
                         <div className="pt-2 border-t">
                           <div className="flex items-center text-xs text-gray-500">
                             <Clock className="w-3 h-3 mr-1" />
-                            Last run: {formatLastRun(suite.test_suite_id)}
+                            Last run: {formatLastRun(suite.id)}
                           </div>
                         </div>
                       </div>
                     ) : (
-                      <div className="text-center py-4">
+                      <div className="text-center py-4 cursor-pointer">
                         <AlertCircle className="w-8 h-8 mx-auto text-gray-400 mb-2" />
                         <p className="text-sm text-gray-500">No test runs yet</p>
                         <p className="text-xs text-gray-400">Click to view test suite</p>
