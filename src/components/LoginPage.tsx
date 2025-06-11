@@ -19,6 +19,7 @@ const LoginPage = ({ onLogin }: LoginPageProps) => {
     username: '',
     email: ''
   });
+  
 
   const validateForm = () => {
     const newErrors = { username: '', email: '' };
@@ -68,6 +69,8 @@ const LoginPage = ({ onLogin }: LoginPageProps) => {
       console.error("Login error:", err);
     }
   };
+
+  
   
 
   return (

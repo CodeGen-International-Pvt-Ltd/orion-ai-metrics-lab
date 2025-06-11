@@ -7,12 +7,13 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { User, Mail, Edit2 } from "lucide-react";
 
 interface EditUserProfileProps {
-  userData: { name: string; email: string };
+  userData: { id: number; name: string; email: string };
   onUpdateUser: (userData: { name: string; email: string }) => void;
 }
 
 const EditUserProfile = ({ userData, onUpdateUser }: EditUserProfileProps) => {
   const [formData, setFormData] = useState({
+    id: userData.id,
     username: userData.name,
     email: userData.email
   });
@@ -43,16 +44,39 @@ const EditUserProfile = ({ userData, onUpdateUser }: EditUserProfileProps) => {
     return isValid;
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (validateForm()) {
-      onUpdateUser({ name: formData.username, email: formData.email });
+    if (!validateForm()) return;
+  
+    try {
+      const response = await fetch(`http://127.0.0.1:8000/user/${formData.id}/`, {
+        method: 'PUT', // or 'PUT' if your backend expects full update
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          name: formData.username,
+          email: formData.email
+        })
+      });
+  
+      if (!response.ok) {
+        throw new Error(`Failed to update user. Status: ${response.status}`);
+      }
+  
+      const updatedUser = await response.json();
+      onUpdateUser({ name: updatedUser.name, email: updatedUser.email });
       setIsOpen(false);
+    } catch (error) {
+      console.error("Error updating user:", error);
+      // Optionally show a user-friendly error message here
     }
   };
+  
 
   const handleCancel = () => {
     setFormData({
+      id: userData.id,
       username: userData.name,
       email: userData.email
     });

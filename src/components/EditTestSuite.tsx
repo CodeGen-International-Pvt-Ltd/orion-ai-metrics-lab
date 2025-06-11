@@ -7,9 +7,11 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Edit2 } from "lucide-react";
 
 interface TestSuite {
-  id: string;
+  id: number;
+  user_id: number;
   name: string;
-  type: 'Excel' | 'Custom';
+  type: 'excel' | 'custom';
+  created_at: string;
   confidentialityStatus: boolean;
 }
 
@@ -23,26 +25,57 @@ const EditTestSuite = ({ testSuite, onUpdateTestSuite }: EditTestSuiteProps) => 
   const [error, setError] = useState('');
   const [isOpen, setIsOpen] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+  
     if (!suiteName.trim()) {
       setError('Test suite name is required');
       return;
     }
-
-    onUpdateTestSuite({
-      ...testSuite,
-      name: suiteName.trim()
-    });
-    setIsOpen(false);
-    setError('');
+  
+    try {
+      const res = await fetch(`http://127.0.0.1:8000/test_suite/${testSuite.id}/`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          suite_name: suiteName.trim(),
+          user: testSuite.user_id,
+          confidential_status: testSuite.confidentialityStatus,
+        }),
+      });
+  
+      if (!res.ok) {
+        const error = await res.text();
+        console.error("Failed to update:", error);
+        return;
+      }
+  
+      const data = await res.json();
+      console.log("Test suite updated:", data);
+      onUpdateTestSuite({
+        ...testSuite,
+        name: suiteName.trim(),
+      });
+      setIsOpen(false);
+      setError('');
+    } catch (err) {
+      console.error("Update error:", err);
+    }
   };
+  
+
+    
 
   const handleCancel = () => {
     setSuiteName(testSuite.name);
     setError('');
     setIsOpen(false);
   };
+
+  
+  
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>

@@ -8,13 +8,16 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Plus, Trash2, FileText, ArrowRight } from "lucide-react";
 
 interface TestSuite {
-  id: string;
+  id: number;
+  user_id: number;
   name: string;
-  type: 'Excel' | 'Custom';
+  type: 'excel' | 'custom';
+  created_at: string;
   confidentialityStatus: boolean;
 }
 
 interface TestSuiteCreationProps {
+  userId: number;
   testSuites: TestSuite[];
   setTestSuites: (suites: TestSuite[]) => void;
   onNext: () => void;
@@ -22,10 +25,11 @@ interface TestSuiteCreationProps {
   setSelectedTestSuiteId: (id: string) => void;
 }
 
-const TestSuiteCreation = ({ testSuites, setTestSuites, onNext, onBack, setSelectedTestSuiteId }: TestSuiteCreationProps) => {
+const TestSuiteCreation = ({ userId, testSuites, setTestSuites, onNext, onBack, setSelectedTestSuiteId }: TestSuiteCreationProps) => {
+
   const [newSuite, setNewSuite] = useState({ 
     name: '', 
-    type: 'Excel' as 'Excel' | 'Custom',
+    type: 'excel' as 'excel' | 'custom',
     confidentialityStatus: false
   });
   const [errors, setErrors] = useState({ name: '' });
@@ -43,7 +47,7 @@ const TestSuiteCreation = ({ testSuites, setTestSuites, onNext, onBack, setSelec
     };
   
     try {
-      const response = await fetch("http://127.0.0.1:8000/user/1/test-suite/", {
+      const response = await fetch(`http://127.0.0.1:8000/user/${userId}/test-suite/`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -58,24 +62,30 @@ const TestSuiteCreation = ({ testSuites, setTestSuites, onNext, onBack, setSelec
       const data = await response.json();
   
       const testSuite: TestSuite = {
-        id: data.id || Date.now().toString(), // Use backend ID if available
+        id: data.id || Date.now(),
         name: newSuite.name,
-        type: newSuite.type,
+        type: newSuite.type.toLowerCase() as 'excel' | 'custom',
         confidentialityStatus: newSuite.confidentialityStatus,
+        user_id: userId,
+        created_at: data.created_at || new Date().toISOString(),
       };
   
       setTestSuites([...testSuites, testSuite]);
-      setSelectedTestSuiteId(testSuite.id);
-      setNewSuite({ name: '', type: 'Excel', confidentialityStatus: false });
+      setSelectedTestSuiteId(testSuite.id.toString());
+      setNewSuite({ name: '', type: 'excel', confidentialityStatus: false });
       setErrors({ name: '' });
+  
     } catch (error) {
       console.error("Error creating test suite:", error);
       alert("Failed to create test suite. Please try again.");
     }
   };
   
+  
 
-  const removeTestSuite = (id: string) => {
+    
+
+  const removeTestSuite = (id: number) => {
     setTestSuites(testSuites.filter(suite => suite.id !== id));
   };
 
@@ -111,14 +121,14 @@ const TestSuiteCreation = ({ testSuites, setTestSuites, onNext, onBack, setSelec
               <Label>Input Format</Label>
               <Select
                 value={newSuite.type}
-                onValueChange={(value: 'Excel' | 'Custom') => setNewSuite({ ...newSuite, type: value })}
+                onValueChange={(value: 'excel' | 'custom') => setNewSuite({ ...newSuite, type: value })}
               >
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="Excel">Excel</SelectItem>
-                  <SelectItem value="Custom">Custom</SelectItem>
+                  <SelectItem value="excel">Excel</SelectItem>
+                  <SelectItem value="custom">Custom</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -156,7 +166,7 @@ const TestSuiteCreation = ({ testSuites, setTestSuites, onNext, onBack, setSelec
                 {testSuites.map((suite) => (
                   <div key={suite.id} className="flex items-center justify-between p-4 border rounded-lg bg-gray-50">
                     <div>
-                      <h4 className="font-medium text-black dark:text-black">{suite.name}</h4>
+                      <h4 className="font-medium">{suite.name}</h4>
                       <p className="text-sm text-gray-600">
                         Format: {suite.type} | Confidential: {suite.confidentialityStatus ? 'True' : 'False'}
                       </p>

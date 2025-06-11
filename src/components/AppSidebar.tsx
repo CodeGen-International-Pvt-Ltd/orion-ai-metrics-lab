@@ -17,12 +17,12 @@ import { FileText, BarChart3, LogOut, Brain } from "lucide-react"
 import EditUserProfile from "./EditUserProfile"
 
 interface AppSidebarProps {
-  userData: { name: string; email: string };
+  userData: { id: number, name: string; email: string };
   onRegisterTestSuite: () => void;
   onDisplayTestSuites: () => void;
   onLogout: () => void;
   onDashboard: () => void;
-  onUpdateUser?: (userData: { name: string; email: string }) => void;
+  onUpdateUser?: (userData: { id: number; name: string; email: string }) => void;
 }
 
 const AppSidebar = ({ 
@@ -49,7 +49,26 @@ const AppSidebar = ({
       icon: FileText,
       onClick: onDisplayTestSuites,
     },
-  ];
+  ]; 
+  const handleLogout = async () => {
+    try {
+      const res = await fetch(`http://127.0.0.1:8000/user/${userData.id}/`, {
+        method: "DELETE",
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
+  
+      if (!res.ok) {
+        throw new Error("Failed to delete user");
+      }
+  
+      onLogout(); // clear state, navigate, etc.
+    } catch (error) {
+      console.error("Logout error:", error);
+    }
+  };
+  
 
   return (
     <Sidebar>
@@ -107,10 +126,10 @@ const AppSidebar = ({
             <Button 
               variant="outline" 
               size="sm" 
-              onClick={onLogout}
+              onClick={handleLogout}
               className="flex-1 gap-2"
             >
-              <LogOut className="w-4 h-4" />
+              
               Logout
             </Button>
           </div>

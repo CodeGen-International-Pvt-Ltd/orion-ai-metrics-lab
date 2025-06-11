@@ -5,22 +5,24 @@ import { FileText, ArrowLeft, AlertCircle, CheckCircle, Clock } from "lucide-rea
 import EditTestSuite from "./EditTestSuite";
 
 interface TestSuite {
-  id: string;
+  id: number;
+  user_id: number;
   name: string;
-  type: 'Excel' | 'Custom';
+  type: 'excel' | 'custom';
+  created_at: string;
   confidentialityStatus: boolean;
 }
 
 interface DisplayTestSuitesProps {
   testSuites: TestSuite[];
   testSuiteResults: Record<string, any>;
-  onSelectTestSuite: (suiteId: string) => void;
+  onSelectTestSuite: (suiteId: number) => void;
   onUpdateTestSuite: (testSuite: TestSuite) => void;
   onBack: () => void;
 }
 
 const DisplayTestSuites = ({ testSuites, testSuiteResults, onSelectTestSuite, onUpdateTestSuite, onBack }: DisplayTestSuitesProps) => {
-  const getTestSuiteStatus = (suiteId: string) => {
+  const getTestSuiteStatus = (suiteId: number) => {
     const results = testSuiteResults[suiteId];
     if (!results || !results.testRuns || results.testRuns.length === 0) {
       return { status: 'not-run', icon: AlertCircle, color: 'bg-gray-100 text-gray-700', label: 'Not Run' };
@@ -39,7 +41,7 @@ const DisplayTestSuites = ({ testSuites, testSuiteResults, onSelectTestSuite, on
     }
   };
 
-  const formatLastRun = (suiteId: string) => {
+  const formatLastRun = (suiteId: number) => {
     const results = testSuiteResults[suiteId];
     if (!results || !results.testRuns || results.testRuns.length === 0) return 'Never';
     
@@ -48,7 +50,7 @@ const DisplayTestSuites = ({ testSuites, testSuiteResults, onSelectTestSuite, on
     return date.toLocaleDateString() + ' ' + date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   };
 
-  const getLatestResults = (suiteId: string) => {
+  const getLatestResults = (suiteId: number) => {
     const results = testSuiteResults[suiteId];
     if (!results || !results.testRuns || results.testRuns.length === 0) return null;
     return results.testRuns[results.testRuns.length - 1];
@@ -92,7 +94,7 @@ const DisplayTestSuites = ({ testSuites, testSuiteResults, onSelectTestSuite, on
                     <FileText className="w-8 h-8 text-blue-600" />
                     <div className="flex gap-2">
                       <Badge variant="outline" className={
-                        suite.type === 'Excel' 
+                        suite.type === 'excel' 
                           ? 'bg-green-100 text-green-700 border-green-200' 
                           : 'bg-purple-100 text-purple-700 border-purple-200'
                       }>
