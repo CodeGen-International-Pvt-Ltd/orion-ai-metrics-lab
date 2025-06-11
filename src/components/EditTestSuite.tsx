@@ -1,0 +1,90 @@
+
+import { useState } from 'react';
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Edit2 } from "lucide-react";
+
+interface TestSuite {
+  id: string;
+  name: string;
+  type: 'Excel' | 'Custom';
+  confidentialityStatus: boolean;
+}
+
+interface EditTestSuiteProps {
+  testSuite: TestSuite;
+  onUpdateTestSuite: (testSuite: TestSuite) => void;
+}
+
+const EditTestSuite = ({ testSuite, onUpdateTestSuite }: EditTestSuiteProps) => {
+  const [suiteName, setSuiteName] = useState(testSuite.name);
+  const [error, setError] = useState('');
+  const [isOpen, setIsOpen] = useState(false);
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!suiteName.trim()) {
+      setError('Test suite name is required');
+      return;
+    }
+
+    onUpdateTestSuite({
+      ...testSuite,
+      name: suiteName.trim()
+    });
+    setIsOpen(false);
+    setError('');
+  };
+
+  const handleCancel = () => {
+    setSuiteName(testSuite.name);
+    setError('');
+    setIsOpen(false);
+  };
+
+  return (
+    <Dialog open={isOpen} onOpenChange={setIsOpen}>
+      <DialogTrigger asChild>
+        <Button variant="outline" size="sm" className="gap-2">
+          <Edit2 className="w-3 h-3" />
+          Edit
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="sm:max-w-[425px]">
+        <DialogHeader>
+          <DialogTitle>Edit Test Suite</DialogTitle>
+          <DialogDescription>
+            Update the name of your test suite.
+          </DialogDescription>
+        </DialogHeader>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="edit-suite-name">Test Suite Name</Label>
+            <Input
+              id="edit-suite-name"
+              type="text"
+              placeholder="Enter test suite name"
+              value={suiteName}
+              onChange={(e) => setSuiteName(e.target.value)}
+              className={error ? 'border-red-500' : ''}
+            />
+            {error && <p className="text-sm text-red-500">{error}</p>}
+          </div>
+
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={handleCancel}>
+              Cancel
+            </Button>
+            <Button type="submit">
+              Save Changes
+            </Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
+  );
+};
+
+export default EditTestSuite;

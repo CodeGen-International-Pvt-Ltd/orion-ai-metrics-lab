@@ -42,6 +42,15 @@ const Index = () => {
     setCurrentStep(1); // Skip the welcome step
   };
   
+  const handleUpdateUser = (updatedUserData: { name: string; email: string }) => {
+    setUserData(updatedUserData);
+  };
+
+  const handleUpdateTestSuite = (updatedTestSuite: any) => {
+    setTestSuites(prev => prev.map(suite => 
+      suite.id === updatedTestSuite.id ? updatedTestSuite : suite
+    ));
+  };
 
   const handleLogout = () => {
     setUserData(null);
@@ -159,6 +168,7 @@ const Index = () => {
           testSuites={testSuites}
           testSuiteResults={testSuiteResults}
           onSelectTestSuite={handleSelectTestSuite}
+          onUpdateTestSuite={handleUpdateTestSuite}
           onBack={handleBackToWorkflow}
         />
       );
@@ -209,6 +219,7 @@ const Index = () => {
           onDisplayTestSuites={handleDisplayTestSuites}
           onLogout={handleLogout}
           onDashboard={handleDashboard}
+          onUpdateUser={handleUpdateUser}
         />
         
         <div className="flex-1 bg-gray-50 dark:bg-gray-900 transition-colors duration-300">
