@@ -51,7 +51,7 @@ const ResultsDashboard = ({ results, onNext, onBack }: ResultsDashboardProps) =>
     return Math.round((percentage / 100) * total);
   };
 
-  // Calculate average past count for each category
+  // Calculate average pass count for each category
   const getAveragePastCount = (scores: Record<string, any>) => {
     let subScores: number[] = [];
   
@@ -94,7 +94,7 @@ const ResultsDashboard = ({ results, onNext, onBack }: ResultsDashboardProps) =>
         <CardHeader className="text-center">
           <CardTitle className="flex items-center justify-center gap-2 text-2xl text-gray-800 dark:text-gray-100">
             <BarChart3 className="w-8 h-8 text-blue-600 dark:text-blue-400" />
-            Overall Evaluation Score
+            Overall Evaluation Pass Count Percentage
           </CardTitle>
           <div className={`text-4xl font-bold mt-2 ${getScoreTextColor(results.overall_score).color}`}>
             {results.overall_score}%
@@ -134,7 +134,7 @@ const ResultsDashboard = ({ results, onNext, onBack }: ResultsDashboardProps) =>
           <div className="space-y-2">
             <div className={`text-2xl font-bold ${color}`}>{score}%</div>
             <div className="text-sm font-medium text-gray-700 dark:text-gray-300">
-  Average Past Count: {averagePastCount}
+  Average Pass Count: {averagePastCount}
 </div>
 
             <Progress value={score} variant="score" className="h-2" />
@@ -181,7 +181,7 @@ const ResultsDashboard = ({ results, onNext, onBack }: ResultsDashboardProps) =>
             <div>
               <h4 className="font-medium capitalize text-gray-800 dark:text-gray-100">{key.replace('_', ' ')}</h4>
               <p className={`text-sm font-semibold ${color}`}>Score: {score}%</p>
-              <p className="text-xs text-gray-600 dark:text-gray-400">Past Count: {getCountFromPercentage(score, 25)}</p>
+              <p className="text-xs text-gray-600 dark:text-gray-400">Pass Count: {getCountFromPercentage(score, 25)}</p>
             </div>
             <div className="w-32">
               <Progress value={score} variant="score" className="h-2" />
@@ -217,7 +217,7 @@ const ResultsDashboard = ({ results, onNext, onBack }: ResultsDashboardProps) =>
                         
                         <div>
                           <span className="text-sm capitalize text-gray-700 dark:text-gray-300">{key}</span>
-                          <p className="text-xs text-gray-600 dark:text-gray-400">Past Count: {getCountFromPercentage(score, 10)}</p>
+                          <p className="text-xs text-gray-600 dark:text-gray-400">Pass Count: {getCountFromPercentage(score, 10)}</p>
                         </div>
                         <div className="flex items-center gap-2">
                           <span className={`text-sm font-medium ${color}`}>{score}%</span>
@@ -243,10 +243,10 @@ const ResultsDashboard = ({ results, onNext, onBack }: ResultsDashboardProps) =>
                 <div>
                   <h4 className="font-medium text-gray-800 dark:text-gray-100">Retrieving Same Content</h4>
                   <p className={`text-sm font-semibold ${getScoreTextColor(results.detailed_results.retrieval_generation.retrieving_same_content).color}`}>
-                    Score: {results.detailed_results.retrieval_generation.retrieving_same_content}%
+                    Pass Count Percentage: {results.detailed_results.retrieval_generation.retrieving_same_content}%
                   </p>
                   <p className="text-xs text-gray-600 dark:text-gray-400">
-                    Past Count: {getCountFromPercentage(results.detailed_results.retrieval_generation.retrieving_same_content, 15)}
+                    Pass Count: {getCountFromPercentage(results.detailed_results.retrieval_generation.retrieving_same_content, 15)}
                   </p>
                 </div>
                 <div className="w-32">
@@ -265,10 +265,10 @@ const ResultsDashboard = ({ results, onNext, onBack }: ResultsDashboardProps) =>
                 <div>
                   <h4 className="font-medium text-gray-800 dark:text-gray-100">Retrieving Similar Content</h4>
                   <p className={`text-sm font-semibold ${getScoreTextColor(results.detailed_results.retrieval_generation.retrieving_similar_content).color}`}>
-                    Score: {results.detailed_results.retrieval_generation.retrieving_similar_content}%
+                  Pass Count Percentage: {results.detailed_results.retrieval_generation.retrieving_similar_content}%
                   </p>
                   <p className="text-xs text-gray-600 dark:text-gray-400">
-                    Past Count: {getCountFromPercentage(results.detailed_results.retrieval_generation.retrieving_similar_content, 15)}
+                    Pass Count: {getCountFromPercentage(results.detailed_results.retrieval_generation.retrieving_similar_content, 15)}
                   </p>
                 </div>
                 <div className="w-32">
@@ -303,7 +303,7 @@ const ResultsDashboard = ({ results, onNext, onBack }: ResultsDashboardProps) =>
                         
                         <div>
                           <span className="text-sm capitalize text-gray-700 dark:text-gray-300">{key}</span>
-                          <p className="text-xs text-gray-600 dark:text-gray-400">Past Count: {getCountFromPercentage(score, 8)}</p>
+                          <p className="text-xs text-gray-600 dark:text-gray-400">Pass Count: {getCountFromPercentage(score, 8)}</p>
                         </div>
                         <div className="flex items-center gap-2">
                           <span className={`text-sm font-medium ${color}`}>{score}%</span>
@@ -334,7 +334,7 @@ const ResultsDashboard = ({ results, onNext, onBack }: ResultsDashboardProps) =>
                         
                         <div>
                           <span className="text-sm capitalize text-gray-700 dark:text-gray-300">{key.replace('_', ' ')}</span>
-                          <p className="text-xs text-gray-600 dark:text-gray-400">Past Count: {getCountFromPercentage(score, 5)}</p>
+                          <p className="text-xs text-gray-600 dark:text-gray-400">Pass Count: {getCountFromPercentage(score, 5)}</p>
                         </div>
                         <div className="flex items-center gap-2">
                           <span className={`text-sm font-medium ${color}`}>{score}%</span>
@@ -365,7 +365,7 @@ const ResultsDashboard = ({ results, onNext, onBack }: ResultsDashboardProps) =>
                         
                         <div>
                           <span className="text-sm capitalize text-gray-700 dark:text-gray-300">{key.replace('_', ' ')}</span>
-                          <p className="text-xs text-gray-600 dark:text-gray-400">Past Count: {getCountFromPercentage(score, 7)}</p>
+                          <p className="text-xs text-gray-600 dark:text-gray-400">Pass Count: {getCountFromPercentage(score, 7)}</p>
                         </div>
                         <div className="flex items-center gap-2">
                           <span className={`text-sm font-medium ${color}`}>{score}%</span>
@@ -402,8 +402,8 @@ const ResultsDashboard = ({ results, onNext, onBack }: ResultsDashboardProps) =>
                     
                     <div>
                       <h4 className="font-medium capitalize text-gray-800 dark:text-gray-100">{key.replace('_', ' ')}</h4>
-                      <p className={`text-sm font-semibold ${color}`}>Score: {score}%</p>
-                      <p className="text-xs text-gray-600 dark:text-gray-400">Past Count: {getCountFromPercentage(score, 25)}</p>
+                      <p className={`text-sm font-semibold ${color}`}>Pass Count Percentage: {score}%</p>
+                      <p className="text-xs text-gray-600 dark:text-gray-400">Pass Count: {getCountFromPercentage(score, 25)}</p>
                     </div>
                     <div className="w-32">
                       <Progress value={score} variant="score" className="h-2" />
