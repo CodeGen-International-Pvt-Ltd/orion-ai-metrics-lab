@@ -24,7 +24,7 @@ import { FileText, LayoutGrid, Brain, User, Moon, Sun, LogOut, Settings, HelpCir
 import { useTheme } from "@/components/ThemeProvider";
 
 interface AppSidebarProps {
-  userData: { name: string; email: string };
+  userData: { id: number; name: string; email: string };
   onRegisterTestSuite: () => void;
   onDisplayTestSuites: () => void;
   onLogout: () => void;
@@ -36,7 +36,25 @@ const AppSidebar = ({ userData, onRegisterTestSuite, onDisplayTestSuites, onLogo
 
   const toggleTheme = () => {
     setTheme(theme === "light" ? "dark" : "light");
-  };
+  }; 
+  const handleLogout = async () => {
+  try {
+    const res = await fetch(`http://127.0.0.1:8000/user/${userData.id}/`, {
+      method: "DELETE",
+    });
+
+    if (!res.ok) {
+      throw new Error("Failed to delete user");
+    }
+
+    onLogout(); // Clear user state or redirect
+  } catch (error) {
+    console.error("Logout error:", error);
+  }
+};
+
+
+  
 
   const menuItems = [
     {
@@ -49,7 +67,9 @@ const AppSidebar = ({ userData, onRegisterTestSuite, onDisplayTestSuites, onLogo
       icon: LayoutGrid,
       onClick: onDisplayTestSuites,
     },
-  ];
+  ]; 
+
+  
 
   return (
     <Sidebar>
@@ -132,7 +152,7 @@ const AppSidebar = ({ userData, onRegisterTestSuite, onDisplayTestSuites, onLogo
                 <span className="truncate">Help</span>
               </DropdownMenuItem>
               <DropdownMenuSeparator className="bg-gray-200 dark:bg-gray-700" />
-              <DropdownMenuItem onClick={onLogout} className="text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 cursor-pointer transition-colors duration-200">
+              <DropdownMenuItem onClick={handleLogout} className="text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 cursor-pointer transition-colors duration-200">
                 <LogOut className="w-4 h-4 mr-2" />
                 <span className="truncate">Logout</span>
               </DropdownMenuItem>

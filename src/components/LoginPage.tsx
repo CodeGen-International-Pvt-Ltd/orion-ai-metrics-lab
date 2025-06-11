@@ -7,7 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Brain, Mail, User } from "lucide-react";
 
 interface LoginPageProps {
-  onLogin: (userData: { name: string; email: string }) => void;
+  onLogin: (userData: { id:number; name: string; email: string }) => void;
 }
 
 const LoginPage = ({ onLogin }: LoginPageProps) => {
@@ -41,12 +41,34 @@ const LoginPage = ({ onLogin }: LoginPageProps) => {
     return isValid;
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (validateForm()) {
-      onLogin({ name: formData.username, email: formData.email });
+    if (!validateForm()) return;
+  
+    try {
+      const response = await fetch("http://localhost:8000/user/", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          name: formData.username,
+          email: formData.email
+        })
+      });
+  
+      if (!response.ok) {
+        throw new Error("Failed to log in");
+      }
+  
+      const data = await response.json();
+      console.log("Login successful:", data);
+      onLogin(data); // optional
+    } catch (err) {
+      console.error("Login error:", err);
     }
   };
+  
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-slate-900 dark:to-slate-800 flex items-center justify-center p-4 transition-colors duration-300">

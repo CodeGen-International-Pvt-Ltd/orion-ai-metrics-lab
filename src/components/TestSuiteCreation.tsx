@@ -30,24 +30,50 @@ const TestSuiteCreation = ({ testSuites, setTestSuites, onNext, onBack, setSelec
   });
   const [errors, setErrors] = useState({ name: '' });
 
-  const addTestSuite = () => {
+  const addTestSuite = async () => {
     if (!newSuite.name.trim()) {
       setErrors({ name: 'Test suite name is required' });
       return;
     }
-
-    const testSuite: TestSuite = {
-      id: Date.now().toString(),
-      name: newSuite.name,
-      type: newSuite.type,
-      confidentialityStatus: newSuite.confidentialityStatus
+  
+    const payload = {
+      suite_name: newSuite.name,
+      suite_type: newSuite.type.toLowerCase(), // 'excel' or 'custom'
+      confidential_status: newSuite.confidentialityStatus,
     };
-
-    setTestSuites([...testSuites, testSuite]);
-    setSelectedTestSuiteId(testSuite.id); // Set the newly created test suite as selected
-    setNewSuite({ name: '', type: 'Excel', confidentialityStatus: false });
-    setErrors({ name: '' });
+  
+    try {
+      const response = await fetch("http://127.0.0.1:8000/user/1/test-suite/", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payload),
+      });
+  
+      if (!response.ok) {
+        throw new Error("Failed to create test suite");
+      }
+  
+      const data = await response.json();
+  
+      const testSuite: TestSuite = {
+        id: data.id || Date.now().toString(), // Use backend ID if available
+        name: newSuite.name,
+        type: newSuite.type,
+        confidentialityStatus: newSuite.confidentialityStatus,
+      };
+  
+      setTestSuites([...testSuites, testSuite]);
+      setSelectedTestSuiteId(testSuite.id);
+      setNewSuite({ name: '', type: 'Excel', confidentialityStatus: false });
+      setErrors({ name: '' });
+    } catch (error) {
+      console.error("Error creating test suite:", error);
+      alert("Failed to create test suite. Please try again.");
+    }
   };
+  
 
   const removeTestSuite = (id: string) => {
     setTestSuites(testSuites.filter(suite => suite.id !== id));
