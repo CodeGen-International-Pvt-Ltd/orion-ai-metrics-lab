@@ -50,7 +50,7 @@ const EditUserProfile = ({ userData, onUpdateUser }: EditUserProfileProps) => {
   
     try {
       const response = await fetch(`http://127.0.0.1:8000/user/${formData.id}/`, {
-        method: 'PUT', // or 'PUT' if your backend expects full update
+        method: 'PUT', 
         headers: {
           'Content-Type': 'application/json'
         },

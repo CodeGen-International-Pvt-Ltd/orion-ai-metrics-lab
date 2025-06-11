@@ -29,12 +29,12 @@ import { useTheme } from "@/components/ThemeProvider"
 import EditUserProfile from "./EditUserProfile"
 
 interface AppSidebarProps {
-  userData: { name: string; email: string };
+  userData: { id: number; name: string; email: string };
   onRegisterTestSuite: () => void;
   onDisplayTestSuites: () => void;
   onLogout: () => void;
   onDashboard: () => void;
-  onUpdateUser?: (userData: { name: string; email: string }) => void;
+  onUpdateUser?: (userData: { id: number; name: string; email: string }) => void;
 }
 
 const AppSidebar = ({ 
@@ -46,6 +46,26 @@ const AppSidebar = ({
   onUpdateUser = () => {}
 }: AppSidebarProps) => {
   const { setTheme, theme } = useTheme();
+
+  const handleLogout = async () => {
+    try {
+      const res = await fetch(`http://127.0.0.1:8000/user/${userData.id}/`, {
+        method: "DELETE",
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
+  
+      if (!res.ok) {
+        throw new Error("Failed to delete user");
+      }
+  
+      onLogout(); // clear state, navigate, etc.
+    } catch (error) {
+      console.error("Logout error:", error);
+    }
+  };
+
 
   const menuItems = [
     {
@@ -155,8 +175,7 @@ const AppSidebar = ({
               
               <DropdownMenuSeparator />
               
-              <DropdownMenuItem onClick={onLogout}>
-                <LogOut className="mr-2 h-4 w-4" />
+              <DropdownMenuItem onClick={handleLogout}>
                 <span>Logout</span>
               </DropdownMenuItem>
             </DropdownMenuContent>
