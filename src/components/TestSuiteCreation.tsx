@@ -130,7 +130,7 @@ const TestSuiteCreation = ({ testSuites, setTestSuites, onNext, onBack, setSelec
                 {testSuites.map((suite) => (
                   <div key={suite.id} className="flex items-center justify-between p-4 border rounded-lg bg-gray-50">
                     <div>
-                      <h4 className="font-medium">{suite.name}</h4>
+                      <h4 className="font-medium text-black dark:text-black">{suite.name}</h4>
                       <p className="text-sm text-gray-600">
                         Format: {suite.type} | Confidential: {suite.confidentialityStatus ? 'True' : 'False'}
                       </p>

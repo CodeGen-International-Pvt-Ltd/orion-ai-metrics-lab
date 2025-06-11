@@ -104,11 +104,11 @@ const ModelSelection = ({ selectedModel, setSelectedModel, onNext, onBack, testS
             {models.map((model) => (
               <div key={model.id} className="relative">
                 <div className={`flex items-center space-x-4 p-6 border rounded-lg transition-all ${
-                  model.disabled 
-                    ? 'opacity-50 cursor-not-allowed bg-gray-100 border-gray-300' 
-                    : `cursor-pointer hover:bg-gray-50 ${
-                        selectedModel === model.id ? 'border-blue-500 bg-blue-50' : 'border-gray-200'
-                      }`
+                  model.disabled
+                  ? 'opacity-50 cursor-not-allowed bg-gray-100 border-gray-300'
+                  : `cursor-pointer border ${
+                      selectedModel === model.id ? 'border-blue-500 ' : 'border-gray-200'
+                    } hover:bg-gray-50/10`
                 }`}>
                   <RadioGroupItem
   value={model.id}
@@ -159,9 +159,10 @@ const ModelSelection = ({ selectedModel, setSelectedModel, onNext, onBack, testS
           {selectedModel === 'Custom' && (
             <div className="mt-6 p-4 border rounded-lg bg-gray-50">
               <div className="space-y-3">
-                <Label htmlFor="customEndpoint" className="text-sm font-medium">
-                  Custom LLM Endpoint URL *
-                </Label>
+              <Label htmlFor="customEndpoint" className="text-sm font-medium text-black dark:text-black-100">
+  Custom LLM Endpoint URL *
+</Label>
+
                 <Input
                   id="customEndpoint"
                   placeholder="https://your-custom-llm-endpoint.com/api/v1"

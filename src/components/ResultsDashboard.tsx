@@ -90,7 +90,7 @@ const ResultsDashboard = ({ results, onNext, onBack }: ResultsDashboardProps) =>
   return (
     <div className="max-w-6xl mx-auto space-y-6">
       {/* Overall Score Card */}
-      <Card className="border-2 border-blue-200 dark:border-blue-800 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 transform transition-transform hover:scale-105">
+      <Card className="border-2 border-blue-200 dark:border-blue-800 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 transform transition-transform">
         <CardHeader className="text-center">
           <CardTitle className="flex items-center justify-center gap-2 text-2xl text-gray-800 dark:text-gray-100">
             <BarChart3 className="w-8 h-8 text-blue-600 dark:text-blue-400" />

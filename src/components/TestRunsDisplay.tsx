@@ -46,7 +46,10 @@ const TestRunsDisplay = ({ testSuiteName, testRuns, onSelectTestRun, onBack }: T
     <div className="max-w-6xl mx-auto space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Test Runs for "{testSuiteName}"</h1>
+        <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
+  Test Runs for "{testSuiteName}"
+</h1>
+
           <p className="text-gray-600 mt-2">View all test runs and their results for this test suite</p>
         </div>
         <Button variant="outline" onClick={onBack}>
@@ -85,7 +88,7 @@ const TestRunsDisplay = ({ testSuiteName, testRuns, onSelectTestRun, onBack }: T
                       <div className="flex items-center space-x-3">
                         <Play className="w-8 h-8 text-blue-600" />
                         <div>
-                          <h3 className="text-lg font-semibold text-gray-900">
+                          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
                             Test Run #{testRuns.length - index}
                             {isLatest && (
                               <Badge className="ml-2 bg-blue-100 text-blue-700 border-blue-200">

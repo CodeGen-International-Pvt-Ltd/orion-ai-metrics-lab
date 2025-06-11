@@ -248,7 +248,7 @@ const MetricsConfiguration = ({ config, setConfig, testSuites, onNext, onBack }:
           <Card key={score.id} className={`p-4 transform transition-all duration-300 hover:shadow-lg hover:scale-102 border-l-4 ${color.includes('indigo') ? 'border-l-indigo-500' : color.includes('purple') ? 'border-l-purple-500' : color.includes('green') ? 'border-l-green-500' : 'border-l-orange-500'}`}>
             <div className="space-y-4">
               <div>
-                <Label className="text-base font-medium text-gray-800 text-left block">{score.name}</Label>
+                <Label className="text-base font-medium text-white-800 text-left block">{score.name}</Label>
                 <div className="mt-3 space-y-2">
                   <div className="flex justify-between items-center">
                     <Label className="text-sm text-gray-600">Threshold: {currentConfig[category]?.[score.id]?.threshold ?? score.defaultThreshold}%</Label>
@@ -272,7 +272,7 @@ const MetricsConfiguration = ({ config, setConfig, testSuites, onNext, onBack }:
                     const threshold = currentConfig[category]?.[subScoreKey]?.threshold ?? subScore.defaultThreshold;
                     return (
                       <div key={subScore.id} className="transform transition-all duration-200 hover:scale-102">
-                        <Label className="text-sm font-medium text-gray-700 text-left block">{subScore.name}</Label>
+                        <Label className="text-sm font-medium text-white-700 text-left block">{subScore.name}</Label>
                         <div className="mt-2 space-y-2">
                           <div className="flex justify-between items-center">
                             <Label className="text-xs text-gray-600">Threshold: {threshold}%</Label>
@@ -353,7 +353,7 @@ const MetricsConfiguration = ({ config, setConfig, testSuites, onNext, onBack }:
           </div>
 
           <div className="space-y-6">
-            <h3 className="text-lg font-semibold text-gray-800">Scoring Methods</h3>
+            <h3 className="text-lg font-semibold text-white-800">Scoring Methods</h3>
             <p className="text-sm text-gray-600">All scoring methods are automatically selected with default thresholds. You can adjust thresholds as needed.</p>
             
             <div className="grid lg:grid-cols-2 gap-6">

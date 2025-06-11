@@ -107,27 +107,28 @@ const ReportGeneration = ({ results, onBack }: ReportGenerationProps) => {
               </div>
 
               {/* Report Preview */}
-              <div className="p-4 bg-gray-50 border rounded-lg">
-                <h4 className="font-semibold mb-3">Report Preview</h4>
-                <div className="space-y-2 text-sm">
-                  <div className="flex justify-between">
-                    <span>Overall Score:</span>
-                    <span className="font-medium">{results?.overall_score}%</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>Test Date:</span>
-                    <span>{new Date().toLocaleDateString()}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>Total Tests:</span>
-                    <span>{results?.detailed_results?.total_tests}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>Format:</span>
-                    <span>{reportFormat}</span>
-                  </div>
-                </div>
-              </div>
+              <div className="bg-white text-black rounded-lg p-4 border border-gray-300 dark:border-gray-600 dark:bg-gray-800/30 dark:text-black">
+              <h4 className="font-semibold mb-3 dark:text-white">Report Preview</h4>
+  <div className="space-y-2 text-sm dark:text-white">
+    <div className="flex justify-between dark:text-white">
+      <span>Overall Score:</span>
+      <span className="font-medium dark:text-white">{results?.overall_score}%</span>
+    </div>
+    <div className="flex justify-between">
+      <span>Test Date:</span>
+      <span>{new Date().toLocaleDateString()}</span>
+    </div>
+    <div className="flex justify-between">
+      <span>Total Tests:</span>
+      <span>{results?.detailed_results?.total_tests}</span>
+    </div>
+    <div className="flex justify-between">
+      <span>Format:</span>
+      <span>{reportFormat}</span>
+    </div>
+  </div>
+</div>
+
 
               {/* Generate Button */}
               <Button
