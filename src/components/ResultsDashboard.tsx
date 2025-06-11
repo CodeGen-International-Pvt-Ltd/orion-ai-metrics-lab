@@ -2,7 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { BarChart3, TrendingUp, AlertTriangle, CheckCircle, ArrowRight } from "lucide-react";
+import { BarChart3, TrendingUp, CheckCircle, ArrowRight } from "lucide-react";
 
 interface ResultsDashboardProps {
   results: any;
@@ -16,11 +16,8 @@ const ResultsDashboard = ({ results, onNext, onBack }: ResultsDashboardProps) =>
   const getStatusIcon = (score: number, threshold: number = 85) => {
     if (score >= threshold) {
       return <CheckCircle className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />;
-    } else if (score >= threshold * 0.8) {
-      return <AlertTriangle className="w-5 h-5 text-yellow-600 dark:text-yellow-400" />;
-    } else {
-      return <AlertTriangle className="w-5 h-5 text-red-600 dark:text-red-400" />;
     }
+    return null; // Remove exclamation mark icons
   };
 
   const getStatusColor = (score: number, threshold: number = 85) => {
@@ -49,14 +46,14 @@ const ResultsDashboard = ({ results, onNext, onBack }: ResultsDashboardProps) =>
     return Math.round((percentage / 100) * total);
   };
 
-  // Calculate total pass count for grouped metrics
-  const getTotalPassCountForGroup = (groupData: any) => {
+  // Calculate total pass count for grouped metrics by summing individual pass counts
+  const getTotalPassCountForGroup = (groupData: any, baseTotal: number = 25) => {
     if (typeof groupData === 'object' && groupData !== null) {
       let total = 0;
       for (const key in groupData) {
         const value = groupData[key];
         if (typeof value === 'number') {
-          total += getCountFromPercentage(value, 25);
+          total += getCountFromPercentage(value, baseTotal);
         }
       }
       return total;
@@ -65,7 +62,7 @@ const ResultsDashboard = ({ results, onNext, onBack }: ResultsDashboardProps) =>
   };
 
   // Calculate average pass count for categories with different structures
-  const getAveragePastCount = (categoryData: any, categoryKey: string) => {
+  const getAveragePassCount = (categoryData: any, categoryKey: string) => {
     let totalCount = 0;
     let itemCount = 0;
 
@@ -81,7 +78,7 @@ const ResultsDashboard = ({ results, onNext, onBack }: ResultsDashboardProps) =>
     } else if (categoryKey === 'retrieval_generation') {
       // Has summarization (with sub-scores) and retrieving_content
       if (categoryData.summarization && typeof categoryData.summarization === 'object') {
-        totalCount += getTotalPassCountForGroup(categoryData.summarization);
+        totalCount += getTotalPassCountForGroup(categoryData.summarization, 10);
         itemCount++;
       }
       if (typeof categoryData.retrieving_same_content === 'number') {
@@ -95,15 +92,15 @@ const ResultsDashboard = ({ results, onNext, onBack }: ResultsDashboardProps) =>
     } else if (categoryKey === 'functional_testing') {
       // Has leading_questions (with sub-scores), edge_cases, and unnecessary_context
       if (categoryData.leading_questions && typeof categoryData.leading_questions === 'object') {
-        totalCount += getTotalPassCountForGroup(categoryData.leading_questions);
+        totalCount += getTotalPassCountForGroup(categoryData.leading_questions, 8);
         itemCount++;
       }
       if (categoryData.edge_cases && typeof categoryData.edge_cases === 'object') {
-        totalCount += getTotalPassCountForGroup(categoryData.edge_cases);
+        totalCount += getTotalPassCountForGroup(categoryData.edge_cases, 5);
         itemCount++;
       }
       if (categoryData.unnecessary_context && typeof categoryData.unnecessary_context === 'object') {
-        totalCount += getTotalPassCountForGroup(categoryData.unnecessary_context);
+        totalCount += getTotalPassCountForGroup(categoryData.unnecessary_context, 7);
         itemCount++;
       }
     }
@@ -145,29 +142,29 @@ const ResultsDashboard = ({ results, onNext, onBack }: ResultsDashboardProps) =>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         {Object.entries(results.category_scores).map(([key, score]: [string, any]) => {
           const { color, label } = getScoreTextColor(score);
-          const averagePastCount = getAveragePastCount(results.detailed_results[key], key);
+          const averagePassCount = getAveragePassCount(results.detailed_results[key], key);
 
           return (
             <Card
               key={key}
               className={`relative border transform transition-all duration-300 hover:scale-105 hover:shadow-lg bg-card/90 dark:bg-card/70 backdrop-blur-sm ${getStatusColor(score)}`}
             >
-              {/* Top-right bubble */}
+              {/* Top-right bubble - moved away from icon area */}
               <span
-                className={`absolute top-3 right-3 px-2 py-0.5 text-xs rounded-full bg-background/90 dark:bg-background/80 shadow-sm backdrop-blur-sm ${color}`}
+                className={`absolute top-2 right-2 px-2 py-1 text-xs rounded-full bg-background/90 dark:bg-background/80 shadow-sm backdrop-blur-sm ${color} z-10`}
               >
                 {label}
               </span>
 
-              <CardContent className="p-4">
+              <CardContent className="p-4 pt-6">
                 <div className="flex items-center justify-between mb-2">
-                  <h3 className="font-semibold text-sm text-foreground">{categoryTitles[key]}</h3>
+                  <h3 className="font-semibold text-sm text-foreground pr-16">{categoryTitles[key]}</h3>
                   {getStatusIcon(score)}
                 </div>
                 <div className="space-y-2">
                   <div className={`text-2xl font-bold ${color}`}>{score}%</div>
                   <div className="text-sm font-medium text-muted-foreground">
-                    Average Past Count: {averagePastCount}
+                    Average Pass Count: {averagePassCount}
                   </div>
                   <Progress value={score} variant="score" className="h-2" />
                 </div>
@@ -203,20 +200,17 @@ const ResultsDashboard = ({ results, onNext, onBack }: ResultsDashboardProps) =>
                     key={key}
                     className={`relative flex items-center justify-between p-4 border rounded-lg transition-all duration-200 hover:shadow-md hover:scale-102 bg-background/50 dark:bg-background/30 backdrop-blur-sm border-border/60`}
                   >
-                    {/* Top-right bubble */}
-                    <span
-                      className={`absolute top-3 right-3 px-2 py-0.5 text-xs rounded-full bg-background/90 dark:bg-background/80 shadow-sm backdrop-blur-sm ${color}`}
-                    >
-                      {label}
-                    </span>
-
-                    <div>
+                    {/* Grade label positioned above progress bar */}
+                    <div className="flex-1">
                       <h4 className="font-medium capitalize text-foreground">{key.replace('_', ' ')}</h4>
                       <p className={`text-sm font-semibold ${color}`}>Score: {score}%</p>
-                      <p className="text-xs text-muted-foreground">Past Count: {getCountFromPercentage(score, 25)}</p>
+                      <p className="text-xs text-muted-foreground">Pass Count: {getCountFromPercentage(score, 25)}</p>
                     </div>
-                    <div className="w-32">
-                      <Progress value={score} variant="score" className="h-2" />
+                    <div className="flex flex-col items-end gap-1 w-32">
+                      <span className={`text-xs px-2 py-0.5 rounded-full bg-background/90 dark:bg-background/80 shadow-sm ${color}`}>
+                        {label}
+                      </span>
+                      <Progress value={score} variant="score" className="h-2 w-full" />
                     </div>
                   </div>
                 );
@@ -237,29 +231,27 @@ const ResultsDashboard = ({ results, onNext, onBack }: ResultsDashboardProps) =>
                 <div className="flex items-center justify-between mb-3">
                   <h4 className="font-semibold text-foreground">Summarization</h4>
                   <div className="text-sm font-medium text-muted-foreground">
-                    Total Past Count: {getTotalPassCountForGroup(results.detailed_results.retrieval_generation.summarization)}
+                    Total Pass Count: {getTotalPassCountForGroup(results.detailed_results.retrieval_generation.summarization, 10)}
                   </div>
                 </div>
-                <div className="space-y-2">
+                <div className="space-y-3">
                   {Object.entries(results.detailed_results.retrieval_generation.summarization).map(([key, score]: [string, any]) => {
                     const { color, label } = getScoreTextColor(score);
                     return (
-                      <div key={key} className="relative flex items-center justify-between">
-                        {/* Label bubble */}
-                        <span
-                          className={`absolute top-2 right-2 px-2 py-0.5 text-xs rounded-full bg-background/90 dark:bg-background/80 shadow-sm backdrop-blur-sm ${color}`}
-                        >
-                          {label}
-                        </span>
-                        
-                        <div>
+                      <div key={key} className="flex items-center justify-between">
+                        <div className="flex-1">
                           <span className="text-sm capitalize text-foreground">{key}</span>
-                          <p className="text-xs text-muted-foreground">Past Count: {getCountFromPercentage(score, 10)}</p>
+                          <p className="text-xs text-muted-foreground">Pass Count: {getCountFromPercentage(score, 10)}</p>
                         </div>
-                        <div className="flex items-center gap-2">
-                          <span className={`text-sm font-medium ${color}`}>{score}%</span>
-                          <div className="w-20">
-                            <Progress value={score} variant="score" className="h-1" />
+                        <div className="flex flex-col items-end gap-1 w-24">
+                          <span className={`text-xs px-2 py-0.5 rounded-full bg-background/90 dark:bg-background/80 shadow-sm ${color}`}>
+                            {label}
+                          </span>
+                          <div className="flex items-center gap-2">
+                            <span className={`text-sm font-medium ${color}`}>{score}%</span>
+                            <div className="w-16">
+                              <Progress value={score} variant="score" className="h-1" />
+                            </div>
                           </div>
                         </div>
                       </div>
@@ -270,46 +262,38 @@ const ResultsDashboard = ({ results, onNext, onBack }: ResultsDashboardProps) =>
               
               {/* Other retrieval metrics */}
               <div className="relative flex items-center justify-between p-4 border rounded-lg transition-all duration-200 hover:shadow-md hover:scale-102 bg-background/50 dark:bg-background/30 backdrop-blur-sm border-border/60">
-                {/* Label bubble */}
-                <span
-                  className={`absolute top-3 right-3 px-2 py-0.5 text-xs rounded-full bg-background/90 dark:bg-background/80 shadow-sm backdrop-blur-sm ${getScoreTextColor(results.detailed_results.retrieval_generation.retrieving_same_content).color}`}
-                >
-                  {getScoreTextColor(results.detailed_results.retrieval_generation.retrieving_same_content).label}
-                </span>
-                
-                <div>
+                <div className="flex-1">
                   <h4 className="font-medium text-foreground">Retrieving Same Content</h4>
                   <p className={`text-sm font-semibold ${getScoreTextColor(results.detailed_results.retrieval_generation.retrieving_same_content).color}`}>
                     Pass Count Percentage: {results.detailed_results.retrieval_generation.retrieving_same_content}%
                   </p>
                   <p className="text-xs text-muted-foreground">
-                    Past Count: {getCountFromPercentage(results.detailed_results.retrieval_generation.retrieving_same_content, 15)}
+                    Pass Count: {getCountFromPercentage(results.detailed_results.retrieval_generation.retrieving_same_content, 15)}
                   </p>
                 </div>
-                <div className="w-32">
-                  <Progress value={results.detailed_results.retrieval_generation.retrieving_same_content} variant="score" className="h-2" />
+                <div className="flex flex-col items-end gap-1 w-32">
+                  <span className={`text-xs px-2 py-0.5 rounded-full bg-background/90 dark:bg-background/80 shadow-sm ${getScoreTextColor(results.detailed_results.retrieval_generation.retrieving_same_content).color}`}>
+                    {getScoreTextColor(results.detailed_results.retrieval_generation.retrieving_same_content).label}
+                  </span>
+                  <Progress value={results.detailed_results.retrieval_generation.retrieving_same_content} variant="score" className="h-2 w-full" />
                 </div>
               </div>
               
               <div className="relative flex items-center justify-between p-4 border rounded-lg transition-all duration-200 hover:shadow-md hover:scale-102 bg-background/50 dark:bg-background/30 backdrop-blur-sm border-border/60">
-                {/* Label bubble */}
-                <span
-                  className={`absolute top-3 right-3 px-2 py-0.5 text-xs rounded-full bg-background/90 dark:bg-background/80 shadow-sm backdrop-blur-sm ${getScoreTextColor(results.detailed_results.retrieval_generation.retrieving_similar_content).color}`}
-                >
-                  {getScoreTextColor(results.detailed_results.retrieval_generation.retrieving_similar_content).label}
-                </span>
-                
-                <div>
+                <div className="flex-1">
                   <h4 className="font-medium text-foreground">Retrieving Similar Content</h4>
                   <p className={`text-sm font-semibold ${getScoreTextColor(results.detailed_results.retrieval_generation.retrieving_similar_content).color}`}>
-                  Pass Count Percentage: {results.detailed_results.retrieval_generation.retrieving_similar_content}%
+                    Pass Count Percentage: {results.detailed_results.retrieval_generation.retrieving_similar_content}%
                   </p>
                   <p className="text-xs text-muted-foreground">
-                    Past Count: {getCountFromPercentage(results.detailed_results.retrieval_generation.retrieving_similar_content, 15)}
+                    Pass Count: {getCountFromPercentage(results.detailed_results.retrieval_generation.retrieving_similar_content, 15)}
                   </p>
                 </div>
-                <div className="w-32">
-                  <Progress value={results.detailed_results.retrieval_generation.retrieving_similar_content} variant="score" className="h-2" />
+                <div className="flex flex-col items-end gap-1 w-32">
+                  <span className={`text-xs px-2 py-0.5 rounded-full bg-background/90 dark:bg-background/80 shadow-sm ${getScoreTextColor(results.detailed_results.retrieval_generation.retrieving_similar_content).color}`}>
+                    {getScoreTextColor(results.detailed_results.retrieval_generation.retrieving_similar_content).label}
+                  </span>
+                  <Progress value={results.detailed_results.retrieval_generation.retrieving_similar_content} variant="score" className="h-2 w-full" />
                 </div>
               </div>
             </CardContent>
@@ -328,29 +312,27 @@ const ResultsDashboard = ({ results, onNext, onBack }: ResultsDashboardProps) =>
                 <div className="flex items-center justify-between mb-3">
                   <h4 className="font-semibold text-foreground">Leading Questions</h4>
                   <div className="text-sm font-medium text-muted-foreground">
-                    Total Past Count: {getTotalPassCountForGroup(results.detailed_results.functional_testing.leading_questions)}
+                    Total Pass Count: {getTotalPassCountForGroup(results.detailed_results.functional_testing.leading_questions, 8)}
                   </div>
                 </div>
-                <div className="space-y-2">
+                <div className="space-y-3">
                   {Object.entries(results.detailed_results.functional_testing.leading_questions).map(([key, score]: [string, any]) => {
                     const { color, label } = getScoreTextColor(score);
                     return (
-                      <div key={key} className="relative flex items-center justify-between">
-                        {/* Label bubble */}
-                        <span
-                          className={`absolute top-2 right-2 px-2 py-0.5 text-xs rounded-full bg-background/90 dark:bg-background/80 shadow-sm backdrop-blur-sm ${color}`}
-                        >
-                          {label}
-                        </span>
-                        
-                        <div>
+                      <div key={key} className="flex items-center justify-between">
+                        <div className="flex-1">
                           <span className="text-sm capitalize text-foreground">{key}</span>
-                          <p className="text-xs text-muted-foreground">Past Count: {getCountFromPercentage(score, 8)}</p>
+                          <p className="text-xs text-muted-foreground">Pass Count: {getCountFromPercentage(score, 8)}</p>
                         </div>
-                        <div className="flex items-center gap-2">
-                          <span className={`text-sm font-medium ${color}`}>{score}%</span>
-                          <div className="w-20">
-                            <Progress value={score} variant="score" className="h-1" />
+                        <div className="flex flex-col items-end gap-1 w-24">
+                          <span className={`text-xs px-2 py-0.5 rounded-full bg-background/90 dark:bg-background/80 shadow-sm ${color}`}>
+                            {label}
+                          </span>
+                          <div className="flex items-center gap-2">
+                            <span className={`text-sm font-medium ${color}`}>{score}%</span>
+                            <div className="w-16">
+                              <Progress value={score} variant="score" className="h-1" />
+                            </div>
                           </div>
                         </div>
                       </div>
@@ -364,29 +346,27 @@ const ResultsDashboard = ({ results, onNext, onBack }: ResultsDashboardProps) =>
                 <div className="flex items-center justify-between mb-3">
                   <h4 className="font-semibold text-foreground">Edge Cases</h4>
                   <div className="text-sm font-medium text-muted-foreground">
-                    Total Past Count: {getTotalPassCountForGroup(results.detailed_results.functional_testing.edge_cases)}
+                    Total Pass Count: {getTotalPassCountForGroup(results.detailed_results.functional_testing.edge_cases, 5)}
                   </div>
                 </div>
-                <div className="space-y-2">
+                <div className="space-y-3">
                   {Object.entries(results.detailed_results.functional_testing.edge_cases).map(([key, score]: [string, any]) => {
                     const { color, label } = getScoreTextColor(score);
                     return (
-                      <div key={key} className="relative flex items-center justify-between">
-                        {/* Label bubble */}
-                        <span
-                          className={`absolute top-2 right-2 px-2 py-0.5 text-xs rounded-full bg-background/90 dark:bg-background/80 shadow-sm backdrop-blur-sm ${color}`}
-                        >
-                          {label}
-                        </span>
-                        
-                        <div>
+                      <div key={key} className="flex items-center justify-between">
+                        <div className="flex-1">
                           <span className="text-sm capitalize text-foreground">{key.replace('_', ' ')}</span>
-                          <p className="text-xs text-muted-foreground">Past Count: {getCountFromPercentage(score, 5)}</p>
+                          <p className="text-xs text-muted-foreground">Pass Count: {getCountFromPercentage(score, 5)}</p>
                         </div>
-                        <div className="flex items-center gap-2">
-                          <span className={`text-sm font-medium ${color}`}>{score}%</span>
-                          <div className="w-20">
-                            <Progress value={score} variant="score" className="h-1" />
+                        <div className="flex flex-col items-end gap-1 w-24">
+                          <span className={`text-xs px-2 py-0.5 rounded-full bg-background/90 dark:bg-background/80 shadow-sm ${color}`}>
+                            {label}
+                          </span>
+                          <div className="flex items-center gap-2">
+                            <span className={`text-sm font-medium ${color}`}>{score}%</span>
+                            <div className="w-16">
+                              <Progress value={score} variant="score" className="h-1" />
+                            </div>
                           </div>
                         </div>
                       </div>
@@ -400,29 +380,27 @@ const ResultsDashboard = ({ results, onNext, onBack }: ResultsDashboardProps) =>
                 <div className="flex items-center justify-between mb-3">
                   <h4 className="font-semibold text-foreground">Unnecessary Context</h4>
                   <div className="text-sm font-medium text-muted-foreground">
-                    Total Past Count: {getTotalPassCountForGroup(results.detailed_results.functional_testing.unnecessary_context)}
+                    Total Pass Count: {getTotalPassCountForGroup(results.detailed_results.functional_testing.unnecessary_context, 7)}
                   </div>
                 </div>
-                <div className="space-y-2">
+                <div className="space-y-3">
                   {Object.entries(results.detailed_results.functional_testing.unnecessary_context).map(([key, score]: [string, any]) => {
                     const { color, label } = getScoreTextColor(score);
                     return (
-                      <div key={key} className="relative flex items-center justify-between">
-                        {/* Label bubble */}
-                        <span
-                          className={`absolute top-2 right-2 px-2 py-0.5 text-xs rounded-full bg-background/90 dark:bg-background/80 shadow-sm backdrop-blur-sm ${color}`}
-                        >
-                          {label}
-                        </span>
-                        
-                        <div>
+                      <div key={key} className="flex items-center justify-between">
+                        <div className="flex-1">
                           <span className="text-sm capitalize text-foreground">{key.replace('_', ' ')}</span>
-                          <p className="text-xs text-muted-foreground">Past Count: {getCountFromPercentage(score, 7)}</p>
+                          <p className="text-xs text-muted-foreground">Pass Count: {getCountFromPercentage(score, 7)}</p>
                         </div>
-                        <div className="flex items-center gap-2">
-                          <span className={`text-sm font-medium ${color}`}>{score}%</span>
-                          <div className="w-20">
-                            <Progress value={score} variant="score" className="h-1" />
+                        <div className="flex flex-col items-end gap-1 w-24">
+                          <span className={`text-xs px-2 py-0.5 rounded-full bg-background/90 dark:bg-background/80 shadow-sm ${color}`}>
+                            {label}
+                          </span>
+                          <div className="flex items-center gap-2">
+                            <span className={`text-sm font-medium ${color}`}>{score}%</span>
+                            <div className="w-16">
+                              <Progress value={score} variant="score" className="h-1" />
+                            </div>
                           </div>
                         </div>
                       </div>
@@ -445,20 +423,16 @@ const ResultsDashboard = ({ results, onNext, onBack }: ResultsDashboardProps) =>
                 const { color, label } = getScoreTextColor(score);
                 return (
                   <div key={key} className="relative flex items-center justify-between p-4 border rounded-lg transition-all duration-200 hover:shadow-md hover:scale-102 bg-background/50 dark:bg-background/30 backdrop-blur-sm border-border/60">
-                    {/* Label bubble */}
-                    <span
-                      className={`absolute top-3 right-3 px-2 py-0.5 text-xs rounded-full bg-background/90 dark:bg-background/80 shadow-sm backdrop-blur-sm ${color}`}
-                    >
-                      {label}
-                    </span>
-                    
-                    <div>
+                    <div className="flex-1">
                       <h4 className="font-medium capitalize text-foreground">{key.replace('_', ' ')}</h4>
                       <p className={`text-sm font-semibold ${color}`}>Pass Count Percentage: {score}%</p>
-                      <p className="text-xs text-muted-foreground">Past Count: {getCountFromPercentage(score, 25)}</p>
+                      <p className="text-xs text-muted-foreground">Pass Count: {getCountFromPercentage(score, 25)}</p>
                     </div>
-                    <div className="w-32">
-                      <Progress value={score} variant="score" className="h-2" />
+                    <div className="flex flex-col items-end gap-1 w-32">
+                      <span className={`text-xs px-2 py-0.5 rounded-full bg-background/90 dark:bg-background/80 shadow-sm ${color}`}>
+                        {label}
+                      </span>
+                      <Progress value={score} variant="score" className="h-2 w-full" />
                     </div>
                   </div>
                 );
