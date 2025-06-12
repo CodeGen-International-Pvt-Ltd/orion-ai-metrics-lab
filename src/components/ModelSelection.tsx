@@ -14,10 +14,12 @@ interface ModelSelectionProps {
   onBack: () => void;
   testSuites: any[];
   selectedTestSuiteId: string | null;
+  config: any;
+  setConfig: (config: any) => void;
 }
 
-const ModelSelection = ({ selectedModel, setSelectedModel, onNext, onBack, testSuites, selectedTestSuiteId }: ModelSelectionProps) => {
-  const [customEndpoint, setCustomEndpoint] = useState('');
+const ModelSelection = ({ selectedModel, setSelectedModel, onNext, onBack, testSuites, selectedTestSuiteId, config, setConfig }: ModelSelectionProps) => {
+  const [customEndpoint, setCustomEndpoint] = useState(config.customEndpoint || '');
   const [endpointError, setEndpointError] = useState('');
 
   const selectedTestSuite = testSuites.find(suite => suite.id === selectedTestSuiteId);
@@ -25,7 +27,7 @@ const ModelSelection = ({ selectedModel, setSelectedModel, onNext, onBack, testS
 
   const models = [
     {
-      id: 'OpenAI',
+      id: 'openai',
       name: 'OpenAI GPT-4',
       description: 'Advanced language model with excellent reasoning capabilities',
       features: ['High accuracy', 'Complex reasoning', 'Broad knowledge base'],
@@ -33,7 +35,7 @@ const ModelSelection = ({ selectedModel, setSelectedModel, onNext, onBack, testS
       disabled: isConfidential
     },
     {
-      id: 'Claude',
+      id: 'claude',
       name: 'Anthropic Claude',
       description: 'Constitutional AI model focused on helpfulness and safety',
       features: ['Safety-focused', 'Nuanced responses', 'Ethical reasoning'],
@@ -41,7 +43,7 @@ const ModelSelection = ({ selectedModel, setSelectedModel, onNext, onBack, testS
       disabled: isConfidential
     },
     {
-      id: 'Custom',
+      id: 'custom',
       name: 'Custom LLM Endpoint',
       description: 'Connect to your own custom language model endpoint',
       features: ['Full control', 'Custom configuration', 'Private deployment'],
@@ -51,12 +53,12 @@ const ModelSelection = ({ selectedModel, setSelectedModel, onNext, onBack, testS
   ];
 
   const validateCustomEndpoint = () => {
-    if (selectedModel === 'Custom' && !customEndpoint.trim()) {
+    if (selectedModel === 'custom' && !customEndpoint.trim()) {
       setEndpointError('Custom LLM endpoint is required');
       return false;
     }
     
-    if (selectedModel === 'Custom') {
+    if (selectedModel === 'custom') {
       try {
         new URL(customEndpoint);
         setEndpointError('');
@@ -74,12 +76,20 @@ const ModelSelection = ({ selectedModel, setSelectedModel, onNext, onBack, testS
     if (!validateCustomEndpoint()) {
       return;
     }
+    
+    // Update config with selected model
+    setConfig({
+      ...config,
+      selectedModel: selectedModel,
+      customEndpoint: selectedModel === 'custom' ? customEndpoint : null
+    });
+    
     onNext();
   };
 
   // Auto-select Custom if confidential and no valid model selected
-  if (isConfidential && (selectedModel === 'OpenAI' || selectedModel === 'Claude' || !selectedModel)) {
-    setSelectedModel('Custom');
+  if (isConfidential && (selectedModel === 'openai' || selectedModel === 'claude' || !selectedModel)) {
+    setSelectedModel('custom');
   }
 
   return (
@@ -111,16 +121,11 @@ const ModelSelection = ({ selectedModel, setSelectedModel, onNext, onBack, testS
                     } hover:bg-gray-50/10`
                 }`}>
                   <RadioGroupItem
-  value={model.id}
-  id={model.id}
-  disabled={model.disabled}
-  className="radio-blue-border"
-/>
-
-
-
-
-
+                    value={model.id}
+                    id={model.id}
+                    disabled={model.disabled}
+                    className="radio-blue-border"
+                  />
 
                   <div className="flex-1">
                     <div className="flex items-center gap-2 mb-2">
@@ -156,13 +161,12 @@ const ModelSelection = ({ selectedModel, setSelectedModel, onNext, onBack, testS
           </RadioGroup>
 
           {/* Custom Endpoint Input */}
-          {selectedModel === 'Custom' && (
+          {selectedModel === 'custom' && (
             <div className="mt-6 p-4 border rounded-lg bg-gray-50">
               <div className="space-y-3">
-              <Label htmlFor="customEndpoint" className="text-sm font-medium text-black dark:text-black-100">
-  Custom LLM Endpoint URL *
-</Label>
-
+                <Label htmlFor="customEndpoint" className="text-sm font-medium text-black dark:text-white">
+                  Custom LLM Endpoint URL *
+                </Label>
                 <Input
                   id="customEndpoint"
                   placeholder="https://your-custom-llm-endpoint.com/api/v1"

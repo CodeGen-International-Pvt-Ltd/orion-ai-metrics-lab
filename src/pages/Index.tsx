@@ -21,7 +21,7 @@ const Index = () => {
   const [userData, setUserData] = useState<{ id: number; name: string; email: string } | null>(null);
   const [testSuites, setTestSuites] = useState([]);
   const [metricsConfig, setMetricsConfig] = useState({});
-  const [selectedModel, setSelectedModel] = useState('OpenAI');
+  const [selectedModel, setSelectedModel] = useState('openai');
   const [evaluationResults, setEvaluationResults] = useState(null);
   const [selectedTestSuiteId, setSelectedTestSuiteId] = useState(null);
   const [selectedTestRunId, setSelectedTestRunId] = useState(null);
@@ -173,11 +173,10 @@ const Index = () => {
     return (
       <ThemeProvider defaultTheme="system" storageKey="ui-theme">
         <LoginPage onLogin={(loginData) => {
-  setUserData(loginData);
-  console.log("User logged in:", loginData);
-  setCurrentStep(1);  // ← Add this line back
-}} />
-
+          setUserData(loginData);
+          console.log("User logged in:", loginData);
+          setCurrentStep(1);
+        }} />
       </ThemeProvider>
     );
   }
@@ -216,7 +215,7 @@ const Index = () => {
       case 2:
         return <MetricsConfiguration config={metricsConfig} setConfig={setMetricsConfig} testSuites={testSuites} onNext={() => setCurrentStep(3)} onBack={() => setCurrentStep(1)} />;
       case 3:
-        return <ModelSelection selectedModel={selectedModel} setSelectedModel={setSelectedModel} onNext={() => setCurrentStep(4)} onBack={() => setCurrentStep(2)} testSuites={testSuites} selectedTestSuiteId={selectedTestSuiteId} />;
+        return <ModelSelection selectedModel={selectedModel} setSelectedModel={setSelectedModel} onNext={() => setCurrentStep(4)} onBack={() => setCurrentStep(2)} testSuites={testSuites} selectedTestSuiteId={selectedTestSuiteId} config={metricsConfig} setConfig={setMetricsConfig} />;
       case 4:
         return <TestExecution onNext={() => setCurrentStep(5)} onBack={() => setCurrentStep(3)} setResults={handleTestExecutionComplete} selectedTestSuiteId={selectedTestSuiteId} />;
       case 5:
