@@ -54,6 +54,16 @@ const Index = () => {
     ));
   };
 
+  const handleDeleteTestSuite = (suiteId: number) => {
+    setTestSuites(prev => prev.filter(suite => suite.id !== suiteId));
+    // Also remove any results for this test suite
+    setTestSuiteResults(prev => {
+      const newResults = { ...prev };
+      delete newResults[suiteId];
+      return newResults;
+    });
+  };
+
   const handleLogout = () => {
     setUserData(null);
     setCurrentStep(0);
@@ -180,6 +190,7 @@ const Index = () => {
           testSuiteResults={testSuiteResults}
           onSelectTestSuite={handleSelectTestSuite}
           onUpdateTestSuite={handleUpdateTestSuite}
+          onDeleteTestSuite={handleDeleteTestSuite}
           onBack={handleBackToWorkflow}
         />
       );

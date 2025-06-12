@@ -49,6 +49,7 @@ const EditTestSuite = ({ testSuite, onUpdateTestSuite }: EditTestSuiteProps) => 
       if (!res.ok) {
         const error = await res.text();
         console.error("Failed to update:", error);
+        setError('Failed to update test suite. Please try again.');
         return;
       }
   
@@ -62,20 +63,15 @@ const EditTestSuite = ({ testSuite, onUpdateTestSuite }: EditTestSuiteProps) => 
       setError('');
     } catch (err) {
       console.error("Update error:", err);
+      setError('Failed to update test suite. Please try again.');
     }
   };
-  
-
-    
 
   const handleCancel = () => {
     setSuiteName(testSuite.name);
     setError('');
     setIsOpen(false);
   };
-
-  
-  
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>

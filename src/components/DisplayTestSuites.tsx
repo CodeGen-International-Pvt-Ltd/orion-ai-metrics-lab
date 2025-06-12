@@ -3,6 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { FileText, ArrowLeft, AlertCircle, CheckCircle, Clock } from "lucide-react";
 import EditTestSuite from "./EditTestSuite";
+import DeleteTestSuite from "./DeleteTestSuite";
 
 interface TestSuite {
   id: number;
@@ -18,10 +19,11 @@ interface DisplayTestSuitesProps {
   testSuiteResults: Record<string, any>;
   onSelectTestSuite: (suiteId: number) => void;
   onUpdateTestSuite: (testSuite: TestSuite) => void;
+  onDeleteTestSuite: (suiteId: number) => void;
   onBack: () => void;
 }
 
-const DisplayTestSuites = ({ testSuites, testSuiteResults, onSelectTestSuite, onUpdateTestSuite, onBack }: DisplayTestSuitesProps) => {
+const DisplayTestSuites = ({ testSuites, testSuiteResults, onSelectTestSuite, onUpdateTestSuite, onDeleteTestSuite, onBack }: DisplayTestSuitesProps) => {
   const getTestSuiteStatus = (suiteId: number) => {
     const results = testSuiteResults[suiteId];
     if (!results || !results.testRuns || results.testRuns.length === 0) {
@@ -113,7 +115,10 @@ const DisplayTestSuites = ({ testSuites, testSuiteResults, onSelectTestSuite, on
                         Input Format: {suite.type}
                       </CardDescription>
                     </div>
-                    <EditTestSuite testSuite={suite} onUpdateTestSuite={onUpdateTestSuite} />
+                    <div className="flex gap-2">
+                      <EditTestSuite testSuite={suite} onUpdateTestSuite={onUpdateTestSuite} />
+                      <DeleteTestSuite testSuite={suite} onDeleteTestSuite={onDeleteTestSuite} />
+                    </div>
                   </div>
                 </CardHeader>
                 <CardContent>
