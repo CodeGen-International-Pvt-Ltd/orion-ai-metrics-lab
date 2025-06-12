@@ -11,7 +11,7 @@ interface TestSuite {
   id: number;
   user_id: number;
   name: string;
-  type: 'excel' | 'custom';
+  type: 'excel' | 'custom' | string;
   created_at: string;
   confidentialityStatus: boolean;
 }
@@ -60,15 +60,20 @@ const TestSuiteCreation = ({ userId, testSuites, setTestSuites, onNext, onBack, 
       }
   
       const data = await response.json();
-  
+      console.log("Created test suite response:", data); // ✅ Log for test/debug
+
       const testSuite: TestSuite = {
-        id: data.id || Date.now(),
-        name: newSuite.name,
-        type: newSuite.type.toLowerCase() as 'excel' | 'custom',
-        confidentialityStatus: newSuite.confidentialityStatus,
-        user_id: userId,
-        created_at: data.created_at || new Date().toISOString(),
+        id: data.test_suite_id,
+        name: data.suite_name,
+        type: data.suite_type,
+        confidentialityStatus: data.confidential_status,
+        user_id: data.user,
+        created_at: data.created_at,
       };
+      
+
+
+
   
       setTestSuites([...testSuites, testSuite]);
       setSelectedTestSuiteId(testSuite.id.toString());

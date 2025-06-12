@@ -8,7 +8,7 @@ interface TestSuite {
   id: number;
   user_id: number;
   name: string;
-  type: 'excel' | 'custom';
+  type: 'excel' | 'custom' | string;
   created_at: string;
   confidentialityStatus: boolean;
 }
@@ -19,6 +19,7 @@ interface DeleteTestSuiteProps {
 }
 
 const DeleteTestSuite = ({ testSuite, onDeleteTestSuite }: DeleteTestSuiteProps) => {
+  console.log("Delete clicked for test suite ID:", testSuite.id); // 
   const [isDeleting, setIsDeleting] = useState(false);
 
   const handleDelete = async () => {

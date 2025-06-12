@@ -10,7 +10,7 @@ interface TestSuite {
   id: number;
   user_id: number;
   name: string;
-  type: 'excel' | 'custom';
+  type: 'excel' | 'custom' | string;
   created_at: string;
   confidentialityStatus: boolean;
 }
@@ -49,7 +49,6 @@ const EditTestSuite = ({ testSuite, onUpdateTestSuite }: EditTestSuiteProps) => 
       if (!res.ok) {
         const error = await res.text();
         console.error("Failed to update:", error);
-        setError('Failed to update test suite. Please try again.');
         return;
       }
   
@@ -63,9 +62,11 @@ const EditTestSuite = ({ testSuite, onUpdateTestSuite }: EditTestSuiteProps) => 
       setError('');
     } catch (err) {
       console.error("Update error:", err);
-      setError('Failed to update test suite. Please try again.');
     }
   };
+  
+
+    
 
   const handleCancel = () => {
     setSuiteName(testSuite.name);
@@ -73,14 +74,27 @@ const EditTestSuite = ({ testSuite, onUpdateTestSuite }: EditTestSuiteProps) => 
     setIsOpen(false);
   };
 
+  
+  
+
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
-        <Button variant="outline" size="sm" className="gap-2">
-          <Edit2 className="w-3 h-3" />
-          Edit
-        </Button>
-      </DialogTrigger>
+  <Button
+    variant="outline"
+    size="sm"
+    className="gap-2"
+    onClick={() => {
+      console.log("Edit clicked for Test Suite ID:", testSuite.id);
+      console.log("User ID:", testSuite.user_id);
+      setIsOpen(true); // manually open the dialog since you're using onClick
+    }}
+  >
+    <Edit2 className="w-3 h-3" />
+    Edit
+  </Button>
+</DialogTrigger>
+
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
           <DialogTitle>Edit Test Suite</DialogTitle>
