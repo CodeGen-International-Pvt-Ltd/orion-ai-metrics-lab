@@ -1,11 +1,12 @@
+
 import { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Slider } from "@/components/ui/slider";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Input } from "@/components/ui/input";
-import { Settings, ArrowRight, Save, Edit2, Trash2 } from "lucide-react";
+import { Progress } from "@/components/ui/progress";
+import { Settings, ArrowRight, Save } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 interface MetricsConfigurationProps {
@@ -19,176 +20,120 @@ interface MetricsConfigurationProps {
 const MetricsConfiguration = ({ config, setConfig, testSuites, onNext, onBack }: MetricsConfigurationProps) => {
   const [selectedTestSuiteId, setSelectedTestSuiteId] = useState(testSuites[0]?.id || '');
   const [isSaving, setIsSaving] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
-  const [existingConfigs, setExistingConfigs] = useState([]);
-  const [editingConfigId, setEditingConfigId] = useState(null);
-  const [apiEndpoint, setApiEndpoint] = useState('https://api.example.com/process');
-  const [directory, setDirectory] = useState('C:/Users/Downloads/ML-viva');
-  const [excelOutputPath, setExcelOutputPath] = useState('C:/Users/Downloads');
   const { toast } = useToast();
 
-  // Define all available metrics with default thresholds
-  const allMetrics = [
-    { id: 'BLEU', name: 'BLEU', defaultThreshold: 0.8 },
-    { id: 'ROUGE', name: 'ROUGE', defaultThreshold: 0.7 },
-    { id: 'NLI', name: 'NLI', defaultThreshold: 0.5 },
-    { id: 'BLEURT', name: 'BLEURT', defaultThreshold: 0.7 },
-    { id: 'G-Eval', name: 'G-Eval', defaultThreshold: 0.6 },
-    { id: 'BERTScore', name: 'BERTScore', defaultThreshold: 0.75 },
-    { id: 'SPICE', name: 'SPICE', defaultThreshold: 0.6 },
-    { id: 'WMD', name: 'WMD', defaultThreshold: 0.5 },
-    { id: 'ELMO', name: 'ELMO', defaultThreshold: 0.5 },
-    { id: 'METEOR', name: 'METEOR', defaultThreshold: 0.7 },
-    { id: 'Levenshtein distance', name: 'Levenshtein Distance', defaultThreshold: 0.8 },
-    { id: 'R-Precision', name: 'R-Precision', defaultThreshold: 0.75 }
+  const contentEvaluation = [
+    { id: 'correctness', name: 'Correctness', defaultThreshold: 90 },
+    { id: 'hallucination', name: 'Hallucination', defaultThreshold: 5, inverted: true },
+    { id: 'answer_relevancy', name: 'Answer Relevancy', defaultThreshold: 85 },
+    { id: 'contextual_relevancy', name: 'Contextual Relevancy', defaultThreshold: 85 }
   ];
 
-  const [metricThresholds, setMetricThresholds] = useState(() => {
-    const thresholds = {};
-    allMetrics.forEach(metric => {
-      thresholds[metric.id] = metric.defaultThreshold;
-    });
-    return thresholds;
-  });
+  const retrievalGeneration = [
+    { id: 'summarization', name: 'Summarization', defaultThreshold: 80 },
+    { id: 'retrieving_content', name: 'Retrieving Content', defaultThreshold: 75 }
+  ];
+
+  const functionalTesting = [
+    { id: 'leading_questions', name: 'Leading Questions', defaultThreshold: 85 },
+    { id: 'edge_cases', name: 'Edge Cases', defaultThreshold: 80 },
+    { id: 'unnecessary_context', name: 'Unnecessary Context', defaultThreshold: 75 }
+  ];
+
+  const nonFunctionalTesting = [
+    { id: 'repetitive_loops', name: 'Repetitive Loops', defaultThreshold: 10, inverted: true },
+    { id: 'spam_flooding', name: 'Spam/Flooding', defaultThreshold: 5, inverted: true },
+    { id: 'intentional_misdirection', name: 'Intentional Misdirection', defaultThreshold: 5, inverted: true },
+    { id: 'prompt_overloading', name: 'Prompt Overloading', defaultThreshold: 10, inverted: true },
+    { id: 'prompt_tuning_attacks', name: 'Susceptibility to Prompt Tuning Attacks', defaultThreshold: 5, inverted: true }
+  ];
+
+  const initializeDefaults = (testSuiteId: string) => {
+    if (!config.testSuiteConfigs) {
+      setConfig({ ...config, testSuiteConfigs: {} });
+    }
+    
+    if (!config.testSuiteConfigs?.[testSuiteId]) {
+      const defaultContentEval = {};
+      contentEvaluation.forEach(score => {
+        defaultContentEval[score.id] = {
+          threshold: score.defaultThreshold
+        };
+      });
+
+      const defaultRetrievalGen = {};
+      retrievalGeneration.forEach(score => {
+        defaultRetrievalGen[score.id] = {
+          threshold: score.defaultThreshold
+        };
+      });
+
+      const defaultFunctional = {};
+      functionalTesting.forEach(score => {
+        defaultFunctional[score.id] = {
+          threshold: score.defaultThreshold
+        };
+      });
+
+      const defaultNonFunctional = {};
+      nonFunctionalTesting.forEach(score => {
+        defaultNonFunctional[score.id] = {
+          threshold: score.defaultThreshold
+        };
+      });
+      
+      setConfig({
+        ...config,
+        testSuiteConfigs: {
+          ...config.testSuiteConfigs,
+          [testSuiteId]: {
+            contentEvaluation: defaultContentEval,
+            retrievalGeneration: defaultRetrievalGen,
+            functionalTesting: defaultFunctional,
+            nonFunctionalTesting: defaultNonFunctional
+          }
+        }
+      });
+    }
+  };
 
   useEffect(() => {
     if (selectedTestSuiteId) {
-      fetchExistingConfigurations();
+      initializeDefaults(selectedTestSuiteId);
     }
   }, [selectedTestSuiteId]);
 
-  const fetchExistingConfigurations = async () => {
-    setIsLoading(true);
-    try {
-      const response = await fetch(`http://127.0.0.1:8000/test-suite/${selectedTestSuiteId}/configurations/`);
-      if (response.ok) {
-        const configs = await response.json();
-        setExistingConfigs(configs);
+  const getCurrentConfig = () => {
+    return config.testSuiteConfigs?.[selectedTestSuiteId] || {};
+  };
+
+  const updateScoreConfig = (category: string, scoreId: string, value: number) => {
+    const currentConfig = getCurrentConfig();
+    setConfig({
+      ...config,
+      testSuiteConfigs: {
+        ...config.testSuiteConfigs,
+        [selectedTestSuiteId]: {
+          ...currentConfig,
+          [category]: {
+            ...currentConfig[category],
+            [scoreId]: {
+              threshold: value
+            }
+          }
+        }
       }
-    } catch (error) {
-      console.error('Error fetching configurations:', error);
-    } finally {
-      setIsLoading(false);
-    }
+    });
   };
 
   const handleSaveConfiguration = async () => {
     setIsSaving(true);
-    
-    const selectedTestSuite = testSuites.find(suite => suite.id === selectedTestSuiteId);
-    const selectedMetrics = allMetrics.map(metric => metric.id);
-    const selectedThresholds = allMetrics.map(metric => metricThresholds[metric.id]);
-    
-    const payload = {
-      suite_type: selectedTestSuite?.type || 'excel',
-      api_endpoint: apiEndpoint,
-      selected_metrics: selectedMetrics,
-      selected_thresholds: selectedThresholds,
-      directory: directory,
-      excel_output_path: excelOutputPath,
-      model_selected: config.selectedModel || 'openai'
-    };
-
-    try {
-      const url = editingConfigId 
-        ? `http://127.0.0.1:8000/test-suite/${selectedTestSuiteId}/configurations/${editingConfigId}/`
-        : `http://127.0.0.1:8000/test-suite/${selectedTestSuiteId}/configurations/`;
-      
-      const method = editingConfigId ? 'PUT' : 'POST';
-      const requestBody = editingConfigId 
-        ? { selected_metrics: selectedMetrics, selected_thresholds: selectedThresholds }
-        : payload;
-
-      const response = await fetch(url, {
-        method: method,
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(requestBody),
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to save configuration');
-      }
-
-      const data = await response.json();
-      console.log('Configuration saved:', data);
-      
-      // Update local config state
-      setConfig({
-        ...config,
-        configurationId: data.config_id,
-        selectedMetrics: selectedMetrics,
-        selectedThresholds: selectedThresholds,
-        apiEndpoint: apiEndpoint,
-        directory: directory,
-        excelOutputPath: excelOutputPath
-      });
-
-      toast({
-        title: editingConfigId ? "Configuration Updated" : "Configuration Saved",
-        description: `Settings for ${selectedTestSuite?.name} have been ${editingConfigId ? 'updated' : 'saved'} successfully.`,
-      });
-
-      setEditingConfigId(null);
-      fetchExistingConfigurations();
-    } catch (error) {
-      console.error('Error saving configuration:', error);
-      toast({
-        title: "Error",
-        description: "Failed to save configuration. Please try again.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsSaving(false);
-    }
-  };
-
-  const handleEditConfiguration = (configData) => {
-    setEditingConfigId(configData.config_id);
-    
-    // Load the configuration data into the form
-    const newThresholds = {};
-    configData.selected_metrics.forEach((metric, index) => {
-      newThresholds[metric] = configData.selected_thresholds[index];
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    setIsSaving(false);
+    toast({
+      title: "Configuration Saved",
+      description: `Settings for ${selectedTestSuite?.name} have been saved successfully.`,
     });
-    setMetricThresholds(newThresholds);
-    setApiEndpoint(configData.api_endpoint);
-    setDirectory(configData.directory);
-    setExcelOutputPath(configData.excel_output_path);
-  };
-
-  const handleDeleteConfiguration = async (configId) => {
-    try {
-      const response = await fetch(`http://127.0.0.1:8000/configurations/${configId}/`, {
-        method: 'DELETE',
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to delete configuration');
-      }
-
-      toast({
-        title: "Configuration Deleted",
-        description: "Configuration has been deleted successfully.",
-      });
-
-      fetchExistingConfigurations();
-    } catch (error) {
-      console.error('Error deleting configuration:', error);
-      toast({
-        title: "Error",
-        description: "Failed to delete configuration. Please try again.",
-        variant: "destructive",
-      });
-    }
-  };
-
-  const updateMetricThreshold = (metricId: string, value: number) => {
-    setMetricThresholds(prev => ({
-      ...prev,
-      [metricId]: value / 100 // Convert percentage to decimal
-    }));
   };
 
   const selectedTestSuite = testSuites.find(suite => suite.id === selectedTestSuiteId);
@@ -213,6 +158,38 @@ const MetricsConfiguration = ({ config, setConfig, testSuites, onNext, onBack }:
     );
   }
 
+  const currentConfig = getCurrentConfig();
+
+  const renderScoreSection = (scores: any[], category: string, title: string, color: string) => (
+    <div className="space-y-4">
+      <h4 className={`text-lg font-semibold mb-4 ${color} text-left`}>{title}</h4>
+      <div className="space-y-4">
+        {scores.map((score) => (
+          <Card key={score.id} className={`p-4 transform transition-all duration-300 hover:shadow-lg hover:scale-102 border-l-4 bg-card dark:bg-card/80 backdrop-blur-sm border-border dark:border-border/60 ${color.includes('indigo') ? 'border-l-indigo-500 dark:border-l-indigo-400' : color.includes('purple') ? 'border-l-purple-500 dark:border-l-purple-400' : color.includes('green') ? 'border-l-green-500 dark:border-l-green-400' : 'border-l-orange-500 dark:border-l-orange-400'}`}>
+            <div className="space-y-4">
+              <div>
+                <Label className="text-base font-medium text-foreground text-left block">{score.name}</Label>
+                <div className="mt-3 space-y-2">
+                  <div className="flex justify-between items-center">
+                    <Label className="text-sm text-muted-foreground">Threshold: {currentConfig[category]?.[score.id]?.threshold ?? score.defaultThreshold}%</Label>
+                  </div>
+                  <Slider
+                    value={[currentConfig[category]?.[score.id]?.threshold ?? score.defaultThreshold]}
+                    onValueChange={([value]) => updateScoreConfig(category, score.id, value)}
+                    min={0}
+                    max={100}
+                    step={1}
+                    className="w-full mt-2"
+                  />
+                </div>
+              </div>
+            </div>
+          </Card>
+        ))}
+      </div>
+    </div>
+  );
+
   return (
     <div className="max-w-6xl mx-auto space-y-6">
       <Card className="transform transition-all duration-300 hover:shadow-lg bg-card dark:bg-card/90 backdrop-blur-lg border-border dark:border-border/60">
@@ -224,7 +201,7 @@ const MetricsConfiguration = ({ config, setConfig, testSuites, onNext, onBack }:
                 Metrics Configuration
               </CardTitle>
               <CardDescription className="text-muted-foreground">
-                Configure metric thresholds and save configurations for your test suites
+                Configure scoring methods and thresholds for your test suites
               </CardDescription>
             </div>
             <Button 
@@ -233,7 +210,7 @@ const MetricsConfiguration = ({ config, setConfig, testSuites, onNext, onBack }:
               className="bg-primary hover:bg-primary/90 text-primary-foreground transform transition-all duration-200 hover:scale-105"
             >
               <Save className="w-4 h-4 mr-2" />
-              {isSaving ? 'Saving...' : editingConfigId ? 'Update Configuration' : 'Save Configuration'}
+              {isSaving ? 'Saving...' : 'Save Configuration'}
             </Button>
           </div>
         </CardHeader>
@@ -245,7 +222,7 @@ const MetricsConfiguration = ({ config, setConfig, testSuites, onNext, onBack }:
               value={selectedTestSuiteId}
               onValueChange={(value) => {
                 setSelectedTestSuiteId(value);
-                setEditingConfigId(null);
+                initializeDefaults(value);
               }}
             >
               <SelectTrigger className="transform transition-all duration-200 hover:scale-102 bg-background dark:bg-background/80 border-border">
@@ -266,106 +243,24 @@ const MetricsConfiguration = ({ config, setConfig, testSuites, onNext, onBack }:
             )}
           </div>
 
-          {/* Configuration Settings */}
-          <div className="grid md:grid-cols-3 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="apiEndpoint">API Endpoint</Label>
-              <Input
-                id="apiEndpoint"
-                value={apiEndpoint}
-                onChange={(e) => setApiEndpoint(e.target.value)}
-                placeholder="https://api.example.com/process"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="directory">Directory</Label>
-              <Input
-                id="directory"
-                value={directory}
-                onChange={(e) => setDirectory(e.target.value)}
-                placeholder="C:/Users/Downloads/ML-viva"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="excelOutputPath">Excel Output Path</Label>
-              <Input
-                id="excelOutputPath"
-                value={excelOutputPath}
-                onChange={(e) => setExcelOutputPath(e.target.value)}
-                placeholder="C:/Users/Downloads"
-              />
-            </div>
-          </div>
-
-          {/* Existing Configurations */}
-          {existingConfigs.length > 0 && (
-            <div className="space-y-4">
-              <h3 className="text-lg font-semibold text-foreground">Existing Configurations</h3>
-              <div className="grid gap-3">
-                {existingConfigs.map((configData) => (
-                  <div key={configData.config_id} className="flex items-center justify-between p-4 border rounded-lg bg-gray-50 dark:bg-gray-800">
-                    <div>
-                      <h4 className="font-medium">Configuration #{configData.config_id}</h4>
-                      <p className="text-sm text-gray-600 dark:text-gray-400">
-                        Model: {configData.model_selected} | Metrics: {configData.selected_metrics.length}
-                      </p>
-                    </div>
-                    <div className="flex gap-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleEditConfiguration(configData)}
-                        className="gap-2"
-                      >
-                        <Edit2 className="w-3 h-3" />
-                        Edit
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleDeleteConfiguration(configData.config_id)}
-                        className="gap-2 text-red-600 hover:text-red-700"
-                      >
-                        <Trash2 className="w-3 h-3" />
-                        Delete
-                      </Button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Metrics Configuration */}
           <div className="space-y-6">
-            <h3 className="text-lg font-semibold text-foreground">Metric Thresholds</h3>
-            <p className="text-sm text-muted-foreground">All metrics are automatically selected. Adjust thresholds as needed (values are in decimals from 0.0 to 1.0).</p>
+            <h3 className="text-lg font-semibold text-foreground">Scoring Methods</h3>
+            <p className="text-sm text-muted-foreground">All scoring methods are automatically selected with default thresholds. You can adjust thresholds as needed.</p>
             
             <div className="grid lg:grid-cols-2 gap-6">
-              {allMetrics.map((metric) => (
-                <Card key={metric.id} className="p-4 transform transition-all duration-300 hover:shadow-lg hover:scale-102 border-l-4 bg-card dark:bg-card/80 backdrop-blur-sm border-border dark:border-border/60 border-l-blue-500 dark:border-l-blue-400">
-                  <div className="space-y-4">
-                    <div>
-                      <Label className="text-base font-medium text-foreground text-left block">{metric.name}</Label>
-                      <div className="mt-3 space-y-2">
-                        <div className="flex justify-between items-center">
-                          <Label className="text-sm text-muted-foreground">
-                            Threshold: {(metricThresholds[metric.id] * 100).toFixed(1)}%
-                          </Label>
-                        </div>
-                        <Slider
-                          value={[metricThresholds[metric.id] * 100]}
-                          onValueChange={([value]) => updateMetricThreshold(metric.id, value)}
-                          min={0}
-                          max={100}
-                          step={0.1}
-                          className="w-full mt-2"
-                        />
-                      </div>
-                    </div>
-                  </div>
-                </Card>
-              ))}
+              {/* Content Evaluation */}
+              {renderScoreSection(contentEvaluation, 'contentEvaluation', 'Content Evaluation', 'text-indigo-700 dark:text-indigo-300')}
+              
+              {/* Retrieval and Generation Evaluation */}
+              {renderScoreSection(retrievalGeneration, 'retrievalGeneration', 'Retrieval and Generation Evaluation', 'text-purple-700 dark:text-purple-300')}
+            </div>
+            
+            <div className="grid lg:grid-cols-2 gap-6">
+              {/* Functional Testing */}
+              {renderScoreSection(functionalTesting, 'functionalTesting', 'Functional Testing', 'text-green-700 dark:text-green-300')}
+              
+              {/* Non-Functional Testing */}
+              {renderScoreSection(nonFunctionalTesting, 'nonFunctionalTesting', 'Non-Functional Testing', 'text-orange-700 dark:text-orange-300')}
             </div>
           </div>
         </CardContent>
