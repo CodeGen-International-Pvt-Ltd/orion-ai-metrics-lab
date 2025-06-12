@@ -18,7 +18,7 @@ import LoginPage from '@/components/LoginPage';
 const Index = () => {
   const [currentStep, setCurrentStep] = useState(0);
   const [currentView, setCurrentView] = useState('workflow'); // 'workflow', 'displaySuites', or 'testRuns'
-  const [userData, setUserData] = useState(null); // Start with no user data (not logged in)
+  const [userData, setUserData] = useState<{ id: number; name: string; email: string } | null>(null);
   const [testSuites, setTestSuites] = useState([]);
   const [metricsConfig, setMetricsConfig] = useState({});
   const [selectedModel, setSelectedModel] = useState('OpenAI');
@@ -38,12 +38,13 @@ const Index = () => {
     'Report'
   ];
 
-  const handleLogin = (loginData: { name: string; email: string }) => {
+  const handleLogin = (loginData: { id: number; name: string; email: string }) => {
     setUserData(loginData);
+    console.log("Logged in user:", loginData);
     setCurrentStep(1); // Skip the welcome step
   };
   
-  const handleUpdateUser = (updatedUserData: { name: string; email: string }) => {
+  const handleUpdateUser = (updatedUserData: { id: number; name: string; email: string }) => {
     setUserData(updatedUserData);
   };
 
@@ -72,7 +73,7 @@ const Index = () => {
     setCurrentView('displaySuites');
   };
 
-  const handleSelectTestSuite = (suiteId: string) => {
+  const handleSelectTestSuite = (suiteId: number) => {
     console.log('Selected test suite:', suiteId);
     setSelectedTestSuiteId(suiteId);
     
@@ -161,7 +162,12 @@ const Index = () => {
   if (!userData) {
     return (
       <ThemeProvider defaultTheme="system" storageKey="ui-theme">
-        <LoginPage onLogin={handleLogin} />
+        <LoginPage onLogin={(loginData) => {
+  setUserData(loginData);
+  console.log("User logged in:", loginData);
+  setCurrentStep(1);  // ← Add this line back
+}} />
+
       </ThemeProvider>
     );
   }
@@ -195,7 +201,7 @@ const Index = () => {
 
     switch (currentStep) {
       case 1:
-        return <TestSuiteCreation testSuites={testSuites} setTestSuites={setTestSuites} onNext={() => setCurrentStep(2)} onBack={() => setCurrentStep(0)} setSelectedTestSuiteId={setSelectedTestSuiteId} />;
+        return <TestSuiteCreation testSuites={testSuites} setTestSuites={setTestSuites} onNext={() => setCurrentStep(2)} onBack={() => setCurrentStep(0)} setSelectedTestSuiteId={setSelectedTestSuiteId} userId={userData?.id} />;
       case 2:
         return <MetricsConfiguration config={metricsConfig} setConfig={setMetricsConfig} testSuites={testSuites} onNext={() => setCurrentStep(3)} onBack={() => setCurrentStep(1)} />;
       case 3:
