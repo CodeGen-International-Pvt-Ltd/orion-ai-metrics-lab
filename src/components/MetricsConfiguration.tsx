@@ -19,9 +19,9 @@ interface MetricsConfigurationProps {
 
 const MetricsConfiguration = ({ config, setConfig, testSuites, onNext, onBack, selectedTestSuiteId }: MetricsConfigurationProps) => {
   const [selectedTestSuiteIdLocal, setSelectedTestSuiteIdLocal] = useState(selectedTestSuiteId || testSuites[0]?.id || '');
-  const [isSaving, setIsSaving] = useState(false);
-  const [isEditing, setIsEditing] = useState(false);
   const [existingConfig, setExistingConfig] = useState(null);
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const [originalConfig, setOriginalConfig] = useState(null);
   const { toast } = useToast();
 
   const contentEvaluation = [
@@ -65,11 +65,9 @@ const MetricsConfiguration = ({ config, setConfig, testSuites, onNext, onBack, s
       if (response.ok) {
         const data = await response.json();
         if (data && data.length > 0) {
-          const configData = data[0]; // Assuming one config per test suite
+          const configData = data[0];
           setExistingConfig(configData);
-          setIsEditing(true);
           
-          // Load existing thresholds into the UI
           const allMetrics = getAllMetrics();
           const currentConfig = {};
           
@@ -77,7 +75,6 @@ const MetricsConfiguration = ({ config, setConfig, testSuites, onNext, onBack, s
             currentConfig[category] = {};
           });
 
-          // Map the existing metrics to the UI structure
           if (configData.selected_metrics && configData.selected_thresholds) {
             configData.selected_metrics.forEach((metric, index) => {
               const threshold = configData.selected_thresholds[index];
@@ -97,27 +94,28 @@ const MetricsConfiguration = ({ config, setConfig, testSuites, onNext, onBack, s
             });
           }
 
-          setConfig({
+          const newConfig = {
             ...config,
             testSuiteConfigs: {
               ...config.testSuiteConfigs,
               [testSuiteId]: currentConfig
             }
-          });
+          };
+          
+          setConfig(newConfig);
+          setOriginalConfig(JSON.parse(JSON.stringify(currentConfig)));
+          setHasUnsavedChanges(false);
         } else {
           setExistingConfig(null);
-          setIsEditing(false);
           initializeDefaults(testSuiteId);
         }
       } else {
         setExistingConfig(null);
-        setIsEditing(false);
         initializeDefaults(testSuiteId);
       }
     } catch (error) {
       console.error('Error fetching configuration:', error);
       setExistingConfig(null);
-      setIsEditing(false);
       initializeDefaults(testSuiteId);
     }
   };
@@ -156,18 +154,23 @@ const MetricsConfiguration = ({ config, setConfig, testSuites, onNext, onBack, s
         };
       });
       
+      const defaultConfig = {
+        contentEvaluation: defaultContentEval,
+        retrievalGeneration: defaultRetrievalGen,
+        functionalTesting: defaultFunctional,
+        nonFunctionalTesting: defaultNonFunctional
+      };
+      
       setConfig({
         ...config,
         testSuiteConfigs: {
           ...config.testSuiteConfigs,
-          [testSuiteId]: {
-            contentEvaluation: defaultContentEval,
-            retrievalGeneration: defaultRetrievalGen,
-            functionalTesting: defaultFunctional,
-            nonFunctionalTesting: defaultNonFunctional
-          }
+          [testSuiteId]: defaultConfig
         }
       });
+      
+      setOriginalConfig(JSON.parse(JSON.stringify(defaultConfig)));
+      setHasUnsavedChanges(false);
     }
   };
 
@@ -181,145 +184,102 @@ const MetricsConfiguration = ({ config, setConfig, testSuites, onNext, onBack, s
     return config.testSuiteConfigs?.[selectedTestSuiteIdLocal] || {};
   };
 
+  const checkForChanges = (newConfig: any) => {
+    if (!originalConfig) return false;
+    return JSON.stringify(newConfig) !== JSON.stringify(originalConfig);
+  };
+
   const updateScoreConfig = (category: string, scoreId: string, value: number) => {
     const currentConfig = getCurrentConfig();
+    const newConfig = {
+      ...currentConfig,
+      [category]: {
+        ...currentConfig[category],
+        [scoreId]: {
+          threshold: value
+        }
+      }
+    };
+    
     setConfig({
       ...config,
       testSuiteConfigs: {
         ...config.testSuiteConfigs,
-        [selectedTestSuiteIdLocal]: {
-          ...currentConfig,
-          [category]: {
-            ...currentConfig[category],
-            [scoreId]: {
-              threshold: value
-            }
-          }
-        }
+        [selectedTestSuiteIdLocal]: newConfig
       }
     });
+    
+    setHasUnsavedChanges(checkForChanges(newConfig));
   };
 
-  const prepareRequestBody = () => {
-    const currentConfig = getCurrentConfig();
-    const allMetrics = getAllMetrics();
-    const selectedMetrics = [];
-    const selectedThresholds = [];
-    const selectedTestSuite = testSuites.find(suite => suite.id === selectedTestSuiteIdLocal);
-
-    allMetrics.forEach(metric => {
-      let category = '';
-      if (contentEvaluation.find(m => m.id === metric.id)) category = 'contentEvaluation';
-      else if (retrievalGeneration.find(m => m.id === metric.id)) category = 'retrievalGeneration';
-      else if (functionalTesting.find(m => m.id === metric.id)) category = 'functionalTesting';
-      else if (nonFunctionalTesting.find(m => m.id === metric.id)) category = 'nonFunctionalTesting';
-
-      if (category && currentConfig[category]?.[metric.id]) {
-        selectedMetrics.push(metric.name);
-        selectedThresholds.push(currentConfig[category][metric.id].threshold / 100);
-      }
-    });
-
-    return {
-      suite_type: selectedTestSuite?.type || "excel",
-      api_endpoint: "https://api.example.com/process",
-      selected_metrics: selectedMetrics,
-      selected_thresholds: selectedThresholds,
-      directory: "C:/Users/default/Downloads/ML-viva",
-      excel_output_path: "C:/Users/default/Downloads",
-      model_selected: config.selectedModel || "openai"
-    };
-  };
-
-  const handleSaveConfiguration = async () => {
-    setIsSaving(true);
+  const saveConfiguration = async () => {
     try {
-      const requestBody = prepareRequestBody();
-      
-      if (isEditing && existingConfig) {
-        // Update existing configuration
+      const currentConfig = getCurrentConfig();
+      const allMetrics = getAllMetrics();
+      const selectedMetrics = [];
+      const selectedThresholds = [];
+
+      allMetrics.forEach(metric => {
+        let category = '';
+        if (contentEvaluation.find(m => m.id === metric.id)) category = 'contentEvaluation';
+        else if (retrievalGeneration.find(m => m.id === metric.id)) category = 'retrievalGeneration';
+        else if (functionalTesting.find(m => m.id === metric.id)) category = 'functionalTesting';
+        else if (nonFunctionalTesting.find(m => m.id === metric.id)) category = 'nonFunctionalTesting';
+
+        if (category && currentConfig[category]?.[metric.id]) {
+          selectedMetrics.push(metric.name);
+          selectedThresholds.push(currentConfig[category][metric.id].threshold / 100);
+        }
+      });
+
+      if (existingConfig) {
         const response = await fetch(`http://127.0.0.1:8000/test-suite/${selectedTestSuiteIdLocal}/configurations/${existingConfig.config_id}/`, {
           method: 'PUT',
           headers: {
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
-            selected_metrics: requestBody.selected_metrics,
-            selected_thresholds: requestBody.selected_thresholds
+            selected_metrics: selectedMetrics,
+            selected_thresholds: selectedThresholds
           }),
         });
         
         if (response.ok) {
           const updatedConfig = await response.json();
           setExistingConfig(updatedConfig);
+          setOriginalConfig(JSON.parse(JSON.stringify(currentConfig)));
+          setHasUnsavedChanges(false);
           toast({
             title: "Configuration Updated",
-            description: `Settings for ${selectedTestSuite?.name} have been updated successfully.`,
+            description: "Threshold changes have been saved successfully.",
           });
         } else {
           throw new Error('Failed to update configuration');
-        }
-      } else {
-        // Create new configuration
-        const response = await fetch(`http://127.0.0.1:8000/test-suite/${selectedTestSuiteIdLocal}/configurations/`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(requestBody),
-        });
-        
-        if (response.ok) {
-          const newConfig = await response.json();
-          setExistingConfig(newConfig);
-          setIsEditing(true);
-          toast({
-            title: "Configuration Created",
-            description: `Settings for ${selectedTestSuite?.name} have been saved successfully.`,
-          });
-        } else {
-          throw new Error('Failed to create configuration');
         }
       }
     } catch (error) {
       console.error('Error saving configuration:', error);
       toast({
         title: "Error",
-        description: "Failed to save configuration. Please try again.",
+        description: "Failed to save configuration changes. Please try again.",
         variant: "destructive",
       });
     }
-    setIsSaving(false);
   };
 
-  const handleDeleteConfiguration = async () => {
-    if (!existingConfig) return;
-    
-    try {
-      const response = await fetch(`http://127.0.0.1:8000/configurations/${existingConfig.config_id}/`, {
-        method: 'DELETE',
-      });
-      
-      if (response.ok) {
-        setExistingConfig(null);
-        setIsEditing(false);
-        initializeDefaults(selectedTestSuiteIdLocal);
-        toast({
-          title: "Configuration Deleted",
-          description: "Configuration has been deleted successfully.",
-        });
-      } else {
-        throw new Error('Failed to delete configuration');
+  // Store the configuration in a way that ModelSelection can access it
+  useEffect(() => {
+    const currentConfig = getCurrentConfig();
+    setConfig({
+      ...config,
+      pendingConfiguration: {
+        testSuiteId: selectedTestSuiteIdLocal,
+        thresholds: currentConfig,
+        isEditing: !!existingConfig,
+        configId: existingConfig?.config_id
       }
-    } catch (error) {
-      console.error('Error deleting configuration:', error);
-      toast({
-        title: "Error",
-        description: "Failed to delete configuration. Please try again.",
-        variant: "destructive",
-      });
-    }
-  };
+    });
+  }, [selectedTestSuiteIdLocal, getCurrentConfig(), existingConfig]);
 
   const selectedTestSuite = testSuites.find(suite => suite.id === selectedTestSuiteIdLocal);
 
@@ -389,26 +349,15 @@ const MetricsConfiguration = ({ config, setConfig, testSuites, onNext, onBack, s
                 Configure scoring methods and thresholds for your test suites
               </CardDescription>
             </div>
-            <div className="flex gap-2">
-              {isEditing && existingConfig && (
-                <Button 
-                  onClick={handleDeleteConfiguration}
-                  variant="destructive"
-                  className="transform transition-all duration-200 hover:scale-105"
-                >
-                  <Trash2 className="w-4 h-4 mr-2" />
-                  Delete Configuration
-                </Button>
-              )}
+            {hasUnsavedChanges && existingConfig && (
               <Button 
-                onClick={handleSaveConfiguration}
-                disabled={isSaving || !selectedTestSuiteIdLocal}
+                onClick={saveConfiguration}
                 className="bg-primary hover:bg-primary/90 text-primary-foreground transform transition-all duration-200 hover:scale-105"
               >
                 <Save className="w-4 h-4 mr-2" />
-                {isSaving ? 'Saving...' : isEditing ? 'Update Configuration' : 'Save Configuration'}
+                Save Changes
               </Button>
-            </div>
+            )}
           </div>
         </CardHeader>
         <CardContent className="space-y-6">
@@ -434,10 +383,17 @@ const MetricsConfiguration = ({ config, setConfig, testSuites, onNext, onBack, s
               </SelectContent>
             </Select>
             {selectedTestSuite && (
-              <p className="text-sm text-muted-foreground animate-fade-in">
-                Configuring: <span className="font-medium text-primary">{selectedTestSuite.name}</span>
-                {isEditing && <span className="text-blue-600 ml-2">(Editing existing configuration)</span>}
-              </p>
+              <div className="space-y-1">
+                <p className="text-sm text-muted-foreground animate-fade-in">
+                  Configuring: <span className="font-medium text-primary">{selectedTestSuite.name}</span>
+                  {existingConfig && <span className="text-blue-600 ml-2">(Editing existing configuration)</span>}
+                </p>
+                {hasUnsavedChanges && (
+                  <p className="text-xs text-orange-600 font-medium">
+                    ⚠️ You have unsaved threshold changes. Save them or they will revert to previous values.
+                  </p>
+                )}
+              </div>
             )}
           </div>
 

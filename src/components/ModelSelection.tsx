@@ -6,6 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Brain, ArrowRight } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 
 interface ModelSelectionProps {
   selectedModel: string;
@@ -21,6 +22,8 @@ interface ModelSelectionProps {
 const ModelSelection = ({ selectedModel, setSelectedModel, onNext, onBack, testSuites, selectedTestSuiteId, config, setConfig }: ModelSelectionProps) => {
   const [customEndpoint, setCustomEndpoint] = useState(config.customEndpoint || '');
   const [endpointError, setEndpointError] = useState('');
+  const [isProcessing, setIsProcessing] = useState(false);
+  const { toast } = useToast();
 
   const selectedTestSuite = testSuites.find(suite => suite.id === selectedTestSuiteId);
   const isConfidential = selectedTestSuite?.confidentialityStatus || false;
@@ -72,19 +75,129 @@ const ModelSelection = ({ selectedModel, setSelectedModel, onNext, onBack, testS
     return true;
   };
 
-  const handleNext = () => {
+  const createOrUpdateConfiguration = async () => {
+    const pendingConfig = config.pendingConfiguration;
+    if (!pendingConfig) return;
+
+    const allMetrics = [
+      { id: 'correctness', name: 'Correctness' },
+      { id: 'hallucination', name: 'Hallucination' },
+      { id: 'answer_relevancy', name: 'Answer Relevancy' },
+      { id: 'contextual_relevancy', name: 'Contextual Relevancy' },
+      { id: 'summarization', name: 'Summarization' },
+      { id: 'retrieving_content', name: 'Retrieving Content' },
+      { id: 'leading_questions', name: 'Leading Questions' },
+      { id: 'edge_cases', name: 'Edge Cases' },
+      { id: 'unnecessary_context', name: 'Unnecessary Context' },
+      { id: 'repetitive_loops', name: 'Repetitive Loops' },
+      { id: 'spam_flooding', name: 'Spam/Flooding' },
+      { id: 'intentional_misdirection', name: 'Intentional Misdirection' },
+      { id: 'prompt_overloading', name: 'Prompt Overloading' },
+      { id: 'prompt_tuning_attacks', name: 'Susceptibility to Prompt Tuning Attacks' }
+    ];
+
+    const selectedMetrics = [];
+    const selectedThresholds = [];
+
+    // Extract metrics and thresholds from the configuration
+    ['contentEvaluation', 'retrievalGeneration', 'functionalTesting', 'nonFunctionalTesting'].forEach(category => {
+      if (pendingConfig.thresholds[category]) {
+        Object.entries(pendingConfig.thresholds[category]).forEach(([metricId, metricData]: [string, any]) => {
+          const metricInfo = allMetrics.find(m => m.id === metricId);
+          if (metricInfo) {
+            selectedMetrics.push(metricInfo.name);
+            selectedThresholds.push(metricData.threshold / 100);
+          }
+        });
+      }
+    });
+
+    try {
+      if (pendingConfig.isEditing) {
+        // Update existing configuration
+        const response = await fetch(`http://127.0.0.1:8000/test-suite/${pendingConfig.testSuiteId}/configurations/${pendingConfig.configId}/`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            selected_metrics: selectedMetrics,
+            selected_thresholds: selectedThresholds
+          }),
+        });
+        
+        if (!response.ok) {
+          throw new Error('Failed to update configuration');
+        }
+        
+        toast({
+          title: "Configuration Updated",
+          description: "Your configuration has been updated successfully with the selected model.",
+        });
+      } else {
+        // Create new configuration
+        const requestBody = {
+          suite_type: selectedTestSuite?.type || "excel",
+          api_endpoint: "https://api.example.com/process",
+          selected_metrics: selectedMetrics,
+          selected_thresholds: selectedThresholds,
+          directory: "C:/Users/default/Downloads/ML-viva",
+          excel_output_path: "C:/Users/default/Downloads",
+          model_selected: selectedModel === 'custom' ? 'custom' : selectedModel
+        };
+
+        const response = await fetch(`http://127.0.0.1:8000/test-suite/${pendingConfig.testSuiteId}/configurations/`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(requestBody),
+        });
+        
+        if (!response.ok) {
+          throw new Error('Failed to create configuration');
+        }
+        
+        toast({
+          title: "Configuration Created",
+          description: "Your configuration has been created successfully with the selected model.",
+        });
+      }
+    } catch (error) {
+      console.error('Error saving configuration:', error);
+      toast({
+        title: "Error",
+        description: "Failed to save configuration. Please try again.",
+        variant: "destructive",
+      });
+      throw error;
+    }
+  };
+
+  const handleNext = async () => {
     if (!validateCustomEndpoint()) {
       return;
     }
     
-    // Update config with selected model
-    setConfig({
-      ...config,
-      selectedModel: selectedModel,
-      customEndpoint: selectedModel === 'custom' ? customEndpoint : null
-    });
+    setIsProcessing(true);
     
-    onNext();
+    try {
+      // Save configuration with selected model
+      await createOrUpdateConfiguration();
+      
+      // Update config with selected model
+      setConfig({
+        ...config,
+        selectedModel: selectedModel,
+        customEndpoint: selectedModel === 'custom' ? customEndpoint : null
+      });
+      
+      onNext();
+    } catch (error) {
+      console.error('Error processing model selection:', error);
+    } finally {
+      setIsProcessing(false);
+    }
   };
 
   // Auto-select Custom if confidential and no valid model selected
@@ -205,11 +318,15 @@ const ModelSelection = ({ selectedModel, setSelectedModel, onNext, onBack, testS
 
       {/* Navigation */}
       <div className="flex justify-between">
-        <Button variant="outline" onClick={onBack}>
+        <Button variant="outline" onClick={onBack} disabled={isProcessing}>
           Back
         </Button>
-        <Button onClick={handleNext} className="bg-blue-600 hover:bg-blue-700">
-          Start Test Execution <ArrowRight className="ml-2 w-4 h-4" />
+        <Button 
+          onClick={handleNext} 
+          className="bg-blue-600 hover:bg-blue-700"
+          disabled={isProcessing}
+        >
+          {isProcessing ? 'Processing...' : 'Start Test Execution'} <ArrowRight className="ml-2 w-4 h-4" />
         </Button>
       </div>
     </div>
