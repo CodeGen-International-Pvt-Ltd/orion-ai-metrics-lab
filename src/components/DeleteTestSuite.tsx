@@ -15,19 +15,22 @@ interface TestSuite {
 
 interface DeleteTestSuiteProps {
   testSuite: TestSuite;
+  userId: number; // <-- Add this
   onDeleteTestSuite: (suiteId: number) => void;
 }
 
-const DeleteTestSuite = ({ testSuite, onDeleteTestSuite }: DeleteTestSuiteProps) => {
-  console.log("Delete clicked for test suite ID:", testSuite.id); // 
+const DeleteTestSuite = ({ testSuite, userId, onDeleteTestSuite }: DeleteTestSuiteProps) => {
   const [isDeleting, setIsDeleting] = useState(false);
 
   const handleDelete = async () => {
     setIsDeleting(true);
-    
+
     try {
-      const res = await fetch(`http://127.0.0.1:8000/test_suite/${testSuite.id}/`, {
+      const res = await fetch(`http://127.0.0.1:8000/user/${userId}/test-suite/${testSuite.id}/`, {
         method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+        }
       });
 
       if (!res.ok) {

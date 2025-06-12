@@ -153,6 +153,8 @@ const ModelSelection = ({ selectedModel, setSelectedModel, onNext, onBack, testS
           },
           body: JSON.stringify(requestBody),
         });
+        console.log('Request body:', requestBody);
+
         
         if (!response.ok) {
           throw new Error('Failed to create configuration');

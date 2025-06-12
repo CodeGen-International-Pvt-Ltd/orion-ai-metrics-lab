@@ -116,13 +116,28 @@ const DisplayTestSuites = ({ testSuites, testSuiteResults, onSelectTestSuite, on
                       </CardDescription>
                     </div>
                     <div className="flex gap-2">
-                      <EditTestSuite testSuite={suite} onUpdateTestSuite={onUpdateTestSuite} />
-                      <DeleteTestSuite testSuite={suite} onDeleteTestSuite={onDeleteTestSuite} />
+                      <EditTestSuite testSuite={suite} onUpdateTestSuite={onUpdateTestSuite} userId={suite.user_id} />
+                      <DeleteTestSuite
+  testSuite={suite}
+  onDeleteTestSuite={onDeleteTestSuite}
+  userId={suite.user_id}
+/>
+
                     </div>
                   </div>
                 </CardHeader>
                 <CardContent>
-                  <div className="space-y-4" onClick={() => onSelectTestSuite(suite.id)}>
+                <div
+  className="space-y-4"
+  onClick={() => {
+    console.log("Test Suite clicked:", suite.id, "User ID:", suite.user_id);
+    setTimeout(() => {
+      onSelectTestSuite(suite.id);
+    }, 1500); // Wait 0.5 sec to view console log
+  }}
+>
+
+
                     {/* Test Results Summary */}
                     {latestResults ? (
                       <div className="space-y-2 cursor-pointer">

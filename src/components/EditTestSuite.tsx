@@ -17,10 +17,11 @@ interface TestSuite {
 
 interface EditTestSuiteProps {
   testSuite: TestSuite;
+  userId: number; // <-- Add this
   onUpdateTestSuite: (testSuite: TestSuite) => void;
 }
 
-const EditTestSuite = ({ testSuite, onUpdateTestSuite }: EditTestSuiteProps) => {
+const EditTestSuite = ({ testSuite, userId, onUpdateTestSuite }: EditTestSuiteProps) => {
   const [suiteName, setSuiteName] = useState(testSuite.name);
   const [error, setError] = useState('');
   const [isOpen, setIsOpen] = useState(false);
@@ -34,7 +35,7 @@ const EditTestSuite = ({ testSuite, onUpdateTestSuite }: EditTestSuiteProps) => 
     }
   
     try {
-      const res = await fetch(`http://127.0.0.1:8000/test_suite/${testSuite.id}/`, {
+      const res = await fetch(`http://127.0.0.1:8000/user/${userId}/test-suite/${testSuite.id}/`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",

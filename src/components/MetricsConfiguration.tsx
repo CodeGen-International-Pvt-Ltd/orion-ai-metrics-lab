@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -19,7 +18,7 @@ interface MetricsConfigurationProps {
 }
 
 const MetricsConfiguration = ({ config, setConfig, testSuites, onNext, onBack, selectedTestSuiteId }: MetricsConfigurationProps) => {
-  const [selectedTestSuiteIdLocal, setSelectedTestSuiteIdLocal] = useState(selectedTestSuiteId || '');
+  const [selectedTestSuiteIdLocal, setSelectedTestSuiteIdLocal] = useState(selectedTestSuiteId || testSuites[0]?.id || '');
   const [existingConfig, setExistingConfig] = useState(null);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [originalConfig, setOriginalConfig] = useState(null);
@@ -214,15 +213,6 @@ const MetricsConfiguration = ({ config, setConfig, testSuites, onNext, onBack, s
   };
 
   const saveConfiguration = async () => {
-    if (!selectedTestSuiteIdLocal) {
-      toast({
-        title: "Error",
-        description: "Please select a test suite first.",
-        variant: "destructive",
-      });
-      return;
-    }
-
     try {
       const currentConfig = getCurrentConfig();
       const allMetrics = getAllMetrics();
@@ -266,11 +256,6 @@ const MetricsConfiguration = ({ config, setConfig, testSuites, onNext, onBack, s
         } else {
           throw new Error('Failed to update configuration');
         }
-      } else {
-        toast({
-          title: "Info",
-          description: "Configuration will be saved after model selection.",
-        });
       }
     } catch (error) {
       console.error('Error saving configuration:', error);
@@ -280,27 +265,6 @@ const MetricsConfiguration = ({ config, setConfig, testSuites, onNext, onBack, s
         variant: "destructive",
       });
     }
-  };
-
-  const handleNext = () => {
-    if (!selectedTestSuiteIdLocal) {
-      toast({
-        title: "Error",
-        description: "Please select a test suite before proceeding.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    if (hasUnsavedChanges) {
-      toast({
-        title: "Unsaved Changes",
-        description: "You have unsaved threshold changes. Save them now or they will revert to previous values.",
-        variant: "destructive",
-      });
-    }
-
-    onNext();
   };
 
   // Store the configuration in a way that ModelSelection can access it
@@ -385,13 +349,15 @@ const MetricsConfiguration = ({ config, setConfig, testSuites, onNext, onBack, s
                 Configure scoring methods and thresholds for your test suites
               </CardDescription>
             </div>
-            <Button 
-              onClick={saveConfiguration}
-              className="bg-primary hover:bg-primary/90 text-primary-foreground transform transition-all duration-200 hover:scale-105"
-            >
-              <Save className="w-4 h-4 mr-2" />
-              Save Configuration
-            </Button>
+            {hasUnsavedChanges && existingConfig && (
+              <Button 
+                onClick={saveConfiguration}
+                className="bg-primary hover:bg-primary/90 text-primary-foreground transform transition-all duration-200 hover:scale-105"
+              >
+                <Save className="w-4 h-4 mr-2" />
+                Save Changes
+              </Button>
+            )}
           </div>
         </CardHeader>
         <CardContent className="space-y-6">
@@ -459,7 +425,7 @@ const MetricsConfiguration = ({ config, setConfig, testSuites, onNext, onBack, s
         <Button variant="outline" onClick={onBack} className="transform transition-all duration-200 hover:scale-105 border-border hover:bg-accent">
           Back
         </Button>
-        <Button onClick={handleNext} className="bg-primary hover:bg-primary/90 text-primary-foreground transform transition-all duration-200 hover:scale-105">
+        <Button onClick={onNext} className="bg-primary hover:bg-primary/90 text-primary-foreground transform transition-all duration-200 hover:scale-105">
           Continue to Model Selection <ArrowRight className="ml-2 w-4 h-4" />
         </Button>
       </div>
