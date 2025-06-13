@@ -171,19 +171,11 @@ const TestSuiteCreation = ({ userId, testSuites, setTestSuites, onNext, onBack, 
                 {testSuites.map((suite) => (
                   <div key={suite.id} className="flex items-center justify-between p-4 border rounded-lg bg-gray-50">
                     <div>
-                      <h4 className="font-medium">{suite.name}</h4>
+                    <h4 className="font-medium text-gray-900 dark:text-black">{suite.name}</h4>
                       <p className="text-sm text-gray-600">
                         Format: {suite.type} | Confidential: {suite.confidentialityStatus ? 'True' : 'False'}
                       </p>
                     </div>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => removeTestSuite(suite.id)}
-                      className="text-red-600 hover:text-red-700"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </Button>
                   </div>
                 ))}
               </div>

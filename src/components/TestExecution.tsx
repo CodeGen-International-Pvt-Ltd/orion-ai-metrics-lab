@@ -23,6 +23,8 @@ const TestExecution = ({ onNext, onBack, setResults, selectedTestSuiteId }: Test
   const [isComplete, setIsComplete] = useState(false);
   const [orionEndpoint, setOrionEndpoint] = useState('');
   const [endpointError, setEndpointError] = useState('');
+  const [testRunId, setTestRunId] = useState<number | null>(null);
+
 
   const testPhases = [
     { name: 'Initializing Test Environment', duration: 1000 },
@@ -43,6 +45,23 @@ const TestExecution = ({ onNext, onBack, setResults, selectedTestSuiteId }: Test
       answer_relevancy: Math.round((35 + random(0, 50)) * 10) / 10,
       contextual_relevance: Math.round((30 + random(0, 45)) * 10) / 10
     };
+
+    
+    
+    const deleteTestRun = async () => {
+      if (!selectedTestSuiteId || !testRunId) return;
+    
+      try {
+        await fetch(`http://127.0.0.1:8000/test-suite/${selectedTestSuiteId}/test_run/${testRunId}/`, {
+          method: 'DELETE',
+        });
+        console.log('Test run deleted');
+      } catch (err) {
+        console.error('Failed to delete test run:', err);
+      }
+    };
+    
+    
 
     // Retrieval and Generation Evaluation with variance
     const retrievalGeneration = {
@@ -132,23 +151,40 @@ const TestExecution = ({ onNext, onBack, setResults, selectedTestSuiteId }: Test
     if (isRunning && !isPaused) {
       const totalDuration = testPhases.reduce((sum, phase) => sum + phase.duration, 0);
       let currentTime = 0;
-
-      const interval = setInterval(() => {
+      let testRunCreated = false;
+  
+      const interval = setInterval(async () => {
         currentTime += 100;
         const newProgress = Math.min((currentTime / totalDuration) * 100, 100);
         setProgress(newProgress);
-
-        // Update current phase
+  
+        // Determine current phase
         let cumulativeTime = 0;
         for (let i = 0; i < testPhases.length; i++) {
           cumulativeTime += testPhases[i].duration;
           if (currentTime <= cumulativeTime) {
-            setCurrentPhase(testPhases[i].name);
+            const phaseName = testPhases[i].name;
+            setCurrentPhase(phaseName);
+  
+            // 💡 Create test run *only* when entering "Executing Test Run"
+            if (phaseName === "Executing Test Run" && !testRunCreated) {
+              try {
+                const runId = await createTestRun();
+                console.log("Test run created during execution:", runId);
+                testRunCreated = true;
+              } catch (err) {
+                console.error("Failed to create test run:", err);
+                setEndpointError("Test run creation failed during execution phase.");
+                clearInterval(interval);
+                setIsRunning(false);
+                return;
+              }
+            }
             break;
           }
         }
-
-        // Mark phases as completed
+  
+        // Mark completed phases
         const completed = [];
         let timeSum = 0;
         for (let i = 0; i < testPhases.length; i++) {
@@ -158,7 +194,7 @@ const TestExecution = ({ onNext, onBack, setResults, selectedTestSuiteId }: Test
           }
         }
         setCompletedTests(completed);
-
+  
         if (newProgress >= 100) {
           clearInterval(interval);
           setIsComplete(true);
@@ -166,10 +202,11 @@ const TestExecution = ({ onNext, onBack, setResults, selectedTestSuiteId }: Test
           setResults(results);
         }
       }, 100);
-
+  
       return () => clearInterval(interval);
     }
   }, [isRunning, isPaused, setResults, selectedTestSuiteId]);
+  
 
   const validateEndpoint = () => {
     if (!orionEndpoint.trim()) {
@@ -187,21 +224,53 @@ const TestExecution = ({ onNext, onBack, setResults, selectedTestSuiteId }: Test
     }
   };
 
-  const startTest = () => {
-    if (!validateEndpoint()) {
-      return;
+  const createTestRun = async () => {
+    if (!selectedTestSuiteId) return;
+  
+    const response = await fetch(`http://127.0.0.1:8000/test-suite/${selectedTestSuiteId}/test-run/`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        host: 'natura.codegen.net',
+        app_id: '3f23b628-6b75-49fd-a1aa-840534949860',
+        thread_id: '5dc36bd7-9723-4556-8aac-2ebd0102c872',
+      }),
+    });
+  
+    if (!response.ok) {
+      throw new Error('Failed to create test run');
     }
+  
+    const data = await response.json();
+    setTestRunId(data.test_run_id); // Store run ID
+    return data.test_run_id;
+  };
+
+  const startTest = async () => {
+    if (!validateEndpoint()) return;
+  
     setIsRunning(true);
     setIsPaused(false);
+    setIsComplete(false);
+    setProgress(0);
+    setCompletedTests([]);
   };
+  
 
   const pauseTest = () => {
     setIsPaused(true);
+    setCurrentPhase("Execution Paused");
   };
-
+  
   const resumeTest = () => {
     setIsPaused(false);
+    // Resume from where it left off – could be handled in a useEffect or directly
+    setCurrentPhase(prev => prev === "Execution Paused" ? "Resuming..." : prev);
   };
+  
+  
 
   return (
     <div className="max-w-4xl mx-auto space-y-6">

@@ -112,70 +112,34 @@ const ModelSelection = ({ selectedModel, setSelectedModel, onNext, onBack, testS
       }
     });
 
-    try {
-      if (pendingConfig.isEditing) {
-        // Update existing configuration
-        const response = await fetch(`http://127.0.0.1:8000/test-suite/${pendingConfig.testSuiteId}/configurations/${pendingConfig.configId}/`, {
-          method: 'PUT',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            selected_metrics: selectedMetrics,
-            selected_thresholds: selectedThresholds
-          }),
-        });
-        
-        if (!response.ok) {
-          throw new Error('Failed to update configuration');
-        }
-        
-        toast({
-          title: "Configuration Updated",
-          description: "Your configuration has been updated successfully with the selected model.",
-        });
-      } else {
-        // Create new configuration
-        const requestBody = {
-          suite_type: selectedTestSuite?.type || "excel",
-          api_endpoint: "https://api.example.com/process",
-          selected_metrics: selectedMetrics,
-          selected_thresholds: selectedThresholds,
-          directory: "C:/Users/default/Downloads/ML-viva",
-          excel_output_path: "C:/Users/default/Downloads",
-          model_selected: selectedModel === 'custom' ? 'custom' : selectedModel
-        };
-
-        const response = await fetch(`http://127.0.0.1:8000/test-suite/${pendingConfig.testSuiteId}/configurations/`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(requestBody),
-        });
-        console.log('Request body:', requestBody);
-
-        
-        if (!response.ok) {
-          throw new Error('Failed to create configuration');
-        }
-        
-        toast({
-          title: "Configuration Created",
-          description: "Your configuration has been created successfully with the selected model.",
-        });
-      }
-    } catch (error) {
-      console.error('Error saving configuration:', error);
-      toast({
-        title: "Error",
-        description: "Failed to save configuration. Please try again.",
-        variant: "destructive",
-      });
-      throw error;
+    const requestBody = {
+      suite_type: selectedTestSuite?.type || "excel",
+      api_endpoint: "https://api.example.com/process",
+      selected_metrics: selectedMetrics,
+      selected_thresholds: selectedThresholds,
+      directory: "C:/Users/default/Downloads/ML-viva",
+      excel_output_path: "C:/Users/default/Downloads",
+      model_selected: selectedModel === 'custom' ? 'custom' : selectedModel
+    };
+    
+    const response = await fetch(`http://127.0.0.1:8000/test-suite/${pendingConfig.testSuiteId}/configurations/`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(requestBody),
+    });
+    console.log('Request body:', requestBody);
+    
+    if (!response.ok) {
+      throw new Error('Failed to create configuration');
     }
-  };
-
+    
+    toast({
+      title: "Configuration Created",
+      description: "Your configuration has been created successfully with the selected model.",
+    });
+  }
   const handleNext = async () => {
     if (!validateCustomEndpoint()) {
       return;
@@ -279,7 +243,7 @@ const ModelSelection = ({ selectedModel, setSelectedModel, onNext, onBack, testS
           {selectedModel === 'custom' && (
             <div className="mt-6 p-4 border rounded-lg bg-gray-50">
               <div className="space-y-3">
-                <Label htmlFor="customEndpoint" className="text-sm font-medium text-black dark:text-white">
+                <Label htmlFor="customEndpoint" className="text-sm font-medium text-black dark:text-black">
                   Custom LLM Endpoint URL *
                 </Label>
                 <Input
