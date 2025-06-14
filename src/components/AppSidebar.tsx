@@ -1,3 +1,4 @@
+
 import {
   Sidebar,
   SidebarContent,
@@ -175,11 +176,12 @@ const AppSidebar = ({
                   <HelpCircle className="mr-2 h-4 w-4" />
                   <span>Help</span>
                 </DropdownMenuItem>
-              </DropdownMenuItem>
+              </HelpDialog>
               
               <DropdownMenuSeparator />
               
               <DropdownMenuItem onClick={handleLogout}>
+                <LogOut className="mr-2 h-4 w-4" />
                 <span>Logout</span>
               </DropdownMenuItem>
             </DropdownMenuContent>
