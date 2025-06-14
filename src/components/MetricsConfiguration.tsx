@@ -5,7 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Slider } from "@/components/ui/slider";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Progress } from "@/components/ui/progress";
-import { Settings, ArrowRight, Save, Edit, Trash2 } from "lucide-react";
+import { Settings, ArrowRight, Save, Edit, Trash2, Lock } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 interface MetricsConfigurationProps {
@@ -15,9 +15,10 @@ interface MetricsConfigurationProps {
   onNext: () => void;
   onBack: () => void;
   selectedTestSuiteId: string | null;
+  testSuiteResults?: any;
 }
 
-const MetricsConfiguration = ({ config, setConfig, testSuites, onNext, onBack, selectedTestSuiteId }: MetricsConfigurationProps) => {
+const MetricsConfiguration = ({ config, setConfig, testSuites, onNext, onBack, selectedTestSuiteId, testSuiteResults }: MetricsConfigurationProps) => {
   const [selectedTestSuiteIdLocal, setSelectedTestSuiteIdLocal] = useState(selectedTestSuiteId || testSuites[0]?.id || '');
   const [existingConfig, setExistingConfig] = useState(null);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
@@ -190,6 +191,16 @@ const MetricsConfiguration = ({ config, setConfig, testSuites, onNext, onBack, s
   };
 
   const updateScoreConfig = (category: string, scoreId: string, value: number) => {
+    // Don't allow updates if configuration is locked
+    if (isConfigurationLocked) {
+      toast({
+        title: "Configuration Locked",
+        description: "Cannot modify thresholds after test runs have been executed.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     const currentConfig = getCurrentConfig();
     const newConfig = {
       ...currentConfig,
@@ -213,6 +224,15 @@ const MetricsConfiguration = ({ config, setConfig, testSuites, onNext, onBack, s
   };
 
   const saveConfiguration = async () => {
+    if (isConfigurationLocked) {
+      toast({
+        title: "Configuration Locked",
+        description: "Cannot save changes after test runs have been executed.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     try {
       const currentConfig = getCurrentConfig();
       const allMetrics = getAllMetrics();
@@ -267,6 +287,15 @@ const MetricsConfiguration = ({ config, setConfig, testSuites, onNext, onBack, s
     }
   };
 
+  // Check if test runs exist for the current test suite
+  const hasTestRuns = () => {
+    if (!selectedTestSuiteIdLocal || !testSuiteResults) return false;
+    const suiteResults = testSuiteResults[selectedTestSuiteIdLocal];
+    return suiteResults && suiteResults.testRuns && suiteResults.testRuns.length > 0;
+  };
+
+  const isConfigurationLocked = hasTestRuns();
+
   // Store the configuration in a way that ModelSelection can access it
   useEffect(() => {
     const currentConfig = getCurrentConfig();
@@ -310,13 +339,18 @@ const MetricsConfiguration = ({ config, setConfig, testSuites, onNext, onBack, s
       <h4 className={`text-lg font-semibold mb-4 ${color} text-left`}>{title}</h4>
       <div className="space-y-4">
         {scores.map((score) => (
-          <Card key={score.id} className={`p-4 transform transition-all duration-300 hover:shadow-lg hover:scale-102 border-l-4 bg-card dark:bg-card/80 backdrop-blur-sm border-border dark:border-border/60 ${color.includes('indigo') ? 'border-l-indigo-500 dark:border-l-indigo-400' : color.includes('purple') ? 'border-l-purple-500 dark:border-l-purple-400' : color.includes('green') ? 'border-l-green-500 dark:border-l-green-400' : 'border-l-orange-500 dark:border-l-orange-400'}`}>
+          <Card key={score.id} className={`p-4 transform transition-all duration-300 hover:shadow-lg hover:scale-102 border-l-4 bg-card dark:bg-card/80 backdrop-blur-sm border-border dark:border-border/60 ${color.includes('indigo') ? 'border-l-indigo-500 dark:border-l-indigo-400' : color.includes('purple') ? 'border-l-purple-500 dark:border-l-purple-400' : color.includes('green') ? 'border-l-green-500 dark:border-l-green-400' : 'border-l-orange-500 dark:border-l-orange-400'} ${isConfigurationLocked ? 'opacity-75' : ''}`}>
             <div className="space-y-4">
               <div>
-                <Label className="text-base font-medium text-foreground text-left block">{score.name}</Label>
+                <Label className={`text-base font-medium text-foreground text-left block ${isConfigurationLocked ? 'text-muted-foreground' : ''}`}>
+                  {score.name}
+                  {isConfigurationLocked && <Lock className="w-4 h-4 inline ml-2 text-muted-foreground" />}
+                </Label>
                 <div className="mt-3 space-y-2">
                   <div className="flex justify-between items-center">
-                    <Label className="text-sm text-muted-foreground">Threshold: {currentConfig[category]?.[score.id]?.threshold ?? score.defaultThreshold}%</Label>
+                    <Label className={`text-sm ${isConfigurationLocked ? 'text-muted-foreground' : 'text-muted-foreground'}`}>
+                      Threshold: {currentConfig[category]?.[score.id]?.threshold ?? score.defaultThreshold}%
+                    </Label>
                   </div>
                   <Slider
                     value={[currentConfig[category]?.[score.id]?.threshold ?? score.defaultThreshold]}
@@ -324,8 +358,14 @@ const MetricsConfiguration = ({ config, setConfig, testSuites, onNext, onBack, s
                     min={0}
                     max={100}
                     step={1}
-                    className="w-full mt-2"
+                    className={`w-full mt-2 ${isConfigurationLocked ? 'pointer-events-none opacity-50' : ''}`}
+                    disabled={isConfigurationLocked}
                   />
+                  {isConfigurationLocked && (
+                    <p className="text-xs text-muted-foreground italic">
+                      Configuration is locked after test execution
+                    </p>
+                  )}
                 </div>
               </div>
             </div>
@@ -344,20 +384,25 @@ const MetricsConfiguration = ({ config, setConfig, testSuites, onNext, onBack, s
               <CardTitle className="flex items-center gap-2 text-foreground">
                 <Settings className="w-5 h-5 text-primary" />
                 Metrics Configuration
+                {isConfigurationLocked && <Lock className="w-5 h-5 text-muted-foreground" />}
               </CardTitle>
               <CardDescription className="text-muted-foreground">
                 Configure scoring methods and thresholds for your test suites
+                {isConfigurationLocked && (
+                  <span className="block mt-1 text-orange-600 font-medium">
+                    ⚠️ Configuration is locked - test runs have been executed for this test suite
+                  </span>
+                )}
               </CardDescription>
             </div>
-            {hasUnsavedChanges && existingConfig && (
-              <Button 
-                onClick={saveConfiguration}
-                className="bg-primary hover:bg-primary/90 text-primary-foreground transform transition-all duration-200 hover:scale-105"
-              >
-                <Save className="w-4 h-4 mr-2" />
-                Save Changes
-              </Button>
-            )}
+            <Button 
+              onClick={saveConfiguration}
+              disabled={isConfigurationLocked}
+              className={`bg-primary hover:bg-primary/90 text-primary-foreground transform transition-all duration-200 hover:scale-105 ${isConfigurationLocked ? 'opacity-50 cursor-not-allowed' : ''}`}
+            >
+              <Save className="w-4 h-4 mr-2" />
+              Save Configuration
+            </Button>
           </div>
         </CardHeader>
         <CardContent className="space-y-6">
@@ -387,8 +432,9 @@ const MetricsConfiguration = ({ config, setConfig, testSuites, onNext, onBack, s
                 <p className="text-sm text-muted-foreground animate-fade-in">
                   Configuring: <span className="font-medium text-primary">{selectedTestSuite.name}</span>
                   {existingConfig && <span className="text-blue-600 ml-2">(Editing existing configuration)</span>}
+                  {isConfigurationLocked && <span className="text-orange-600 ml-2">(Locked - test runs executed)</span>}
                 </p>
-                {hasUnsavedChanges && (
+                {hasUnsavedChanges && !isConfigurationLocked && (
                   <p className="text-xs text-orange-600 font-medium">
                     ⚠️ You have unsaved threshold changes. Save them or they will revert to previous values.
                   </p>
@@ -399,7 +445,14 @@ const MetricsConfiguration = ({ config, setConfig, testSuites, onNext, onBack, s
 
           <div className="space-y-6">
             <h3 className="text-lg font-semibold text-foreground">Scoring Methods</h3>
-            <p className="text-sm text-muted-foreground">All scoring methods are automatically selected with default thresholds. You can adjust thresholds as needed.</p>
+            <p className="text-sm text-muted-foreground">
+              All scoring methods are automatically selected with default thresholds. You can adjust thresholds as needed.
+              {isConfigurationLocked && (
+                <span className="block mt-1 text-orange-600 font-medium">
+                  Note: Thresholds cannot be modified after test runs have been executed.
+                </span>
+              )}
+            </p>
             
             <div className="grid lg:grid-cols-2 gap-6">
               {/* Content Evaluation */}
@@ -425,7 +478,11 @@ const MetricsConfiguration = ({ config, setConfig, testSuites, onNext, onBack, s
         <Button variant="outline" onClick={onBack} className="transform transition-all duration-200 hover:scale-105 border-border hover:bg-accent">
           Back
         </Button>
-        <Button onClick={onNext} className="bg-primary hover:bg-primary/90 text-primary-foreground transform transition-all duration-200 hover:scale-105">
+        <Button 
+          onClick={onNext} 
+          disabled={!selectedTestSuiteIdLocal}
+          className="bg-primary hover:bg-primary/90 text-primary-foreground transform transition-all duration-200 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
+        >
           Continue to Model Selection <ArrowRight className="ml-2 w-4 h-4" />
         </Button>
       </div>
