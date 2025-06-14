@@ -1,4 +1,3 @@
-
 import {
   Sidebar,
   SidebarContent,
@@ -27,6 +26,8 @@ import {
 import { FileText, BarChart3, LogOut, Brain, Settings, HelpCircle, Monitor, Moon, Sun } from "lucide-react"
 import { useTheme } from "@/components/ThemeProvider"
 import EditUserProfile from "./EditUserProfile"
+import SettingsDialog from "./SettingsDialog"
+import HelpDialog from "./HelpDialog"
 
 interface AppSidebarProps {
   userData: { id: number; name: string; email: string };
@@ -65,7 +66,6 @@ const AppSidebar = ({
       console.error("Logout error:", error);
     }
   };
-
 
   const menuItems = [
     {
@@ -163,14 +163,18 @@ const AppSidebar = ({
                 </DropdownMenuSubContent>
               </DropdownMenuSub>
               
-              <DropdownMenuItem>
-                <Settings className="mr-2 h-4 w-4" />
-                <span>Settings</span>
-              </DropdownMenuItem>
+              <SettingsDialog>
+                <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+                  <Settings className="mr-2 h-4 w-4" />
+                  <span>Settings</span>
+                </DropdownMenuItem>
+              </SettingsDialog>
               
-              <DropdownMenuItem>
-                <HelpCircle className="mr-2 h-4 w-4" />
-                <span>Help</span>
+              <HelpDialog>
+                <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+                  <HelpCircle className="mr-2 h-4 w-4" />
+                  <span>Help</span>
+                </DropdownMenuItem>
               </DropdownMenuItem>
               
               <DropdownMenuSeparator />
