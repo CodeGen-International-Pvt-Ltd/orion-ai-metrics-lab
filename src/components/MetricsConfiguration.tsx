@@ -5,7 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Slider } from "@/components/ui/slider";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Progress } from "@/components/ui/progress";
-import { Settings, ArrowRight, Save, Edit, Trash2, Lock } from "lucide-react";
+import { Settings, ArrowRight, Save, Edit, Trash2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 interface MetricsConfigurationProps {
@@ -15,51 +15,75 @@ interface MetricsConfigurationProps {
   onNext: () => void;
   onBack: () => void;
   selectedTestSuiteId: string | null;
-  testSuiteResults?: any;
+  testSuiteResults?: any; // add this line
 }
 
-const MetricsConfiguration = ({ config, setConfig, testSuites, onNext, onBack, selectedTestSuiteId, testSuiteResults }: MetricsConfigurationProps) => {
-  const [selectedTestSuiteIdLocal, setSelectedTestSuiteIdLocal] = useState(selectedTestSuiteId || testSuites[0]?.id || '');
-  const [existingConfig, setExistingConfig] = useState(null);
+const MetricsConfiguration = ({
+  config,
+  setConfig,
+  testSuites,
+  onNext,
+  onBack,
+  selectedTestSuiteId,
+}: MetricsConfigurationProps) => {
+  const [selectedTestSuiteIdLocal, setSelectedTestSuiteIdLocal] = useState(
+    selectedTestSuiteId || testSuites[0]?.id || ''
+  );
+  const [existingConfig, setExistingConfig] = useState<any>(null);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
-  const [originalConfig, setOriginalConfig] = useState(null);
+  const [originalConfig, setOriginalConfig] = useState<any>(null);
   const { toast } = useToast();
 
   const contentEvaluation = [
-    { id: 'correctness', name: 'Correctness', defaultThreshold: 90 },
-    { id: 'hallucination', name: 'Hallucination', defaultThreshold: 5, inverted: true },
-    { id: 'answer_relevancy', name: 'Answer Relevancy', defaultThreshold: 85 },
-    { id: 'contextual_relevancy', name: 'Contextual Relevancy', defaultThreshold: 85 }
+    { id: 'correctness', name: 'Correctness', defaultThreshold: 50 },
+    { id: 'hallucination', name: 'Hallucination', defaultThreshold: 70, inverted: true },
+    { id: 'answer relevancy', name: 'Answer Relevancy', defaultThreshold: 60 },
+    { id: 'contexual relevancy', name: 'Contextual Relevancy', defaultThreshold: 70 },
   ];
 
   const retrievalGeneration = [
-    { id: 'summarization', name: 'Summarization', defaultThreshold: 80 },
-    { id: 'retrieving_content', name: 'Retrieving Content', defaultThreshold: 75 }
+    { id: 'summarization', name: 'Summarization', defaultThreshold: 60 },
+    { id: 'retrieving same/similar content', name: 'Retrieving Content', defaultThreshold: 80 },
   ];
 
   const functionalTesting = [
-    { id: 'leading_questions', name: 'Leading Questions', defaultThreshold: 85 },
-    { id: 'edge_cases', name: 'Edge Cases', defaultThreshold: 80 },
-    { id: 'unnecessary_context', name: 'Unnecessary Context', defaultThreshold: 75 }
+    { id: 'leading questions', name: 'Leading Questions', defaultThreshold: 60 },
+    { id: 'edge cases', name: 'Edge Cases', defaultThreshold: 70 },
+    { id: 'unnecessary context', name: 'Unnecessary Context', defaultThreshold: 50 },
   ];
 
   const nonFunctionalTesting = [
-    { id: 'repetitive_loops', name: 'Repetitive Loops', defaultThreshold: 10, inverted: true },
-    { id: 'spam_flooding', name: 'Spam/Flooding', defaultThreshold: 5, inverted: true },
-    { id: 'intentional_misdirection', name: 'Intentional Misdirection', defaultThreshold: 5, inverted: true },
-    { id: 'prompt_overloading', name: 'Prompt Overloading', defaultThreshold: 10, inverted: true },
-    { id: 'prompt_tuning_attacks', name: 'Susceptibility to Prompt Tuning Attacks', defaultThreshold: 5, inverted: true }
+    { id: 'repetitive loops', name: 'Repetitive Loops', defaultThreshold: 30, inverted: true },
+    { id: 'spam/flooding', name: 'Spam/Flooding', defaultThreshold: 20, inverted: true },
+    { id: 'intentional misdirection', name: 'Intentional Misdirection', defaultThreshold: 40, inverted: true },
+    { id: 'prompt overloading', name: 'Prompt Overloading', defaultThreshold: 30, inverted: true },
+    { id: 'susceptibility to prompt tuning attacks', name: 'Susceptibility to Prompt Tuning Attacks', defaultThreshold: 30, inverted: true },
   ];
 
-  const getAllMetrics = () => {
-    return [
-      ...contentEvaluation,
-      ...retrievalGeneration,
-      ...functionalTesting,
-      ...nonFunctionalTesting
-    ];
+  const getAllMetrics = () => [
+    ...contentEvaluation,
+    ...retrievalGeneration,
+    ...functionalTesting,
+    ...nonFunctionalTesting,
+  ];
+
+  // Helper to map backend category names to frontend keys
+  const categoryToKey = (category: string): string => {
+    switch (category) {
+      case 'content evaluation':
+        return 'contentEvaluation';
+      case 'retrieval and generation evaluation':
+        return 'retrievalGeneration';
+      case 'functional testing':
+        return 'functionalTesting';
+      case 'non functional testing':
+        return 'nonFunctionalTesting';
+      default:
+        return '';
+    }
   };
 
+  // Fetch existing configuration from backend
   const fetchExistingConfiguration = async (testSuiteId: string) => {
     try {
       const response = await fetch(`http://127.0.0.1:8000/test-suite/${testSuiteId}/configurations/`);
@@ -68,41 +92,37 @@ const MetricsConfiguration = ({ config, setConfig, testSuites, onNext, onBack, s
         if (data && data.length > 0) {
           const configData = data[0];
           setExistingConfig(configData);
-          
-          const allMetrics = getAllMetrics();
-          const currentConfig = {};
-          
-          ['contentEvaluation', 'retrievalGeneration', 'functionalTesting', 'nonFunctionalTesting'].forEach(category => {
-            currentConfig[category] = {};
-          });
 
-          if (configData.selected_metrics && configData.selected_thresholds) {
-            configData.selected_metrics.forEach((metric, index) => {
-              const threshold = configData.selected_thresholds[index];
-              const metricInfo = allMetrics.find(m => m.name === metric || m.id === metric);
-              
+          // The backend now sends selected_metrics as an object grouped by category
+          // So we parse accordingly
+          const selectedMetrics = configData.selected_metrics || {};
+          const currentConfig: any = {
+            contentEvaluation: {},
+            retrievalGeneration: {},
+            functionalTesting: {},
+            nonFunctionalTesting: {},
+          };
+
+          Object.entries(selectedMetrics).forEach(([category, metrics]: [string, any]) => {
+            const key = categoryToKey(category);
+            if (!key) return;
+            Object.entries(metrics).forEach(([metricName, threshold]: [string, any]) => {
+              // Find metric by name in all metrics
+              const metricInfo = getAllMetrics().find(m => m.name === metricName);
               if (metricInfo) {
-                let category = '';
-                if (contentEvaluation.find(m => m.id === metricInfo.id)) category = 'contentEvaluation';
-                else if (retrievalGeneration.find(m => m.id === metricInfo.id)) category = 'retrievalGeneration';
-                else if (functionalTesting.find(m => m.id === metricInfo.id)) category = 'functionalTesting';
-                else if (nonFunctionalTesting.find(m => m.id === metricInfo.id)) category = 'nonFunctionalTesting';
-                
-                if (category) {
-                  currentConfig[category][metricInfo.id] = { threshold: threshold * 100 };
-                }
+                currentConfig[key][metricInfo.id] = { threshold: threshold * 100 };
               }
             });
-          }
+          });
 
           const newConfig = {
             ...config,
             testSuiteConfigs: {
               ...config.testSuiteConfigs,
-              [testSuiteId]: currentConfig
-            }
+              [testSuiteId]: currentConfig,
+            },
           };
-          
+
           setConfig(newConfig);
           setOriginalConfig(JSON.parse(JSON.stringify(currentConfig)));
           setHasUnsavedChanges(false);
@@ -121,55 +141,56 @@ const MetricsConfiguration = ({ config, setConfig, testSuites, onNext, onBack, s
     }
   };
 
+  // Initialize default thresholds for a new test suite
   const initializeDefaults = (testSuiteId: string) => {
     if (!config.testSuiteConfigs) {
       setConfig({ ...config, testSuiteConfigs: {} });
     }
-    
+
     if (!config.testSuiteConfigs?.[testSuiteId]) {
-      const defaultContentEval = {};
+      const defaultContentEval: any = {};
       contentEvaluation.forEach(score => {
         defaultContentEval[score.id] = {
-          threshold: score.defaultThreshold
+          threshold: score.defaultThreshold,
         };
       });
 
-      const defaultRetrievalGen = {};
+      const defaultRetrievalGen: any = {};
       retrievalGeneration.forEach(score => {
         defaultRetrievalGen[score.id] = {
-          threshold: score.defaultThreshold
+          threshold: score.defaultThreshold,
         };
       });
 
-      const defaultFunctional = {};
+      const defaultFunctional: any = {};
       functionalTesting.forEach(score => {
         defaultFunctional[score.id] = {
-          threshold: score.defaultThreshold
+          threshold: score.defaultThreshold,
         };
       });
 
-      const defaultNonFunctional = {};
+      const defaultNonFunctional: any = {};
       nonFunctionalTesting.forEach(score => {
         defaultNonFunctional[score.id] = {
-          threshold: score.defaultThreshold
+          threshold: score.defaultThreshold,
         };
       });
-      
+
       const defaultConfig = {
         contentEvaluation: defaultContentEval,
         retrievalGeneration: defaultRetrievalGen,
         functionalTesting: defaultFunctional,
-        nonFunctionalTesting: defaultNonFunctional
+        nonFunctionalTesting: defaultNonFunctional,
       };
-      
+
       setConfig({
         ...config,
         testSuiteConfigs: {
           ...config.testSuiteConfigs,
-          [testSuiteId]: defaultConfig
-        }
+          [testSuiteId]: defaultConfig,
+        },
       });
-      
+
       setOriginalConfig(JSON.parse(JSON.stringify(defaultConfig)));
       setHasUnsavedChanges(false);
     }
@@ -191,87 +212,74 @@ const MetricsConfiguration = ({ config, setConfig, testSuites, onNext, onBack, s
   };
 
   const updateScoreConfig = (category: string, scoreId: string, value: number) => {
-    // Don't allow updates if configuration is locked
-    if (isConfigurationLocked) {
-      toast({
-        title: "Configuration Locked",
-        description: "Cannot modify thresholds after test runs have been executed.",
-        variant: "destructive",
-      });
-      return;
-    }
-
     const currentConfig = getCurrentConfig();
     const newConfig = {
       ...currentConfig,
       [category]: {
         ...currentConfig[category],
         [scoreId]: {
-          threshold: value
-        }
-      }
+          threshold: value,
+        },
+      },
     };
-    
+
     setConfig({
       ...config,
       testSuiteConfigs: {
         ...config.testSuiteConfigs,
-        [selectedTestSuiteIdLocal]: newConfig
-      }
+        [selectedTestSuiteIdLocal]: newConfig,
+      },
     });
-    
+
     setHasUnsavedChanges(checkForChanges(newConfig));
   };
 
+  // Updated saveConfiguration to send selected_metrics as category -> {metricName: threshold}
   const saveConfiguration = async () => {
-    if (isConfigurationLocked) {
-      toast({
-        title: "Configuration Locked",
-        description: "Cannot save changes after test runs have been executed.",
-        variant: "destructive",
-      });
-      return;
-    }
-
     try {
       const currentConfig = getCurrentConfig();
-      const allMetrics = getAllMetrics();
-      const selectedMetrics = [];
-      const selectedThresholds = [];
 
-      allMetrics.forEach(metric => {
-        let category = '';
-        if (contentEvaluation.find(m => m.id === metric.id)) category = 'contentEvaluation';
-        else if (retrievalGeneration.find(m => m.id === metric.id)) category = 'retrievalGeneration';
-        else if (functionalTesting.find(m => m.id === metric.id)) category = 'functionalTesting';
-        else if (nonFunctionalTesting.find(m => m.id === metric.id)) category = 'nonFunctionalTesting';
+      const metricGroups = [
+        { category: 'content evaluation', metrics: contentEvaluation },
+        { category: 'retrieval and generation evaluation', metrics: retrievalGeneration },
+        { category: 'functional testing', metrics: functionalTesting },
+        { category: 'non functional testing', metrics: nonFunctionalTesting },
+      ];
 
-        if (category && currentConfig[category]?.[metric.id]) {
-          selectedMetrics.push(metric.name);
-          selectedThresholds.push(currentConfig[category][metric.id].threshold / 100);
-        }
+      const selectedMetrics: Record<string, Record<string, number>> = {};
+
+      metricGroups.forEach(({ category, metrics }) => {
+        selectedMetrics[category] = {};
+        metrics.forEach(metric => {
+          const thresholdValue = currentConfig?.[categoryToKey(category)]?.[metric.id]?.threshold;
+          if (thresholdValue !== undefined) {
+            selectedMetrics[category][metric.name] = thresholdValue / 100; // convert to 0-1
+          }
+        });
       });
 
       if (existingConfig) {
-        const response = await fetch(`http://127.0.0.1:8000/test-suite/${selectedTestSuiteIdLocal}/configurations/${existingConfig.config_id}/`, {
-          method: 'PUT',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            selected_metrics: selectedMetrics,
-            selected_thresholds: selectedThresholds
-          }),
-        });
-        
+        const response = await fetch(
+          `http://127.0.0.1:8000/test-suite/${selectedTestSuiteIdLocal}/configurations/${existingConfig.config_id}/`,
+          {
+            method: 'PUT',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              selected_metrics: selectedMetrics,
+            }),
+          }
+        );
+
         if (response.ok) {
           const updatedConfig = await response.json();
           setExistingConfig(updatedConfig);
           setOriginalConfig(JSON.parse(JSON.stringify(currentConfig)));
           setHasUnsavedChanges(false);
           toast({
-            title: "Configuration Updated",
-            description: "Threshold changes have been saved successfully.",
+            title: 'Configuration Updated',
+            description: 'Threshold changes have been saved successfully.',
           });
         } else {
           throw new Error('Failed to update configuration');
@@ -280,21 +288,12 @@ const MetricsConfiguration = ({ config, setConfig, testSuites, onNext, onBack, s
     } catch (error) {
       console.error('Error saving configuration:', error);
       toast({
-        title: "Error",
-        description: "Failed to save configuration changes. Please try again.",
-        variant: "destructive",
+        title: 'Error',
+        description: 'Failed to save configuration changes. Please try again.',
+        variant: 'destructive',
       });
     }
   };
-
-  // Check if test runs exist for the current test suite
-  const hasTestRuns = () => {
-    if (!selectedTestSuiteIdLocal || !testSuiteResults) return false;
-    const suiteResults = testSuiteResults[selectedTestSuiteIdLocal];
-    return suiteResults && suiteResults.testRuns && suiteResults.testRuns.length > 0;
-  };
-
-  const isConfigurationLocked = hasTestRuns();
 
   // Store the configuration in a way that ModelSelection can access it
   useEffect(() => {
@@ -305,10 +304,10 @@ const MetricsConfiguration = ({ config, setConfig, testSuites, onNext, onBack, s
         testSuiteId: selectedTestSuiteIdLocal,
         thresholds: currentConfig,
         isEditing: !!existingConfig,
-        configId: existingConfig?.config_id
-      }
+        configId: existingConfig?.config_id,
+      },
     });
-  }, [selectedTestSuiteIdLocal, getCurrentConfig(), existingConfig]);
+  }, [selectedTestSuiteIdLocal, existingConfig]);
 
   const selectedTestSuite = testSuites.find(suite => suite.id === selectedTestSuiteIdLocal);
 
@@ -339,18 +338,13 @@ const MetricsConfiguration = ({ config, setConfig, testSuites, onNext, onBack, s
       <h4 className={`text-lg font-semibold mb-4 ${color} text-left`}>{title}</h4>
       <div className="space-y-4">
         {scores.map((score) => (
-          <Card key={score.id} className={`p-4 transform transition-all duration-300 hover:shadow-lg hover:scale-102 border-l-4 bg-card dark:bg-card/80 backdrop-blur-sm border-border dark:border-border/60 ${color.includes('indigo') ? 'border-l-indigo-500 dark:border-l-indigo-400' : color.includes('purple') ? 'border-l-purple-500 dark:border-l-purple-400' : color.includes('green') ? 'border-l-green-500 dark:border-l-green-400' : 'border-l-orange-500 dark:border-l-orange-400'} ${isConfigurationLocked ? 'opacity-75' : ''}`}>
+          <Card key={score.id} className={`p-4 transform transition-all duration-300 hover:shadow-lg hover:scale-102 border-l-4 bg-card dark:bg-card/80 backdrop-blur-sm border-border dark:border-border/60 ${color.includes('indigo') ? 'border-l-indigo-500 dark:border-l-indigo-400' : color.includes('purple') ? 'border-l-purple-500 dark:border-l-purple-400' : color.includes('green') ? 'border-l-green-500 dark:border-l-green-400' : 'border-l-orange-500 dark:border-l-orange-400'}`}>
             <div className="space-y-4">
               <div>
-                <Label className={`text-base font-medium text-foreground text-left block ${isConfigurationLocked ? 'text-muted-foreground' : ''}`}>
-                  {score.name}
-                  {isConfigurationLocked && <Lock className="w-4 h-4 inline ml-2 text-muted-foreground" />}
-                </Label>
+                <Label className="text-base font-medium text-foreground text-left block">{score.name}</Label>
                 <div className="mt-3 space-y-2">
                   <div className="flex justify-between items-center">
-                    <Label className={`text-sm ${isConfigurationLocked ? 'text-muted-foreground' : 'text-muted-foreground'}`}>
-                      Threshold: {currentConfig[category]?.[score.id]?.threshold ?? score.defaultThreshold}%
-                    </Label>
+                    <Label className="text-sm text-muted-foreground">Threshold: {currentConfig[category]?.[score.id]?.threshold ?? score.defaultThreshold}%</Label>
                   </div>
                   <Slider
                     value={[currentConfig[category]?.[score.id]?.threshold ?? score.defaultThreshold]}
@@ -358,14 +352,8 @@ const MetricsConfiguration = ({ config, setConfig, testSuites, onNext, onBack, s
                     min={0}
                     max={100}
                     step={1}
-                    className={`w-full mt-2 ${isConfigurationLocked ? 'pointer-events-none opacity-50' : ''}`}
-                    disabled={isConfigurationLocked}
+                    className="w-full mt-2"
                   />
-                  {isConfigurationLocked && (
-                    <p className="text-xs text-muted-foreground italic">
-                      Configuration is locked after test execution
-                    </p>
-                  )}
                 </div>
               </div>
             </div>
@@ -384,25 +372,20 @@ const MetricsConfiguration = ({ config, setConfig, testSuites, onNext, onBack, s
               <CardTitle className="flex items-center gap-2 text-foreground">
                 <Settings className="w-5 h-5 text-primary" />
                 Metrics Configuration
-                {isConfigurationLocked && <Lock className="w-5 h-5 text-muted-foreground" />}
               </CardTitle>
               <CardDescription className="text-muted-foreground">
                 Configure scoring methods and thresholds for your test suites
-                {isConfigurationLocked && (
-                  <span className="block mt-1 text-orange-600 font-medium">
-                    ⚠️ Configuration is locked - test runs have been executed for this test suite
-                  </span>
-                )}
               </CardDescription>
             </div>
-            <Button 
-              onClick={saveConfiguration}
-              disabled={isConfigurationLocked}
-              className={`bg-primary hover:bg-primary/90 text-primary-foreground transform transition-all duration-200 hover:scale-105 ${isConfigurationLocked ? 'opacity-50 cursor-not-allowed' : ''}`}
-            >
-              <Save className="w-4 h-4 mr-2" />
-              Save Configuration
-            </Button>
+            {hasUnsavedChanges && existingConfig && (
+              <Button 
+                onClick={saveConfiguration}
+                className="bg-primary hover:bg-primary/90 text-primary-foreground transform transition-all duration-200 hover:scale-105"
+              >
+                <Save className="w-4 h-4 mr-2" />
+                Save Changes
+              </Button>
+            )}
           </div>
         </CardHeader>
         <CardContent className="space-y-6">
@@ -432,9 +415,8 @@ const MetricsConfiguration = ({ config, setConfig, testSuites, onNext, onBack, s
                 <p className="text-sm text-muted-foreground animate-fade-in">
                   Configuring: <span className="font-medium text-primary">{selectedTestSuite.name}</span>
                   {existingConfig && <span className="text-blue-600 ml-2">(Editing existing configuration)</span>}
-                  {isConfigurationLocked && <span className="text-orange-600 ml-2">(Locked - test runs executed)</span>}
                 </p>
-                {hasUnsavedChanges && !isConfigurationLocked && (
+                {hasUnsavedChanges && (
                   <p className="text-xs text-orange-600 font-medium">
                     ⚠️ You have unsaved threshold changes. Save them or they will revert to previous values.
                   </p>
@@ -445,14 +427,7 @@ const MetricsConfiguration = ({ config, setConfig, testSuites, onNext, onBack, s
 
           <div className="space-y-6">
             <h3 className="text-lg font-semibold text-foreground">Scoring Methods</h3>
-            <p className="text-sm text-muted-foreground">
-              All scoring methods are automatically selected with default thresholds. You can adjust thresholds as needed.
-              {isConfigurationLocked && (
-                <span className="block mt-1 text-orange-600 font-medium">
-                  Note: Thresholds cannot be modified after test runs have been executed.
-                </span>
-              )}
-            </p>
+            <p className="text-sm text-muted-foreground">All scoring methods are automatically selected with default thresholds. You can adjust thresholds as needed.</p>
             
             <div className="grid lg:grid-cols-2 gap-6">
               {/* Content Evaluation */}
@@ -478,11 +453,7 @@ const MetricsConfiguration = ({ config, setConfig, testSuites, onNext, onBack, s
         <Button variant="outline" onClick={onBack} className="transform transition-all duration-200 hover:scale-105 border-border hover:bg-accent">
           Back
         </Button>
-        <Button 
-          onClick={onNext} 
-          disabled={!selectedTestSuiteIdLocal}
-          className="bg-primary hover:bg-primary/90 text-primary-foreground transform transition-all duration-200 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
-        >
+        <Button onClick={onNext} className="bg-primary hover:bg-primary/90 text-primary-foreground transform transition-all duration-200 hover:scale-105">
           Continue to Model Selection <ArrowRight className="ml-2 w-4 h-4" />
         </Button>
       </div>
