@@ -125,7 +125,10 @@ const TestExecution = ({ onNext, onBack, setResults, selectedTestSuiteId }: Test
     const nonFunctionalScore = (nonFunctionalTesting.repetitive_loops + nonFunctionalTesting.spam_flooding + 
                                nonFunctionalTesting.intentional_misdirection + nonFunctionalTesting.prompt_overloading + 
                                nonFunctionalTesting.susceptibility_prompt_tuning) / 5;
+ 
 
+              
+                              
     const overallScore = (contentScore + retrievalScore + functionalScore + nonFunctionalScore) / 4;
 
     return {
@@ -193,14 +196,50 @@ const TestExecution = ({ onNext, onBack, setResults, selectedTestSuiteId }: Test
             completed.push(testPhases[i].name);
           }
         }
-        setCompletedTests(completed);
+        setCompletedTests(completed); 
+
+        const fetchActualResults = async (runId: number) => {
+          if (!selectedTestSuiteId || !runId) throw new Error("Missing required IDs");
+
+          console.log("Fetching results with:");
+          console.log("Test Suite ID:", selectedTestSuiteId);
+          console.log("Test Run ID:", runId);
+
+          console.log("✅ Test Run ID returned:", runId);
+        
+          const response = await fetch(`http://127.0.0.1:8000/test-suite/${selectedTestSuiteId}/test-run/${runId}/`);
+          if (!response.ok) {
+            throw new Error("Failed to fetch test results");
+          }
+        
+          const data = await response.json();
+          console.log("✅ Results fetched:", data);
+          return data; // This assumes the API returns the full test run result
+
+        };
   
         if (newProgress >= 100) {
           clearInterval(interval);
           setIsComplete(true);
-          const results = generateMockResults(selectedTestSuiteId || '');
-          setResults(results);
+        
+          let runId = testRunId; // Get the one already set earlier
+        
+          // If it was somehow not set (edge case), create it once
+          if (!runId) {
+            runId = await createTestRun();
+            console.log("Test run created at completion phase:", runId);
+          }
+        
+          try {
+            const results = await fetchActualResults(runId);
+            setResults(results);
+          } catch (error) {
+            console.error("Failed to fetch actual results:", error);
+            setEndpointError("Fetching test run results failed.");
+          }
         }
+        
+        
       }, 100);
   
       return () => clearInterval(interval);
@@ -226,6 +265,7 @@ const TestExecution = ({ onNext, onBack, setResults, selectedTestSuiteId }: Test
 
   const createTestRun = async () => {
     if (!selectedTestSuiteId) return;
+    console.log("Creating test run for suite ID:", selectedTestSuiteId);
   
     const response = await fetch(`http://127.0.0.1:8000/test-suite/${selectedTestSuiteId}/test-run/`, {
       method: 'POST',
@@ -244,9 +284,17 @@ const TestExecution = ({ onNext, onBack, setResults, selectedTestSuiteId }: Test
     }
   
     const data = await response.json();
-    setTestRunId(data.test_run_id); // Store run ID
-    return data.test_run_id;
+  
+    const runId = data.test_run?.test_run_id;
+    if (!runId) throw new Error('test_run_id missing from response');
+  
+    setTestRunId(runId); 
+    console.log("Used test suite ID: ", selectedTestSuiteId);
+    console.log("✅ Created test run ID:", runId);
+  
+    return runId;
   };
+  
 
   const startTest = async () => {
     if (!validateEndpoint()) return;
