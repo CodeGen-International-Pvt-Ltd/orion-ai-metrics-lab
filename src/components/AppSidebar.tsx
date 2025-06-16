@@ -156,10 +156,6 @@ const AppSidebar = ({
                     <Moon className="mr-2 h-4 w-4" />
                     <span>Dark</span>
                   </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => setTheme("system")}>
-                    <Monitor className="mr-2 h-4 w-4" />
-                    <span>System</span>
-                  </DropdownMenuItem>
                 </DropdownMenuSubContent>
               </DropdownMenuSub>
               

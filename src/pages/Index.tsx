@@ -171,7 +171,7 @@ const Index = () => {
   // Show login page if user is not logged in
   if (!userData) {
     return (
-      <ThemeProvider defaultTheme="system" storageKey="ui-theme">
+      <ThemeProvider defaultTheme="light" storageKey="ui-theme">
         <LoginPage onLogin={(loginData) => {
           setUserData(loginData);
           console.log("User logged in:", loginData);
@@ -229,14 +229,14 @@ const Index = () => {
 
   if (currentStep === 0) {
     return (
-      <ThemeProvider defaultTheme="system" storageKey="ui-theme">
+      <ThemeProvider defaultTheme="light" storageKey="ui-theme">
         {renderCurrentStep()}
       </ThemeProvider>
     );
   }
 
   return (
-    <ThemeProvider defaultTheme="system" storageKey="ui-theme">
+    <ThemeProvider defaultTheme="light" storageKey="ui-theme">
       <SidebarProvider>
         <div className="min-h-screen flex w-full">
           <AppSidebar 
