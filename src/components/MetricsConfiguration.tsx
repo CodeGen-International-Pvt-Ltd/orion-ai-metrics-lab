@@ -61,9 +61,9 @@ const MetricsConfiguration = ({
   ];
 
   const getAllMetrics = () => [
-    ...contentEvaluation,
-    ...retrievalGeneration,
-    ...functionalTesting,
+      ...contentEvaluation,
+      ...retrievalGeneration,
+      ...functionalTesting,
     ...nonFunctionalTesting,
   ];
 
@@ -92,7 +92,7 @@ const MetricsConfiguration = ({
         if (data && data.length > 0) {
           const configData = data[0];
           setExistingConfig(configData);
-
+          
           // The backend now sends selected_metrics as an object grouped by category
           // So we parse accordingly
           const selectedMetrics = configData.selected_metrics || {};
@@ -122,7 +122,7 @@ const MetricsConfiguration = ({
               [testSuiteId]: currentConfig,
             },
           };
-
+          
           setConfig(newConfig);
           setOriginalConfig(JSON.parse(JSON.stringify(currentConfig)));
           setHasUnsavedChanges(false);
@@ -146,7 +146,7 @@ const MetricsConfiguration = ({
     if (!config.testSuiteConfigs) {
       setConfig({ ...config, testSuiteConfigs: {} });
     }
-
+    
     if (!config.testSuiteConfigs?.[testSuiteId]) {
       const defaultContentEval: any = {};
       contentEvaluation.forEach(score => {
@@ -175,14 +175,14 @@ const MetricsConfiguration = ({
           threshold: score.defaultThreshold,
         };
       });
-
+      
       const defaultConfig = {
         contentEvaluation: defaultContentEval,
         retrievalGeneration: defaultRetrievalGen,
         functionalTesting: defaultFunctional,
         nonFunctionalTesting: defaultNonFunctional,
       };
-
+      
       setConfig({
         ...config,
         testSuiteConfigs: {
@@ -190,7 +190,7 @@ const MetricsConfiguration = ({
           [testSuiteId]: defaultConfig,
         },
       });
-
+      
       setOriginalConfig(JSON.parse(JSON.stringify(defaultConfig)));
       setHasUnsavedChanges(false);
     }
@@ -222,7 +222,7 @@ const MetricsConfiguration = ({
         },
       },
     };
-
+    
     setConfig({
       ...config,
       testSuiteConfigs: {
@@ -230,7 +230,7 @@ const MetricsConfiguration = ({
         [selectedTestSuiteIdLocal]: newConfig,
       },
     });
-
+    
     setHasUnsavedChanges(checkForChanges(newConfig));
   };
 
@@ -262,16 +262,16 @@ const MetricsConfiguration = ({
         const response = await fetch(
           `http://127.0.0.1:8000/test-suite/${selectedTestSuiteIdLocal}/configurations/${existingConfig.config_id}/`,
           {
-            method: 'PUT',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              selected_metrics: selectedMetrics,
-            }),
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            selected_metrics: selectedMetrics,
+          }),
           }
         );
-
+        
         if (response.ok) {
           const updatedConfig = await response.json();
           setExistingConfig(updatedConfig);

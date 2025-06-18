@@ -1,5 +1,4 @@
-
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -24,7 +23,11 @@ const TestExecution = ({ onNext, onBack, setResults, selectedTestSuiteId }: Test
   const [orionEndpoint, setOrionEndpoint] = useState('');
   const [endpointError, setEndpointError] = useState('');
   const [testRunId, setTestRunId] = useState<number | null>(null);
-
+  const [totalTestRuns, setTotalTestRuns] = useState(0);
+  
+  // Global flag to prevent multiple test run creations
+  const isCreatingTestRun = useRef(false);
+  const currentExecutionRef = useRef<string | null>(null);
 
   const testPhases = [
     { name: 'Initializing Test Environment', duration: 1000 },
@@ -150,101 +153,109 @@ const TestExecution = ({ onNext, onBack, setResults, selectedTestSuiteId }: Test
     };
   };
 
-  useEffect(() => {
-    if (isRunning && !isPaused) {
-      const totalDuration = testPhases.reduce((sum, phase) => sum + phase.duration, 0);
-      let currentTime = 0;
-      let testRunCreated = false;
-  
-      const interval = setInterval(async () => {
-        currentTime += 100;
-        const newProgress = Math.min((currentTime / totalDuration) * 100, 100);
-        setProgress(newProgress);
-  
-        // Determine current phase
-        let cumulativeTime = 0;
-        for (let i = 0; i < testPhases.length; i++) {
-          cumulativeTime += testPhases[i].duration;
-          if (currentTime <= cumulativeTime) {
-            const phaseName = testPhases[i].name;
-            setCurrentPhase(phaseName);
-  
-            // 💡 Create test run *only* when entering "Executing Test Run"
-            if (phaseName === "Executing Test Run" && !testRunCreated) {
-              try {
-                const runId = await createTestRun();
-                console.log("Test run created during execution:", runId);
-                testRunCreated = true;
-              } catch (err) {
-                console.error("Failed to create test run:", err);
-                setEndpointError("Test run creation failed during execution phase.");
-                clearInterval(interval);
-                setIsRunning(false);
-                return;
-              }
-            }
-            break;
-          }
-        }
-  
-        // Mark completed phases
-        const completed = [];
-        let timeSum = 0;
-        for (let i = 0; i < testPhases.length; i++) {
-          timeSum += testPhases[i].duration;
-          if (currentTime > timeSum) {
-            completed.push(testPhases[i].name);
-          }
-        }
-        setCompletedTests(completed); 
+  const fetchActualResults = async (runId: number) => {
+    if (!selectedTestSuiteId || !runId) throw new Error("Missing required IDs");
 
-        const fetchActualResults = async (runId: number) => {
-          if (!selectedTestSuiteId || !runId) throw new Error("Missing required IDs");
+    console.log("Fetching results with:");
+    console.log("Test Suite ID:", selectedTestSuiteId);
+    console.log("Test Run ID:", runId);
 
-          console.log("Fetching results with:");
-          console.log("Test Suite ID:", selectedTestSuiteId);
-          console.log("Test Run ID:", runId);
-
-          console.log("✅ Test Run ID returned:", runId);
-        
-          const response = await fetch(`http://127.0.0.1:8000/test-suite/${selectedTestSuiteId}/test-run/${runId}/`);
-          if (!response.ok) {
-            throw new Error("Failed to fetch test results");
-          }
-        
-          const data = await response.json();
-          console.log("✅ Results fetched:", data);
-          return data; // This assumes the API returns the full test run result
-
-        };
+    console.log("✅ Test Run ID returned:", runId);
   
-        if (newProgress >= 100) {
-          clearInterval(interval);
-          setIsComplete(true);
-        
-          let runId = testRunId; // Get the one already set earlier
-        
-          // If it was somehow not set (edge case), create it once
-          if (!runId) {
-            runId = await createTestRun();
-            console.log("Test run created at completion phase:", runId);
-          }
-        
-          try {
-            const results = await fetchActualResults(runId);
-            setResults(results);
-          } catch (error) {
-            console.error("Failed to fetch actual results:", error);
-            setEndpointError("Fetching test run results failed.");
-          }
-        }
-        
-        
-      }, 100);
-  
-      return () => clearInterval(interval);
+    const response = await fetch(`http://127.0.0.1:8000/test-suite/${selectedTestSuiteId}/test-run/${runId}/`);
+    if (!response.ok) {
+      throw new Error("Failed to fetch test results");
     }
-  }, [isRunning, isPaused, setResults, selectedTestSuiteId]);
+  
+    const data = await response.json();
+    console.log("✅ Results fetched:", data);
+    return data; // This assumes the API returns the full test run result
+  };
+
+  useEffect(() => {
+    // Only run when isRunning changes to true
+    if (!isRunning) return;
+    
+    const totalDuration = testPhases.reduce((sum, phase) => sum + phase.duration, 0);
+    let currentTime = 0;
+    let testRunCreated = false;
+    const executionId = currentExecutionRef.current;
+    
+    console.log("🔄 Starting execution cycle with ID:", executionId);
+    
+    const interval = setInterval(async () => {
+      currentTime += 100;
+      const newProgress = Math.min((currentTime / totalDuration) * 100, 100);
+      setProgress(newProgress);
+      
+      // Determine current phase
+      let cumulativeTime = 0;
+      for (let i = 0; i < testPhases.length; i++) {
+        cumulativeTime += testPhases[i].duration;
+        if (currentTime <= cumulativeTime) {
+          const phaseName = testPhases[i].name;
+          setCurrentPhase(phaseName);
+          
+          // Create test run when entering "Executing Test Run" phase
+          if (phaseName === "Executing Test Run" && !testRunCreated && !isCreatingTestRun.current) {
+            console.log("🔍 Creating test run for execution ID:", executionId);
+            isCreatingTestRun.current = true;
+            testRunCreated = true;
+            
+            try {
+              const runId = await createTestRun();
+              console.log(`✅ Test run created successfully for execution ID ${executionId}:`, runId);
+              setTotalTestRuns(prev => {
+                console.log(`📊 Updating total test runs from ${prev} to ${prev + 1}`);
+                return prev + 1;
+              });
+            } catch (err) {
+              console.error("❌ Failed to create test run for execution ID", executionId, ":", err);
+              setEndpointError("Test run creation failed during execution phase.");
+              clearInterval(interval);
+              setIsRunning(false);
+              isCreatingTestRun.current = false;
+              return;
+            }
+          }
+          break;
+        }
+      }
+      
+      // Mark completed phases
+      const completed = [];
+      let timeSum = 0;
+      for (let i = 0; i < testPhases.length; i++) {
+        timeSum += testPhases[i].duration;
+        if (currentTime > timeSum) {
+          completed.push(testPhases[i].name);
+        }
+      }
+      setCompletedTests(completed);
+      
+      if (newProgress >= 100) {
+        console.log("🎉 Execution completed for ID:", executionId);
+        clearInterval(interval);
+        setIsComplete(true);
+        setIsRunning(false);
+        isCreatingTestRun.current = false;
+        
+        let runId = testRunId;
+        
+        try {
+          const results = await fetchActualResults(runId);
+          setResults(results);
+        } catch (error) {
+          console.error("Failed to fetch actual results:", error);
+        }
+      }
+    }, 100);
+    
+    return () => {
+      console.log("🧹 Cleaning up interval for execution ID:", executionId);
+      clearInterval(interval);
+    };
+  }, [isRunning]); // Only depend on isRunning
   
 
   const validateEndpoint = () => {
@@ -299,11 +310,39 @@ const TestExecution = ({ onNext, onBack, setResults, selectedTestSuiteId }: Test
   const startTest = async () => {
     if (!validateEndpoint()) return;
   
+    // Generate new execution ID
+    currentExecutionRef.current = Date.now().toString();
+    
+    console.log("🚀 Starting test execution with ID:", currentExecutionRef.current);
     setIsRunning(true);
     setIsPaused(false);
     setIsComplete(false);
     setProgress(0);
     setCompletedTests([]);
+    setTestRunId(null);
+    setEndpointError('');
+    
+    // Reset test run creation flag
+    isCreatingTestRun.current = false;
+  };
+
+  const createAdditionalTestRun = async () => {
+    if (!validateEndpoint()) return;
+  
+    // Generate new execution ID
+    currentExecutionRef.current = Date.now().toString();
+    
+    console.log("🚀 Creating additional test run with ID:", currentExecutionRef.current);
+    setIsRunning(true);
+    setIsPaused(false);
+    setIsComplete(false);
+    setProgress(0);
+    setCompletedTests([]);
+    setTestRunId(null);
+    setEndpointError('');
+    
+    // Reset test run creation flag
+    isCreatingTestRun.current = false;
   };
   
 
@@ -370,7 +409,7 @@ const TestExecution = ({ onNext, onBack, setResults, selectedTestSuiteId }: Test
               <Button 
                 onClick={startTest} 
                 className="bg-emerald-600 hover:bg-emerald-700 transform transition-transform hover:scale-105"
-                disabled={!orionEndpoint.trim()}
+                disabled={!orionEndpoint.trim() || totalTestRuns > 0}
               >
                 <Play className="w-4 h-4 mr-2" />
                 Start Test Execution
@@ -410,6 +449,28 @@ const TestExecution = ({ onNext, onBack, setResults, selectedTestSuiteId }: Test
             </div>
           )}
 
+          {/* Test Run Statistics */}
+          {!isRunning && totalTestRuns > 0 && (
+            <div className="p-4 bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-lg">
+              <div className="flex justify-between items-center">
+                <div>
+                  <p className="font-medium text-green-900">Total Test Runs Created:</p>
+                  <p className="text-2xl font-bold text-green-700">{totalTestRuns}</p>
+                </div>
+                <Button 
+                  onClick={createAdditionalTestRun}
+                  className="bg-green-600 hover:bg-green-700 text-white"
+                >
+                  <Play className="w-4 h-4 mr-2" />
+                  Create Another Test Run
+                </Button>
+              </div>
+              <p className="text-sm text-green-600 mt-2">
+                Each test run evaluates your OrionAI system with the configured metrics.
+              </p>
+            </div>
+          )}
+
           {/* Test Phases Status */}
           {isRunning && (
             <div className="space-y-3">
@@ -441,9 +502,9 @@ const TestExecution = ({ onNext, onBack, setResults, selectedTestSuiteId }: Test
           {isComplete && (
             <div className="p-6 bg-gradient-to-r from-emerald-50 to-green-50 border border-emerald-200 rounded-lg text-center animate-fade-in">
               <CheckCircle className="w-8 h-8 text-emerald-600 mx-auto mb-2 animate-bounce" />
-              <h3 className="text-lg font-semibold text-emerald-900 mb-2">Test Execution Complete!</h3>
+              <h3 className="text-lg font-semibold text-emerald-900 mb-2">Test Run Complete!</h3>
               <p className="text-emerald-700">
-                All evaluation tests have been completed successfully. View detailed results in the next step.
+                Test run has been completed successfully. You can create additional test runs or view results.
               </p>
             </div>
           )}
@@ -459,6 +520,7 @@ const TestExecution = ({ onNext, onBack, setResults, selectedTestSuiteId }: Test
                     <li>• Enter a valid OrionAI endpoint URL</li>
                     <li>• Ensure OrionAI system is accessible and running</li>
                     <li>• Test execution may take several minutes to complete</li>
+                    <li>• Each execution creates one test run</li>
                     <li>• Do not close this window during test execution</li>
                   </ul>
                 </div>
@@ -475,7 +537,7 @@ const TestExecution = ({ onNext, onBack, setResults, selectedTestSuiteId }: Test
         </Button>
         <Button 
           onClick={onNext} 
-          disabled={!isComplete}
+          disabled={totalTestRuns === 0}
           className="bg-blue-600 hover:bg-blue-700 transform transition-transform hover:scale-105"
         >
           View Results <ArrowRight className="ml-2 w-4 h-4" />
