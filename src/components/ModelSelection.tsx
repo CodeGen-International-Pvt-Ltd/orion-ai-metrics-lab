@@ -14,7 +14,7 @@ interface ModelSelectionProps {
   onNext: () => void;
   onBack: () => void;
   testSuites: any[];
-  selectedTestSuiteId: string | null;
+  selectedTestSuiteId: number | null;
   config: any;
   setConfig: (config: any) => void;
 }

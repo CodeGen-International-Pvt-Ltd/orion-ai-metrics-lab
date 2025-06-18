@@ -22,7 +22,7 @@ interface TestSuiteCreationProps {
   setTestSuites: (suites: TestSuite[]) => void;
   onNext: () => void;
   onBack: () => void;
-  setSelectedTestSuiteId: (id: string) => void;
+  setSelectedTestSuiteId: (id: number) => void;
 }
 
 const TestSuiteCreation = ({ userId, testSuites, setTestSuites, onNext, onBack, setSelectedTestSuiteId }: TestSuiteCreationProps) => {
@@ -76,7 +76,7 @@ const TestSuiteCreation = ({ userId, testSuites, setTestSuites, onNext, onBack, 
 
   
       setTestSuites([...testSuites, testSuite]);
-      setSelectedTestSuiteId(testSuite.id.toString());
+      setSelectedTestSuiteId(testSuite.id);
       setNewSuite({ name: '', type: 'excel', confidentialityStatus: false });
       setErrors({ name: '' });
   

@@ -5,8 +5,18 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Slider } from "@/components/ui/slider";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Progress } from "@/components/ui/progress";
-import { Settings, ArrowRight, Save, Edit, Trash2 } from "lucide-react";
+import { Settings, ArrowRight, Save, Edit, Trash2, Lock, AlertCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+
+interface TestRun {
+  test_run_id: number;
+  test_suite: number;
+  test_run_date: string;
+  execution_status: string;
+  total_time: string | null;
+  evaluation: any;
+  test_results: any[];
+}
 
 interface MetricsConfigurationProps {
   config: any;
@@ -14,8 +24,8 @@ interface MetricsConfigurationProps {
   testSuites: any[];
   onNext: () => void;
   onBack: () => void;
-  selectedTestSuiteId: string | null;
-  testSuiteResults?: any; // add this line
+  selectedTestSuiteId: number | null;
+  testSuiteResults?: any;
 }
 
 const MetricsConfiguration = ({
@@ -32,6 +42,8 @@ const MetricsConfiguration = ({
   const [existingConfig, setExistingConfig] = useState<any>(null);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [originalConfig, setOriginalConfig] = useState<any>(null);
+  const [testRuns, setTestRuns] = useState<TestRun[]>([]);
+  const [loadingTestRuns, setLoadingTestRuns] = useState(false);
   const { toast } = useToast();
 
   const contentEvaluation = [
@@ -66,6 +78,36 @@ const MetricsConfiguration = ({
       ...functionalTesting,
     ...nonFunctionalTesting,
   ];
+
+  // Check if the selected test suite has test runs
+  const hasTestRuns = testRuns.length > 0;
+
+  // Fetch test runs for the selected test suite
+  const fetchTestRuns = async (testSuiteId: string) => {
+    if (!testSuiteId) return;
+    
+    setLoadingTestRuns(true);
+    try {
+      const response = await fetch(`http://127.0.0.1:8000/test-suite/${testSuiteId}/test-run/filter/`);
+      
+      if (response.ok) {
+        const data = await response.json();
+        const sortedRuns = Array.isArray(data) ? data.sort((a: TestRun, b: TestRun) => 
+          new Date(b.test_run_date).getTime() - new Date(a.test_run_date).getTime()
+        ) : [];
+        setTestRuns(sortedRuns);
+        console.log(`Fetched ${sortedRuns.length} test runs for suite ${testSuiteId}`);
+      } else {
+        console.warn(`Failed to fetch test runs for suite ${testSuiteId}:`, response.status);
+        setTestRuns([]);
+      }
+    } catch (error) {
+      console.error(`Error fetching test runs for suite ${testSuiteId}:`, error);
+      setTestRuns([]);
+    } finally {
+      setLoadingTestRuns(false);
+    }
+  };
 
   // Helper to map backend category names to frontend keys
   const categoryToKey = (category: string): string => {
@@ -199,6 +241,7 @@ const MetricsConfiguration = ({
   useEffect(() => {
     if (selectedTestSuiteIdLocal) {
       fetchExistingConfiguration(selectedTestSuiteIdLocal);
+      fetchTestRuns(selectedTestSuiteIdLocal);
     }
   }, [selectedTestSuiteIdLocal]);
 
@@ -207,71 +250,77 @@ const MetricsConfiguration = ({
   };
 
   const checkForChanges = (newConfig: any) => {
-    if (!originalConfig) return false;
     return JSON.stringify(newConfig) !== JSON.stringify(originalConfig);
   };
 
   const updateScoreConfig = (category: string, scoreId: string, value: number) => {
+    if (hasTestRuns) {
+      toast({
+        title: 'Thresholds Locked',
+        description: 'Cannot modify thresholds after test runs have been executed.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
     const currentConfig = getCurrentConfig();
+    const newCategoryConfig = {
+      ...currentConfig[category],
+      [scoreId]: { threshold: value },
+    };
+
     const newConfig = {
       ...currentConfig,
-      [category]: {
-        ...currentConfig[category],
-        [scoreId]: {
-          threshold: value,
-        },
-      },
+      [category]: newCategoryConfig,
     };
-    
-    setConfig({
+
+    const newFullConfig = {
       ...config,
       testSuiteConfigs: {
         ...config.testSuiteConfigs,
         [selectedTestSuiteIdLocal]: newConfig,
       },
-    });
-    
+    };
+
+    setConfig(newFullConfig);
     setHasUnsavedChanges(checkForChanges(newConfig));
   };
 
-  // Updated saveConfiguration to send selected_metrics as category -> {metricName: threshold}
   const saveConfiguration = async () => {
     try {
       const currentConfig = getCurrentConfig();
+      
+      // Convert frontend config to backend format
+      const backendConfig: any = {
+        selected_metrics: {},
+      };
 
-      const metricGroups = [
-        { category: 'content evaluation', metrics: contentEvaluation },
-        { category: 'retrieval and generation evaluation', metrics: retrievalGeneration },
-        { category: 'functional testing', metrics: functionalTesting },
-        { category: 'non functional testing', metrics: nonFunctionalTesting },
-      ];
-
-      const selectedMetrics: Record<string, Record<string, number>> = {};
-
-      metricGroups.forEach(({ category, metrics }) => {
-        selectedMetrics[category] = {};
-        metrics.forEach(metric => {
-          const thresholdValue = currentConfig?.[categoryToKey(category)]?.[metric.id]?.threshold;
-          if (thresholdValue !== undefined) {
-            selectedMetrics[category][metric.name] = thresholdValue / 100; // convert to 0-1
+      Object.entries(currentConfig).forEach(([category, metrics]: [string, any]) => {
+        const categoryName = category === 'contentEvaluation' ? 'content evaluation' :
+                           category === 'retrievalGeneration' ? 'retrieval and generation evaluation' :
+                           category === 'functionalTesting' ? 'functional testing' :
+                           category === 'nonFunctionalTesting' ? 'non functional testing' : category;
+        
+        backendConfig.selected_metrics[categoryName] = {};
+        
+        Object.entries(metrics).forEach(([metricId, config]: [string, any]) => {
+          const metricInfo = getAllMetrics().find(m => m.id === metricId);
+          if (metricInfo) {
+            backendConfig.selected_metrics[categoryName][metricInfo.name] = config.threshold / 100;
           }
         });
       });
 
       if (existingConfig) {
-        const response = await fetch(
-          `http://127.0.0.1:8000/test-suite/${selectedTestSuiteIdLocal}/configurations/${existingConfig.config_id}/`,
-          {
+        // Update existing configuration
+        const response = await fetch(`http://127.0.0.1:8000/test-suite/${selectedTestSuiteIdLocal}/configurations/${existingConfig.config_id}/`, {
           method: 'PUT',
           headers: {
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify({
-            selected_metrics: selectedMetrics,
-          }),
-          }
-        );
-        
+          body: JSON.stringify(backendConfig),
+        });
+
         if (response.ok) {
           const updatedConfig = await response.json();
           setExistingConfig(updatedConfig);
@@ -281,6 +330,30 @@ const MetricsConfiguration = ({
             title: 'Configuration Updated',
             description: 'Threshold changes have been saved successfully.',
           });
+          console.log('✅ Configuration saved successfully');
+        } else {
+          throw new Error('Failed to update configuration');
+        }
+      } else {
+        // Create new configuration
+        const response = await fetch(`http://127.0.0.1:8000/test-suite/${selectedTestSuiteIdLocal}/configurations/`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(backendConfig),
+        });
+
+        if (response.ok) {
+          const newConfig = await response.json();
+          setExistingConfig(newConfig);
+          setOriginalConfig(JSON.parse(JSON.stringify(currentConfig)));
+          setHasUnsavedChanges(false);
+          toast({
+            title: 'Configuration Created',
+            description: 'Threshold changes have been saved successfully.',
+          });
+          console.log('✅ Configuration saved successfully');
         } else {
           throw new Error('Failed to update configuration');
         }
@@ -298,6 +371,8 @@ const MetricsConfiguration = ({
   // Store the configuration in a way that ModelSelection can access it
   useEffect(() => {
     const currentConfig = getCurrentConfig();
+    console.log('🔄 Storing configuration for ModelSelection:', currentConfig);
+    
     setConfig({
       ...config,
       pendingConfiguration: {
@@ -307,7 +382,7 @@ const MetricsConfiguration = ({
         configId: existingConfig?.config_id,
       },
     });
-  }, [selectedTestSuiteIdLocal, existingConfig]);
+  }, [selectedTestSuiteIdLocal, existingConfig, config.testSuiteConfigs]);
 
   const selectedTestSuite = testSuites.find(suite => suite.id === selectedTestSuiteIdLocal);
 
@@ -337,28 +412,47 @@ const MetricsConfiguration = ({
     <div className="space-y-4">
       <h4 className={`text-lg font-semibold mb-4 ${color} text-left`}>{title}</h4>
       <div className="space-y-4">
-        {scores.map((score) => (
-          <Card key={score.id} className={`p-4 transform transition-all duration-300 hover:shadow-lg hover:scale-102 border-l-4 bg-card dark:bg-card/80 backdrop-blur-sm border-border dark:border-border/60 ${color.includes('indigo') ? 'border-l-indigo-500 dark:border-l-indigo-400' : color.includes('purple') ? 'border-l-purple-500 dark:border-l-purple-400' : color.includes('green') ? 'border-l-green-500 dark:border-l-green-400' : 'border-l-orange-500 dark:border-l-orange-400'}`}>
-            <div className="space-y-4">
-              <div>
-                <Label className="text-base font-medium text-foreground text-left block">{score.name}</Label>
-                <div className="mt-3 space-y-2">
-                  <div className="flex justify-between items-center">
-                    <Label className="text-sm text-muted-foreground">Threshold: {currentConfig[category]?.[score.id]?.threshold ?? score.defaultThreshold}%</Label>
+        {scores.map((score) => {
+          const currentThreshold = currentConfig[category]?.[score.id]?.threshold ?? score.defaultThreshold;
+          const isChanged = currentThreshold !== score.defaultThreshold;
+          
+          return (
+            <Card key={score.id} className={`p-4 transform transition-all duration-300 hover:shadow-lg hover:scale-102 border-l-4 bg-card dark:bg-card/80 backdrop-blur-sm border-border dark:border-border/60 ${color.includes('indigo') ? 'border-l-indigo-500 dark:border-l-indigo-400' : color.includes('purple') ? 'border-l-purple-500 dark:border-l-purple-400' : color.includes('green') ? 'border-l-green-500 dark:border-l-green-400' : 'border-l-orange-500 dark:border-l-orange-400'}`}>
+              <div className="space-y-4">
+                <div>
+                  <Label className="text-base font-medium text-foreground text-left block">{score.name}</Label>
+                  <div className="mt-3 space-y-2">
+                    <div className="flex justify-between items-center">
+                      <Label className="text-sm text-muted-foreground">
+                        Threshold: {currentThreshold}%
+                        {isChanged && (
+                          <span className="ml-2 text-xs text-blue-600 font-medium">
+                            (Changed from {score.defaultThreshold}%)
+                          </span>
+                        )}
+                      </Label>
+                      {hasTestRuns && (
+                        <div className="flex items-center gap-1 text-xs text-orange-600">
+                          <Lock className="w-3 h-3" />
+                          <span>Locked</span>
+                        </div>
+                      )}
+                    </div>
+                    <Slider
+                      value={[currentThreshold]}
+                      onValueChange={([value]) => updateScoreConfig(category, score.id, value)}
+                      min={0}
+                      max={100}
+                      step={1}
+                      className="w-full mt-2"
+                      disabled={hasTestRuns}
+                    />
                   </div>
-                  <Slider
-                    value={[currentConfig[category]?.[score.id]?.threshold ?? score.defaultThreshold]}
-                    onValueChange={([value]) => updateScoreConfig(category, score.id, value)}
-                    min={0}
-                    max={100}
-                    step={1}
-                    className="w-full mt-2"
-                  />
                 </div>
               </div>
-            </div>
-          </Card>
-        ))}
+            </Card>
+          );
+        })}
       </div>
     </div>
   );
@@ -381,6 +475,7 @@ const MetricsConfiguration = ({
               <Button 
                 onClick={saveConfiguration}
                 className="bg-primary hover:bg-primary/90 text-primary-foreground transform transition-all duration-200 hover:scale-105"
+                disabled={hasTestRuns}
               >
                 <Save className="w-4 h-4 mr-2" />
                 Save Changes
@@ -397,6 +492,7 @@ const MetricsConfiguration = ({
               onValueChange={(value) => {
                 setSelectedTestSuiteIdLocal(value);
                 fetchExistingConfiguration(value);
+                fetchTestRuns(value);
               }}
             >
               <SelectTrigger className="transform transition-all duration-200 hover:scale-102 bg-background dark:bg-background/80 border-border">
@@ -420,6 +516,17 @@ const MetricsConfiguration = ({
                   <p className="text-xs text-orange-600 font-medium">
                     ⚠️ You have unsaved threshold changes. Save them or they will revert to previous values.
                   </p>
+                )}
+                {hasTestRuns && (
+                  <div className="flex items-center gap-2 p-3 bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 rounded-lg">
+                    <AlertCircle className="w-4 h-4 text-orange-600" />
+                    <div className="text-sm">
+                      <p className="text-orange-800 dark:text-orange-200 font-medium">Thresholds Locked</p>
+                      <p className="text-orange-700 dark:text-orange-300 text-xs">
+                        This test suite has {testRuns.length} test run{testRuns.length !== 1 ? 's' : ''}. Thresholds cannot be modified after test execution.
+                      </p>
+                    </div>
+                  </div>
                 )}
               </div>
             )}

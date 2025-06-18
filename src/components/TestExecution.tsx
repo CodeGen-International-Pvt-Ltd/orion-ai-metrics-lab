@@ -10,7 +10,7 @@ interface TestExecutionProps {
   onNext: () => void;
   onBack: () => void;
   setResults: (results: any) => void;
-  selectedTestSuiteId?: string | null;
+  selectedTestSuiteId?: number | null;
 }
 
 const TestExecution = ({ onNext, onBack, setResults, selectedTestSuiteId }: TestExecutionProps) => {

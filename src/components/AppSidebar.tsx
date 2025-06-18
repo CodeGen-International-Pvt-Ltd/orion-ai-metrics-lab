@@ -1,4 +1,3 @@
-
 import {
   Sidebar,
   SidebarContent,
@@ -24,8 +23,9 @@ import {
   DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { FileText, BarChart3, LogOut, Brain, Settings, HelpCircle, Monitor, Moon, Sun } from "lucide-react"
+import { FileText, BarChart3, LogOut, Brain, Settings, HelpCircle } from "lucide-react"
 import { useTheme } from "@/components/ThemeProvider"
+import { ThemeToggle } from "@/components/ThemeToggle"
 import EditUserProfile from "./EditUserProfile"
 import SettingsDialog from "./SettingsDialog"
 import HelpDialog from "./HelpDialog"
@@ -87,30 +87,37 @@ const AppSidebar = ({
   ];
 
   return (
-    <Sidebar>
-      <SidebarHeader>
-        <div className="flex items-center gap-3 px-4 py-3">
-          <div className="w-8 h-8 bg-blue-600 dark:bg-blue-500 rounded-full flex items-center justify-center">
-            <Brain className="w-4 h-4 text-white" />
+    <Sidebar className="border-r bg-sidebar text-sidebar-foreground">
+      <SidebarHeader className="border-b border-sidebar-border p-4">
+        <div className="flex items-center gap-2">
+          <Brain className="h-6 w-6" />
+          <span className="text-lg font-semibold">OrionAI</span>
+        </div>
+        <div className="mt-4 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Avatar className="h-8 w-8">
+              <AvatarFallback className="bg-sidebar-accent text-sidebar-accent-foreground">
+                {userData.name.charAt(0).toUpperCase()}
+              </AvatarFallback>
+            </Avatar>
+            <div className="flex flex-col">
+              <span className="text-sm font-medium">{userData.name}</span>
+              <span className="text-xs text-sidebar-foreground/70">{userData.email}</span>
+            </div>
           </div>
-          <div className="font-semibold text-lg text-gray-900 dark:text-gray-100">
-            AI Evaluator
-          </div>
+          <ThemeToggle />
         </div>
       </SidebarHeader>
-      
-      <SidebarContent>
+      <SidebarContent className="p-4">
         <SidebarGroup>
           <SidebarGroupLabel>Navigation</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               {menuItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild>
-                    <button onClick={item.onClick} className="w-full">
-                      <item.icon className="w-4 h-4" />
-                      <span>{item.title}</span>
-                    </button>
+                  <SidebarMenuButton onClick={item.onClick}>
+                    <item.icon className="h-4 w-4" />
+                    <span>{item.title}</span>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               ))}
@@ -118,47 +125,18 @@ const AppSidebar = ({
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
-
-      <SidebarFooter>
-        <div className="p-4 border-t border-gray-200 dark:border-gray-700">
+      <SidebarFooter className="border-t border-sidebar-border p-4">
+        <div className="flex items-center justify-between">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <button className="flex items-center gap-3 mb-3 w-full text-left hover:bg-gray-50 dark:hover:bg-gray-800 p-2 rounded-lg transition-colors">
-                <Avatar className="w-8 h-8">
-                  <AvatarFallback className="bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-400">
-                    {userData.name.charAt(0).toUpperCase()}
-                  </AvatarFallback>
-                </Avatar>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
-                    {userData.name}
-                  </p>
-                  <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
-                    {userData.email}
-                  </p>
-                </div>
-              </button>
+              <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                <Settings className="h-4 w-4" />
+                <span className="sr-only">Open settings</span>
+              </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-56">
               <DropdownMenuLabel>My Account</DropdownMenuLabel>
               <DropdownMenuSeparator />
-              
-              <DropdownMenuSub>
-                <DropdownMenuSubTrigger>
-                  <Monitor className="mr-2 h-4 w-4" />
-                  <span>Appearance</span>
-                </DropdownMenuSubTrigger>
-                <DropdownMenuSubContent>
-                  <DropdownMenuItem onClick={() => setTheme("light")}>
-                    <Sun className="mr-2 h-4 w-4" />
-                    <span>Light</span>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => setTheme("dark")}>
-                    <Moon className="mr-2 h-4 w-4" />
-                    <span>Dark</span>
-                  </DropdownMenuItem>
-                </DropdownMenuSubContent>
-              </DropdownMenuSub>
               
               <SettingsDialog>
                 <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
@@ -189,7 +167,7 @@ const AppSidebar = ({
         </div>
       </SidebarFooter>
     </Sidebar>
-  );
-};
+  )
+}
 
-export default AppSidebar;
+export default AppSidebar

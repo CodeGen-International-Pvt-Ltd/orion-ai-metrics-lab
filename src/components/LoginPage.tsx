@@ -1,10 +1,10 @@
-
 import { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Brain, Mail, User } from "lucide-react";
+import { ThemeToggleLarge } from "@/components/ThemeToggle";
 
 interface LoginPageProps {
   onLogin: (userData: { id:number; name: string; email: string }) => void;
@@ -74,21 +74,26 @@ const LoginPage = ({ onLogin }: LoginPageProps) => {
   
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-slate-900 dark:to-slate-800 flex items-center justify-center p-4 transition-colors duration-300">
-      <Card className="w-full max-w-md bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-background dark:to-secondary flex items-center justify-center p-4 transition-colors duration-300">
+      {/* Theme Toggle positioned in top-right corner */}
+      <div className="absolute top-4 right-4">
+        <ThemeToggleLarge />
+      </div>
+      
+      <Card className="w-full max-w-md bg-white dark:bg-card border-gray-200 dark:border-border">
         <CardHeader className="text-center">
           <div className="mx-auto mb-4 w-16 h-16 bg-blue-600 dark:bg-blue-500 rounded-full flex items-center justify-center">
             <Brain className="w-8 h-8 text-white" />
           </div>
-          <CardTitle className="text-3xl font-bold text-gray-900 dark:text-gray-100">Welcome to AI Evaluator</CardTitle>
-          <CardDescription className="text-lg text-gray-600 dark:text-gray-400">
+          <CardTitle className="text-3xl font-bold text-gray-900 dark:text-foreground">Welcome to AI Evaluator</CardTitle>
+          <CardDescription className="text-lg text-gray-600 dark:text-muted-foreground">
             Sign in to access the evaluation platform
           </CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="username" className="text-gray-700 dark:text-gray-300">Username</Label>
+              <Label htmlFor="username" className="text-gray-700 dark:text-foreground">Username</Label>
               <div className="relative">
                 <User className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
                 <Input
@@ -104,7 +109,7 @@ const LoginPage = ({ onLogin }: LoginPageProps) => {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="email" className="text-gray-700 dark:text-gray-300">Email</Label>
+              <Label htmlFor="email" className="text-gray-700 dark:text-foreground">Email</Label>
               <div className="relative">
                 <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
                 <Input
