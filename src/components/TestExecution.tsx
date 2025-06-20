@@ -154,12 +154,13 @@ const TestExecution = ({ onNext, onBack, setResults, selectedTestSuiteId }: Test
   };
 
   const fetchActualResults = async (runId: number) => {
-    if (!selectedTestSuiteId || !runId) throw new Error("Missing required IDs");
-
-    console.log("Fetching results with:");
     console.log("Test Suite ID:", selectedTestSuiteId);
     console.log("Test Run ID:", runId);
-
+    if (!selectedTestSuiteId || !runId) throw new Error("Missing required IDs");
+  
+    console.log("Fetching results with:");
+    
+  
     console.log("✅ Test Run ID returned:", runId);
   
     const response = await fetch(`http://127.0.0.1:8000/test-suite/${selectedTestSuiteId}/test-run/${runId}/`);
@@ -168,10 +169,10 @@ const TestExecution = ({ onNext, onBack, setResults, selectedTestSuiteId }: Test
     }
   
     const data = await response.json();
-    console.log("✅ Results fetched:", data);
-    return data; // This assumes the API returns the full test run result
+    console.log("✅ Results fetched:\n" + JSON.stringify(data, null, 2)); // Pretty print
+    return data;
   };
-
+  
   useEffect(() => {
     // Only run when isRunning changes to true
     if (!isRunning) return;
@@ -180,6 +181,7 @@ const TestExecution = ({ onNext, onBack, setResults, selectedTestSuiteId }: Test
     let currentTime = 0;
     let testRunCreated = false;
     const executionId = currentExecutionRef.current;
+    let createdRunId: number | null = null;
     
     console.log("🔄 Starting execution cycle with ID:", executionId);
     
@@ -204,6 +206,7 @@ const TestExecution = ({ onNext, onBack, setResults, selectedTestSuiteId }: Test
             
             try {
               const runId = await createTestRun();
+              createdRunId = runId;
               console.log(`✅ Test run created successfully for execution ID ${executionId}:`, runId);
               setTotalTestRuns(prev => {
                 console.log(`📊 Updating total test runs from ${prev} to ${prev + 1}`);
@@ -240,13 +243,16 @@ const TestExecution = ({ onNext, onBack, setResults, selectedTestSuiteId }: Test
         setIsRunning(false);
         isCreatingTestRun.current = false;
         
-        let runId = testRunId;
-        
-        try {
-          const results = await fetchActualResults(runId);
-          setResults(results);
-        } catch (error) {
-          console.error("Failed to fetch actual results:", error);
+        if (createdRunId) {
+          try {
+            console.log(`Fetching results for newly created run ID: ${createdRunId}`);
+            const results = await fetchActualResults(createdRunId);
+            setResults(results);
+          } catch (error) {
+            console.error("Failed to fetch actual results:", error);
+          }
+        } else {
+            console.error("Could not fetch results because test run ID was not available.");
         }
       }
     }, 100);
