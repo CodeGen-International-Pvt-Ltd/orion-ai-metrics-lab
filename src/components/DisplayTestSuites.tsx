@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { FileText, ArrowLeft, AlertCircle, CheckCircle, Clock, Loader2 } from "lucide-react";
 import EditTestSuite from "./EditTestSuite";
 import DeleteTestSuite from "./DeleteTestSuite";
+import ServerErrorPage from './ServerErrorPage';
 
 interface TestSuite {
   id: number;
@@ -38,6 +39,7 @@ const DisplayTestSuites = ({ testSuites, testSuiteResults, onSelectTestSuite, on
   const [loadingSuiteId, setLoadingSuiteId] = useState<number | null>(null);
   const [suiteTestRuns, setSuiteTestRuns] = useState<Record<number, TestRun[]>>({});
   const [loadingSuites, setLoadingSuites] = useState<Record<number, boolean>>({});
+  const [serverError, setServerError] = useState(false);
 
   useEffect(() => {
     // Fetch test runs for all test suites on component mount
@@ -163,6 +165,66 @@ const DisplayTestSuites = ({ testSuites, testSuiteResults, onSelectTestSuite, on
     return null;
   };
 
+  // Function to check if results are null (same as in TestExecution)
+  const checkResultsNull = (results: any) => {
+    return !results || results.evaluation === null || (Array.isArray(results.test_results) && results.test_results.length === 0);
+  };
+
+  // Function to fetch actual results (same as in TestExecution)
+  const fetchActualResults = async (runId: number, suiteId: number) => {
+    console.log("Test Suite ID:", suiteId);
+    console.log("Test Run ID:", runId);
+    if (!suiteId || !runId) throw new Error("Missing required IDs");
+  
+    console.log("Fetching results with:");
+    console.log("✅ Test Run ID returned:", runId);
+  
+    const response = await fetch(`http://127.0.0.1:8000/test-suite/${suiteId}/test-run/${runId}/`);
+    if (!response.ok) {
+      throw new Error("Failed to fetch test results");
+    }
+  
+    const data = await response.json();
+    console.log("✅ Results fetched:\n" + JSON.stringify(data, null, 2));
+    return data;
+  };
+
+  // Handler for when users click on test runs within test suite cards
+  const handleTestRunClick = async (runId: number, suiteId: number) => {
+    try {
+      // Fetch actual results
+      const results = await fetchActualResults(runId, suiteId);
+      
+      // Check if results are null
+      if (checkResultsNull(results)) {
+        setServerError(true);
+        return;
+      }
+      
+      // If results are valid, you might want to navigate to results page
+      // For now, we'll just show the test suite details
+      onSelectTestSuite(suiteId);
+    } catch (error) {
+      console.error("Failed to fetch test run results:", error);
+      setServerError(true);
+    }
+  };
+
+  if (serverError) {
+    return (
+        <ServerErrorPage 
+          errorCode={500} 
+          title="Server Error" 
+          description="Failed to load test results. Please check your server connection and try again." 
+          showRefresh={true}
+          onGoHome={() => {
+            setServerError(false);
+            // You might want to navigate to dashboard or home here
+          }}
+        />
+    );
+  }
+
   return (
     <div className="max-w-6xl mx-auto space-y-6">
       <div className="flex items-center justify-between">
@@ -281,6 +343,28 @@ const DisplayTestSuites = ({ testSuites, testSuiteResults, onSelectTestSuite, on
                             Last run: {formatLastRun(suite.id)}
                           </div>
                         </div>
+                        
+                        {/* Clickable Latest Test Run */}
+                        {testRuns.length > 0 && (
+                          <div 
+                            className="pt-2 border-t cursor-pointer hover:bg-gray-50 rounded p-2 -m-2 transition-colors"
+                            onClick={(e) => {
+                              e.stopPropagation(); // Prevent triggering the test suite click
+                              const latestRun = testRuns[0];
+                              if (latestRun) {
+                                handleTestRunClick(latestRun.test_run_id, suite.id);
+                              }
+                            }}
+                          >
+                            <div className="flex items-center justify-between text-xs">
+                              <span className="text-gray-500">Latest Test Run:</span>
+                              <span className="text-blue-600 font-medium">#{testRuns[0]?.test_run_id}</span>
+                            </div>
+                            <div className="text-xs text-gray-400 mt-1">
+                              Click to check results
+                            </div>
+                          </div>
+                        )}
                       </div>
                     ) : (
                       <div className="text-center py-4">

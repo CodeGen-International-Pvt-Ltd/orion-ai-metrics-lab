@@ -91,7 +91,7 @@ const AppSidebar = ({
       <SidebarHeader className="border-b border-sidebar-border p-4">
         <div className="flex items-center gap-2">
           <Brain className="h-6 w-6" />
-          <span className="text-lg font-semibold">OrionAI</span>
+          <span className="text-lg font-semibold">OrionAI Evaluator</span>
         </div>
         <div className="mt-4 flex items-center justify-between">
           <div className="flex items-center gap-2">

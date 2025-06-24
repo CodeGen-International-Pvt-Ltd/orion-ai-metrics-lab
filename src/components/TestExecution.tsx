@@ -5,6 +5,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Play, Pause, ArrowRight, CheckCircle, Clock, AlertCircle } from "lucide-react";
+import ServerErrorPage from "./ServerErrorPage";
 
 interface TestExecutionProps {
   onNext: () => void;
@@ -24,6 +25,9 @@ const TestExecution = ({ onNext, onBack, setResults, selectedTestSuiteId }: Test
   const [endpointError, setEndpointError] = useState('');
   const [testRunId, setTestRunId] = useState<number | null>(null);
   const [totalTestRuns, setTotalTestRuns] = useState(0);
+  const [serverError, setServerError] = useState(false);
+  const [hasClickedViewResults, setHasClickedViewResults] = useState(false);
+
   
   // Global flag to prevent multiple test run creations
   const isCreatingTestRun = useRef(false);
@@ -247,12 +251,22 @@ const TestExecution = ({ onNext, onBack, setResults, selectedTestSuiteId }: Test
           try {
             console.log(`Fetching results for newly created run ID: ${createdRunId}`);
             const results = await fetchActualResults(createdRunId);
+            // Check for null/empty/invalid results
+            if (!results || results.evaluation === null || (Array.isArray(results.test_results) && results.test_results.length === 0)) {
+              setServerError(true);
+              setResults(null); // Also clear results in parent
+              return;
+            }
             setResults(results);
           } catch (error) {
+            setServerError(true);
+            setResults(null);
             console.error("Failed to fetch actual results:", error);
           }
         } else {
-            console.error("Could not fetch results because test run ID was not available.");
+          setServerError(true);
+          setResults(null);
+          console.error("Could not fetch results because test run ID was not available.");
         }
       }
     }, 100);
@@ -364,6 +378,23 @@ const TestExecution = ({ onNext, onBack, setResults, selectedTestSuiteId }: Test
   };
   
   
+
+  
+  if (serverError) {
+    return (
+        <ServerErrorPage 
+          errorCode={500} 
+          title="Server Error" 
+          description="Failed to load test results. Please check your server connection and try again." 
+          showRefresh={true}
+          onGoHome={() => {
+            setServerError(false);
+            // You might want to navigate to dashboard or home here
+          }}
+        />
+    );
+  }
+
 
   return (
     <div className="max-w-4xl mx-auto space-y-6">
@@ -542,7 +573,10 @@ const TestExecution = ({ onNext, onBack, setResults, selectedTestSuiteId }: Test
           Back
         </Button>
         <Button 
-          onClick={onNext} 
+          onClick={() => {
+            setHasClickedViewResults(true);
+            onNext();
+          }} 
           disabled={totalTestRuns === 0}
           className="bg-blue-600 hover:bg-blue-700 transform transition-transform hover:scale-105"
         >

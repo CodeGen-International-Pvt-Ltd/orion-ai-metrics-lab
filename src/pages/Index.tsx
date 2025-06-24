@@ -16,6 +16,7 @@ import TestRunsDisplay from '@/components/TestRunsDisplay';
 import Dashboard from '@/components/Dashboard';
 import LoginPage from '@/components/LoginPage';
 import { ThemeToggle } from '@/components/ThemeToggle';
+import ServerErrorPage from '@/components/ServerErrorPage';
 
 const Index = () => {
   const [currentStep, setCurrentStep] = useState(0);
@@ -157,13 +158,18 @@ const Index = () => {
     );
   }
 
+  
+
   const renderCurrentStep = () => {
     if (currentView === 'dashboard') {
       return (
         <Dashboard 
           testSuites={testSuites}
+          userData={userData}
           onSelectTestRun={handleSelectTestRun}
           onSelectTestSuite={handleSelectTestSuite}
+          onUpdateTestSuite={handleUpdateTestSuite}
+          onDeleteTestSuite={handleDeleteTestSuite}
         />
       );
     }
@@ -204,6 +210,27 @@ const Index = () => {
       case 4:
         return <TestExecution onNext={() => setCurrentStep(5)} onBack={() => setCurrentStep(3)} setResults={handleTestExecutionComplete} selectedTestSuiteId={selectedTestSuiteId} />;
       case 5:
+        // If results are null, show the server error page with sidebar and navigation
+        if (!evaluationResults) {
+          return (
+            <div className="flex w-full min-h-screen">
+              <AppSidebar 
+                userData={userData}
+                onRegisterTestSuite={handleRegisterTestSuite}
+                onDisplayTestSuites={handleDisplayTestSuites}
+                onLogout={handleLogout}
+                onDashboard={handleDashboard}
+                onUpdateUser={handleUpdateUser}
+              />
+              <div className="flex-1 flex items-center justify-center bg-gray-50 dark:bg-background transition-colors duration-300">
+                <div className="w-full">
+                  {/* ServerErrorPage with no back button, just navigation/sidebar */}
+                  <ServerErrorPage errorCode={500} title="Server Error" description="Failed to load test results. Please check your server connection and try again." showRefresh={true} onGoHome={() => setCurrentView('dashboard')}/>
+                </div>
+              </div>
+            </div>
+          );
+        }
         return <ResultsDashboard results={evaluationResults} onNext={() => setCurrentStep(6)} onBack={() => setCurrentStep(4)} />;
       case 6:
         return <ReportGeneration results={evaluationResults} onBack={() => setCurrentStep(5)} />;

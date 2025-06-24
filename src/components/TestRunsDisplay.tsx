@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { ArrowLeft, Play, AlertCircle, CheckCircle, Clock, BarChart3, Loader2 } from "lucide-react";
+import ServerErrorPage from './ServerErrorPage';
 
 interface TestRun {
   test_run_id: number;
@@ -25,6 +26,7 @@ const TestRunsDisplay = ({ testSuiteName, testSuiteId, onSelectTestRun, onBack }
   const [testRuns, setTestRuns] = useState<TestRun[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [serverError, setServerError] = useState(false);
 
   useEffect(() => {
     fetchTestRuns();
@@ -75,6 +77,68 @@ const TestRunsDisplay = ({ testSuiteName, testSuiteId, onSelectTestRun, onBack }
     const date = new Date(dateString);
     return date.toLocaleDateString() + ' at ' + date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   };
+
+  // Function to check if results are null (same as in TestExecution)
+  const checkResultsNull = (results: any) => {
+    return !results || results.evaluation === null || (Array.isArray(results.test_results) && results.test_results.length === 0);
+  };
+
+  // Function to fetch actual results (same as in TestExecution)
+  const fetchActualResults = async (runId: number) => {
+    console.log("Test Suite ID:", testSuiteId);
+    console.log("Test Run ID:", runId);
+    if (!testSuiteId || !runId) throw new Error("Missing required IDs");
+  
+    console.log("Fetching results with:");
+    console.log("✅ Test Run ID returned:", runId);
+  
+    const response = await fetch(`http://127.0.0.1:8000/test-suite/${testSuiteId}/test-run/${runId}/`);
+    if (!response.ok) {
+      throw new Error("Failed to fetch test results");
+    }
+  
+    const data = await response.json();
+    console.log("✅ Results fetched:\n" + JSON.stringify(data, null, 2));
+    return data;
+  };
+
+  // Updated test run click handler
+  const handleTestRunClick = async (runId: number) => {
+    try {
+      // Fetch actual results
+      const results = await fetchActualResults(runId);
+      
+      // Check if results are null
+      if (checkResultsNull(results)) {
+        setServerError(true);
+        return;
+      }
+      
+      // If results are valid, proceed normally
+      onSelectTestRun(runId);
+    } catch (error) {
+      console.error("Failed to fetch test run results:", error);
+      setServerError(true);
+    }
+  };
+
+  // Show server error page if needed
+  // Show server error page if needed
+  // Show server error page if needed
+  if (serverError) {
+    return (
+        <ServerErrorPage 
+          errorCode={500} 
+          title="Server Error" 
+          description="Failed to load test results. Please check your server connection and try again." 
+          showRefresh={true}
+          onGoHome={() => {
+            setServerError(false);
+            // You might want to navigate to dashboard or home here
+          }}
+        />
+    );
+  }
 
   if (loading) {
     return (
@@ -166,7 +230,7 @@ const TestRunsDisplay = ({ testSuiteName, testSuiteId, onSelectTestRun, onBack }
               <Card 
                 key={run.test_run_id} 
                 className="hover:shadow-lg transition-shadow cursor-pointer group"
-                onClick={() => onSelectTestRun(run.test_run_id)}
+                onClick={() => handleTestRunClick(run.test_run_id)}
               >
                 <CardHeader>
                   <div className="flex items-center justify-between">
