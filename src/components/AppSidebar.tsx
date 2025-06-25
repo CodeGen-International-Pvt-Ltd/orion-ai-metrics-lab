@@ -1,3 +1,4 @@
+import { useState } from "react";
 import {
   Sidebar,
   SidebarContent,
@@ -23,7 +24,7 @@ import {
   DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { FileText, BarChart3, LogOut, Brain, Settings, HelpCircle } from "lucide-react"
+import { FileText, BarChart3, LogOut, Brain, Settings, HelpCircle, ChevronsLeft } from "lucide-react"
 import { useTheme } from "@/components/ThemeProvider"
 import { ThemeToggle } from "@/components/ThemeToggle"
 import EditUserProfile from "./EditUserProfile"
@@ -48,6 +49,7 @@ const AppSidebar = ({
   onUpdateUser = () => {}
 }: AppSidebarProps) => {
   const { setTheme, theme } = useTheme();
+  const [collapsed, setCollapsed] = useState(false);
 
   const handleLogout = async () => {
     try {
@@ -87,11 +89,28 @@ const AppSidebar = ({
   ];
 
   return (
-    <Sidebar className="border-r bg-sidebar text-sidebar-foreground">
-      <SidebarHeader className="border-b border-sidebar-border p-4">
-        <div className="flex items-center gap-2">
-          <Brain className="h-6 w-6" />
-          <span className="text-lg font-semibold">OrionAI Evaluator</span>
+    <Sidebar className={`border-r border-blue-500 bg-sidebar text-sidebar-foreground ${collapsed ? 'w-20' : 'w-64'} transition-all duration-300`}>
+      <SidebarHeader className="border-b border-blue-500 border-sidebar-border p-4">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Brain className="h-6 w-6" />
+            {!collapsed && <span className="text-lg font-semibold">OrionAI Evaluator</span>}
+          </div>
+          <div className="relative">
+  <Button
+    variant="ghost"
+    size="icon"
+    className="absolute left-[-2px] top-1/2 transform -translate-y-1/2 h-8 w-8 border border-blue-500 rounded-full bg-white shadow-md hover:scale-105 transition-transform z-10"
+    onClick={() => setCollapsed(!collapsed)}
+  >
+    <ChevronsLeft
+      className={`h-5 w-5 text-blue-600 transition-transform duration-300 ${!collapsed ? "" : "rotate-180"}`}
+    />
+  </Button>
+</div>
+
+
+
         </div>
         <div className="mt-4 flex items-center justify-between">
           <div className="flex items-center gap-2">
@@ -100,24 +119,35 @@ const AppSidebar = ({
                 {userData.name.charAt(0).toUpperCase()}
               </AvatarFallback>
             </Avatar>
-            <div className="flex flex-col">
-              <span className="text-sm font-medium">{userData.name}</span>
-              <span className="text-xs text-sidebar-foreground/70">{userData.email}</span>
-            </div>
+            {!collapsed && (
+              <div className="flex flex-col">
+                <span className="text-sm font-medium">{userData.name}</span>
+                <span className="text-xs text-sidebar-foreground/70">{userData.email}</span>
+              </div>
+            )}
           </div>
-          <ThemeToggle />
+          {!collapsed && (
+  <div
+    className={`p-0.2 border-2 rounded-md transition-shadow ${
+      theme === "dark" ? "border-blue-500" : "border-yellow-500"
+    }`}
+  >
+    <ThemeToggle />
+  </div>
+)}
+
+
         </div>
       </SidebarHeader>
       <SidebarContent className="p-4">
         <SidebarGroup>
-          <SidebarGroupLabel>Navigation</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               {menuItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton onClick={item.onClick}>
+                  <SidebarMenuButton onClick={item.onClick} className="justify-start">
                     <item.icon className="h-4 w-4" />
-                    <span>{item.title}</span>
+                    {!collapsed && <span>{item.title}</span>}
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               ))}
@@ -125,7 +155,7 @@ const AppSidebar = ({
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
-      <SidebarFooter className="border-t border-sidebar-border p-4">
+      <SidebarFooter className="border-t border-blue-500 border-sidebar-border p-4">
         <div className="flex items-center justify-between">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -162,7 +192,7 @@ const AppSidebar = ({
           </DropdownMenu>
           
           <div className="flex gap-2">
-            <EditUserProfile userData={userData} onUpdateUser={onUpdateUser} />
+            {!collapsed && <EditUserProfile userData={userData} onUpdateUser={onUpdateUser} />}
           </div>
         </div>
       </SidebarFooter>

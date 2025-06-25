@@ -40,7 +40,6 @@ interface DashboardProps {
 
 const Dashboard = ({ testSuites, userData, onSelectTestRun, onSelectTestSuite, onUpdateTestSuite, onDeleteTestSuite }: DashboardProps) => {
   const [allTestRuns, setAllTestRuns] = useState<TestRun[]>([]);
-  const [fetchedTestSuites, setFetchedTestSuites] = useState<TestSuite[]>([]);
   const [suiteTestRuns, setSuiteTestRuns] = useState<Record<number, TestRun[]>>({});
   const [loading, setLoading] = useState(true);
   const [loadingSuites, setLoadingSuites] = useState(true);
@@ -52,16 +51,14 @@ const Dashboard = ({ testSuites, userData, onSelectTestRun, onSelectTestSuite, o
 
   useEffect(() => {
     fetchAllTestRuns();
-    fetchAllTestSuites();
-  }, [userData]);
+  }, [userData, testSuites]);
 
   useEffect(() => {
     // Fetch test runs for all test suites when they're loaded
-    const suitesToUse = fetchedTestSuites.length > 0 ? fetchedTestSuites : testSuites;
-    suitesToUse.forEach(suite => {
+    testSuites.forEach(suite => {
       fetchTestRunsForSuite(suite.id);
     });
-  }, [fetchedTestSuites, testSuites]);
+  }, [testSuites]);
 
   const fetchTestRunsForSuite = async (suiteId: number) => {
     setLoadingSuiteRuns(prev => ({ ...prev, [suiteId]: true }));
@@ -93,46 +90,6 @@ const Dashboard = ({ testSuites, userData, onSelectTestRun, onSelectTestSuite, o
     }
   };
 
-  const fetchAllTestSuites = async () => {
-    if (!userData) {
-      setSuitesError('User data not available');
-      setLoadingSuites(false);
-      return;
-    }
-
-    setLoadingSuites(true);
-    setSuitesError(null);
-    
-    try {
-      const response = await fetch(`http://127.0.0.1:8000/user/${userData.id}/test-suite/`);
-      console.log('Fetching test suites for user:', userData.id);
-      
-      if (!response.ok) {
-        throw new Error(`Failed to fetch test suites: ${response.status}`);
-      }
-      
-      const data = await response.json();
-      console.log('Fetched test suites:', data);
-      // Map backend fields to expected TestSuite shape
-      const mappedSuites = Array.isArray(data)
-        ? data.map(suite => ({
-            id: suite.id ?? suite.test_suite_id ?? suite.suite_id,
-            name: suite.name ?? suite.suite_name,
-            type: suite.type ?? suite.suite_type,
-            confidentialityStatus: suite.confidentialityStatus ?? suite.confidential_status,
-            user_id: suite.user_id ?? suite.user,
-            created_at: suite.created_at,
-          }))
-        : [];
-      setFetchedTestSuites(mappedSuites);
-    } catch (err) {
-      console.error('Error fetching test suites:', err);
-      setSuitesError('Failed to load test suites');
-    } finally {
-      setLoadingSuites(false);
-    }
-  };
-
   const fetchAllTestRuns = async () => {
     setLoading(true);
     setError(null);
@@ -140,11 +97,8 @@ const Dashboard = ({ testSuites, userData, onSelectTestRun, onSelectTestSuite, o
     try {
       const allRuns: TestRun[] = [];
       
-      // Use fetched test suites if available, otherwise fall back to props
-      const suitesToUse = fetchedTestSuites.length > 0 ? fetchedTestSuites : testSuites;
-      
       // Fetch test runs for each test suite
-      for (const suite of suitesToUse) {
+      for (const suite of testSuites) {
         try {
           const response = await fetch(`http://127.0.0.1:8000/test-suite/${suite.id}/test-run/filter/`);
           console.log(suite.id);
@@ -246,8 +200,7 @@ const Dashboard = ({ testSuites, userData, onSelectTestRun, onSelectTestSuite, o
   };
 
   const getTestSuiteById = (suiteId: number) => {
-    const suitesToUse = fetchedTestSuites.length > 0 ? fetchedTestSuites : testSuites;
-    return suitesToUse.find(suite => suite.id === suiteId);
+    return testSuites.find(suite => suite.id === suiteId);
   };
 
   // Function to check if results are null (same as in TestExecution)
@@ -377,7 +330,7 @@ const Dashboard = ({ testSuites, userData, onSelectTestRun, onSelectTestSuite, o
     );
   }
 
-  const suitesToUse = fetchedTestSuites.length > 0 ? fetchedTestSuites : testSuites;
+  const suitesToUse = testSuites;
 
   return (
     <div className="max-w-6xl mx-auto space-y-8">

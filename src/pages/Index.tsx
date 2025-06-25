@@ -1,9 +1,9 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { ThemeProvider } from "@/components/ThemeProvider";
-import { ArrowRight, Brain, BarChart3, FileText } from "lucide-react";
+import { ArrowRight, Brain, BarChart3, FileText, Lock } from "lucide-react";
 import TestSuiteCreation from '@/components/TestSuiteCreation';
 import MetricsConfiguration from '@/components/MetricsConfiguration';
 import ModelSelection from '@/components/ModelSelection';
@@ -19,8 +19,8 @@ import { ThemeToggle } from '@/components/ThemeToggle';
 import ServerErrorPage from '@/components/ServerErrorPage';
 
 const Index = () => {
-  const [currentStep, setCurrentStep] = useState(0);
-  const [currentView, setCurrentView] = useState<'workflow' | 'displaySuites' | 'testRuns' | 'dashboard'>('workflow');
+  const [currentStep, setCurrentStep] = useState(1);
+  const [currentView, setCurrentView] = useState<'workflow' | 'displaySuites' | 'testRuns' | 'dashboard'>('dashboard');
   const [testSuites, setTestSuites] = useState<any[]>([]);
   const [selectedTestSuiteId, setSelectedTestSuiteId] = useState<number | null>(null);
   const [metricsConfig, setMetricsConfig] = useState<any>({});
@@ -28,6 +28,35 @@ const Index = () => {
   const [evaluationResults, setEvaluationResults] = useState<any>(null);
   const [testSuiteResults, setTestSuiteResults] = useState<Record<string, any>>({});
   const [userData, setUserData] = useState<{ id: number; name: string; email: string } | null>(null);
+
+  useEffect(() => {
+    if (userData) {
+      const fetchTestSuites = async () => {
+        try {
+          const response = await fetch(`http://127.0.0.1:8000/user/${userData.id}/test-suite/`);
+          if (response.ok) {
+            const data = await response.json();
+            setTestSuites(data);
+            if (data.length > 0) {
+              setCurrentView('dashboard');
+            } else {
+              setCurrentView('workflow');
+              setCurrentStep(1);
+            }
+          } else {
+            // Handle no test suites or error
+            setCurrentView('workflow');
+            setCurrentStep(1);
+          }
+        } catch (error) {
+          console.error("Failed to fetch test suites", error);
+          setCurrentView('workflow');
+          setCurrentStep(1);
+        }
+      };
+      fetchTestSuites();
+    }
+  }, [userData]);
 
   const steps = ['', 'Create Test Suite', 'Configure Metrics', 'Select Model', 'Execute Tests', 'View Results', 'Generate Report'];
 
@@ -145,6 +174,12 @@ const Index = () => {
     return suiteResults?.testRuns || [];
   };
 
+  const hasTestRuns = (suiteId: number | null) => {
+    if (!suiteId) return false;
+    const suiteResults = testSuiteResults[suiteId];
+    return suiteResults && suiteResults.testRuns && suiteResults.testRuns.length > 0;
+  };
+
   // Show login page if user is not logged in
   if (!userData) {
     return (
@@ -157,8 +192,6 @@ const Index = () => {
       </ThemeProvider>
     );
   }
-
-  
 
   const renderCurrentStep = () => {
     if (currentView === 'dashboard') {
@@ -206,6 +239,23 @@ const Index = () => {
       case 2:
         return <MetricsConfiguration config={metricsConfig} setConfig={setMetricsConfig} testSuites={testSuites} onNext={() => setCurrentStep(3)} onBack={() => setCurrentStep(1)} selectedTestSuiteId={selectedTestSuiteId} testSuiteResults={testSuiteResults} />;
       case 3:
+        if (hasTestRuns(selectedTestSuiteId)) {
+          return (
+            <div className="flex flex-col items-center justify-center min-h-[300px] text-center">
+              <Lock className="w-12 h-12 text-gray-400 mb-4" />
+              <h2 className="text-xl font-bold text-gray-700">Model Selection is Locked</h2>
+              <p className="text-gray-500 mt-2 mb-6">
+                Once a test suite has a test run, its model configuration cannot be changed.
+                <br />
+                You can proceed to execute more test runs with the existing configuration.
+              </p>
+              <Button onClick={() => setCurrentStep(4)}>
+                Execute New Test Run
+                <ArrowRight className="ml-2 w-4 h-4" />
+              </Button>
+            </div>
+          );
+        }
         return <ModelSelection selectedModel={selectedModel} setSelectedModel={setSelectedModel} onNext={() => setCurrentStep(4)} onBack={() => setCurrentStep(2)} testSuites={testSuites} selectedTestSuiteId={selectedTestSuiteId} config={metricsConfig} setConfig={setMetricsConfig} />;
       case 4:
         return <TestExecution onNext={() => setCurrentStep(5)} onBack={() => setCurrentStep(3)} setResults={handleTestExecutionComplete} selectedTestSuiteId={selectedTestSuiteId} />;
@@ -277,6 +327,8 @@ const Index = () => {
                   <div className="flex items-center space-x-2">
                     {steps.slice(1).map((step, index) => {
                       const StepIcon = getStepIcon(index + 1);
+                      const isModelSelection = index + 1 === 3;
+                      const disabled = isModelSelection && hasTestRuns(selectedTestSuiteId);
                       return (
                         <div key={step} className="flex items-center">
                           <div 
@@ -284,10 +336,13 @@ const Index = () => {
                               index + 1 < currentStep ? 'bg-blue-600 dark:bg-blue-500 text-white hover:bg-blue-700 dark:hover:bg-blue-600' : 
                               index + 1 === currentStep ? 'bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-400 border-2 border-blue-600 dark:border-blue-400' : 
                               'bg-gray-200 dark:bg-muted text-gray-600 dark:text-muted-foreground'
-                            }`}
-                            onClick={() => handleStepIconClick(index + 1)}
+                            } ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
+                            onClick={() => {
+                              if (!disabled && index + 1 <= currentStep) handleStepIconClick(index + 1);
+                            }}
+                            title={disabled ? 'Model selection is locked after the first test run.' : ''}
                           >
-                            {StepIcon && <StepIcon className="w-4 h-4" />}
+                            {StepIcon && (disabled ? <Lock className="w-4 h-4" /> : <StepIcon className="w-4 h-4" />)}
                           </div>
                           <div className={`ml-2 text-sm font-medium ${
                             index + 1 <= currentStep ? 'text-gray-800 dark:text-foreground' : 'text-gray-400 dark:text-muted-foreground'
