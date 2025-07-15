@@ -183,13 +183,11 @@ const Index = () => {
   // Show login page if user is not logged in
   if (!userData) {
     return (
-      <ThemeProvider defaultTheme="light" storageKey="ui-theme">
-        <LoginPage onLogin={(loginData) => {
-          setUserData(loginData);
-          console.log("User logged in:", loginData);
-          setCurrentStep(1);
-        }} />
-      </ThemeProvider>
+      <LoginPage onLogin={(loginData) => {
+        setUserData(loginData);
+        console.log("User logged in:", loginData);
+        setCurrentStep(1);
+      }} />
     );
   }
 
@@ -200,9 +198,11 @@ const Index = () => {
           testSuites={testSuites}
           userData={userData}
           onSelectTestRun={handleSelectTestRun}
+          setResults={handleTestExecutionComplete}
           onSelectTestSuite={handleSelectTestSuite}
           onUpdateTestSuite={handleUpdateTestSuite}
           onDeleteTestSuite={handleDeleteTestSuite}
+          onCreateTestSuite={handleRegisterTestSuite}
         />
       );
     }
@@ -216,6 +216,7 @@ const Index = () => {
           onUpdateTestSuite={handleUpdateTestSuite}
           onDeleteTestSuite={handleDeleteTestSuite}
           onBack={handleBackToWorkflow}
+          onCreate={handleRegisterTestSuite}
         />
       );
     }
@@ -273,7 +274,8 @@ const Index = () => {
                 onUpdateUser={handleUpdateUser}
               />
               <div className="flex-1 flex items-center justify-center bg-gray-50 dark:bg-background transition-colors duration-300">
-                <div className="w-full">
+              <div className="-mt-40 -ml-[700px]">
+                
                   {/* ServerErrorPage with no back button, just navigation/sidebar */}
                   <ServerErrorPage errorCode={500} title="Server Error" description="Failed to load test results. Please check your server connection and try again." showRefresh={true} onGoHome={() => setCurrentView('dashboard')}/>
                 </div>
@@ -290,86 +292,80 @@ const Index = () => {
   };
 
   if (currentStep === 0) {
-    return (
-      <ThemeProvider defaultTheme="light" storageKey="ui-theme">
-        {renderCurrentStep()}
-      </ThemeProvider>
-    );
+    return renderCurrentStep();
   }
 
   return (
-    <ThemeProvider defaultTheme="light" storageKey="ui-theme">
-      <SidebarProvider>
-        <div className="min-h-screen flex w-full">
-          <AppSidebar 
-            userData={userData}
-            onRegisterTestSuite={handleRegisterTestSuite}
-            onDisplayTestSuites={handleDisplayTestSuites}
-            onLogout={handleLogout}
-            onDashboard={handleDashboard}
-            onUpdateUser={handleUpdateUser}
-          />
-          
-          <div className="flex-1 bg-gray-50 dark:bg-background transition-colors duration-300">
-            {/* Progress Header - only show for workflow */}
-            {currentView === 'workflow' && (
-              <div className="bg-white dark:bg-card shadow-sm border-b border-gray-200 dark:border-border">
-                <div className="max-w-6xl mx-auto px-6 py-4">
-                  <div className="flex items-center justify-between mb-4">
-                    <h1 className="text-2xl font-bold text-gray-800 dark:text-foreground">AI Evaluator Platform</h1>
-                    <div className="flex items-center gap-4">
-                      <div className="text-sm text-gray-600 dark:text-muted-foreground">
-                        Step {currentStep} of {steps.length - 1}
-                      </div>
-                      <ThemeToggle />
+    <SidebarProvider>
+      <div className="min-h-screen flex w-full">
+        <AppSidebar 
+          userData={userData}
+          onRegisterTestSuite={handleRegisterTestSuite}
+          onDisplayTestSuites={handleDisplayTestSuites}
+          onLogout={handleLogout}
+          onDashboard={handleDashboard}
+          onUpdateUser={handleUpdateUser}
+        />
+        
+        <div className="flex-1 bg-gray-50 dark:bg-background transition-colors duration-300">
+          {/* Progress Header - only show for workflow */}
+          {currentView === 'workflow' && (
+            <div className="bg-white dark:bg-card shadow-sm border-b border-gray-200 dark:border-border">
+              <div className="max-w-6xl mx-auto px-6 py-4">
+                <div className="flex items-center justify-between mb-4">
+                  <h1 className="text-2xl font-bold text-gray-800 dark:text-foreground">AI Evaluator Platform</h1>
+                  <div className="flex items-center gap-4">
+                    <div className="text-sm text-gray-600 dark:text-muted-foreground">
+                      Step {currentStep} of {steps.length - 1}
                     </div>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    {steps.slice(1).map((step, index) => {
-                      const StepIcon = getStepIcon(index + 1);
-                      const isModelSelection = index + 1 === 3;
-                      const disabled = isModelSelection && hasTestRuns(selectedTestSuiteId);
-                      return (
-                        <div key={step} className="flex items-center">
-                          <div 
-                            className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium cursor-pointer transition-colors ${
-                              index + 1 < currentStep ? 'bg-blue-600 dark:bg-blue-500 text-white hover:bg-blue-700 dark:hover:bg-blue-600' : 
-                              index + 1 === currentStep ? 'bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-400 border-2 border-blue-600 dark:border-blue-400' : 
-                              'bg-gray-200 dark:bg-muted text-gray-600 dark:text-muted-foreground'
-                            } ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
-                            onClick={() => {
-                              if (!disabled && index + 1 <= currentStep) handleStepIconClick(index + 1);
-                            }}
-                            title={disabled ? 'Model selection is locked after the first test run.' : ''}
-                          >
-                            {StepIcon && (disabled ? <Lock className="w-4 h-4" /> : <StepIcon className="w-4 h-4" />)}
-                          </div>
-                          <div className={`ml-2 text-sm font-medium ${
-                            index + 1 <= currentStep ? 'text-gray-800 dark:text-foreground' : 'text-gray-400 dark:text-muted-foreground'
-                          }`}>
-                            {step}
-                          </div>
-                          {index < steps.length - 2 && (
-                            <div className={`w-8 h-0.5 mx-4 ${
-                              index + 1 < currentStep ? 'bg-blue-600 dark:bg-blue-500' : 'bg-gray-200 dark:bg-border'
-                            }`} />
-                          )}
-                        </div>
-                      );
-                    })}
+                    <ThemeToggle />
                   </div>
                 </div>
+                <div className="flex items-center space-x-2">
+                  {steps.slice(1).map((step, index) => {
+                    const StepIcon = getStepIcon(index + 1);
+                    const isModelSelection = index + 1 === 3;
+                    const disabled = isModelSelection && hasTestRuns(selectedTestSuiteId);
+                    return (
+                      <div key={step} className="flex items-center">
+                        <div 
+                          className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium cursor-pointer transition-colors ${
+                            index + 1 < currentStep ? 'bg-blue-600 dark:bg-blue-500 text-white hover:bg-blue-700 dark:hover:bg-blue-600' : 
+                            index + 1 === currentStep ? 'bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-400 border-2 border-blue-600 dark:border-blue-400' : 
+                            'bg-gray-200 dark:bg-muted text-gray-600 dark:text-muted-foreground'
+                          } ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
+                          onClick={() => {
+                            if (!disabled && index + 1 <= currentStep) handleStepIconClick(index + 1);
+                          }}
+                          title={disabled ? 'Model selection is locked after the first test run.' : ''}
+                        >
+                          {StepIcon && (disabled ? <Lock className="w-4 h-4" /> : <StepIcon className="w-4 h-4" />)}
+                        </div>
+                        <div className={`ml-2 text-sm font-medium ${
+                          index + 1 <= currentStep ? 'text-gray-800 dark:text-foreground' : 'text-gray-400 dark:text-muted-foreground'
+                        }`}>
+                          {step}
+                        </div>
+                        {index < steps.length - 2 && (
+                          <div className={`w-8 h-0.5 mx-4 ${
+                            index + 1 < currentStep ? 'bg-blue-600 dark:bg-blue-500' : 'bg-gray-200 dark:bg-border'
+                          }`} />
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
-            )}
-
-            {/* Main Content */}
-            <div className="max-w-6xl mx-auto px-6 py-8">
-              {renderCurrentStep()}
             </div>
+          )}
+
+          {/* Main Content */}
+          <div className="max-w-6xl mx-auto px-6 py-8">
+            {renderCurrentStep()}
           </div>
         </div>
-      </SidebarProvider>
-    </ThemeProvider>
+      </div>
+    </SidebarProvider>
   );
 };
 

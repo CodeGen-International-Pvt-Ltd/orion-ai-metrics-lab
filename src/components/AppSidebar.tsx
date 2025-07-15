@@ -145,7 +145,7 @@ const AppSidebar = ({
             <SidebarMenu>
               {menuItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton onClick={item.onClick} className="justify-start">
+                  <SidebarMenuButton onClick={item.onClick} className="justify-start hover:bg-sidebar-accent">
                     <item.icon className="h-4 w-4" />
                     {!collapsed && <span>{item.title}</span>}
                   </SidebarMenuButton>
@@ -184,7 +184,7 @@ const AppSidebar = ({
               
               <DropdownMenuSeparator />
               
-              <DropdownMenuItem onClick={handleLogout}>
+              <DropdownMenuItem onClick={handleLogout} className="text-red-500 hover:!text-red-500 hover:!bg-red-500/10 focus:!bg-red-500/10 focus:!text-red-500">
                 <LogOut className="mr-2 h-4 w-4" />
                 <span>Logout</span>
               </DropdownMenuItem>

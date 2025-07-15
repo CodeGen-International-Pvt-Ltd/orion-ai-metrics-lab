@@ -2,7 +2,9 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { BarChart3, TrendingUp, CheckCircle, ArrowRight } from "lucide-react";
+import { BarChart3, TrendingUp, CheckCircle, ArrowRight } from "lucide-react"; 
+import ServerErrorPage from "./ServerErrorPage";
+import { useState, useEffect } from "react";
 
 interface ResultsDashboardProps {
   results: any;
@@ -11,7 +13,12 @@ interface ResultsDashboardProps {
 }
 
 const ResultsDashboard = ({ results, onNext, onBack }: ResultsDashboardProps) => {
-  if (!results) return null;
+  const [serverError, setServerError] = useState(false);
+  //if (!results) return null; 
+
+  //if (!results.test_results || results.test_results.length === 0) {
+    //setServerError(true);
+  //}
 
   const getStatusIcon = (score: number, threshold: number = 85) => {
     if (score >= threshold) {
@@ -115,9 +122,10 @@ const ResultsDashboard = ({ results, onNext, onBack }: ResultsDashboardProps) =>
     non_functional_testing: 'Non-Functional Testing'
   };
 
-  const totalQuestionsPairs = 100; // Total question-answer pairs in test suite
+  const totalQuestionsPairs = 100; // Total question-answer pairs in test suite 
 
-  return (
+
+  return ( 
     <div className="max-w-6xl mx-auto space-y-6">
       {/* Overall Score Card */}
       <Card className="border-2 border-primary/20 dark:border-primary/30 bg-gradient-to-r from-background/95 to-accent/30 dark:from-background/80 dark:to-accent/20 backdrop-blur-lg transform transition-transform">

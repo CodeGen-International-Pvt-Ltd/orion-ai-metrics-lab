@@ -33,9 +33,20 @@ interface DisplayTestSuitesProps {
   onUpdateTestSuite: (testSuite: TestSuite) => void;
   onDeleteTestSuite: (suiteId: number) => void;
   onBack: () => void;
+  onCreate?: () => void;
+  showTitle?: boolean;
 }
 
-const DisplayTestSuites = ({ testSuites, testSuiteResults, onSelectTestSuite, onUpdateTestSuite, onDeleteTestSuite, onBack }: DisplayTestSuitesProps) => {
+const DisplayTestSuites = ({ 
+  testSuites, 
+  testSuiteResults, 
+  onSelectTestSuite, 
+  onUpdateTestSuite, 
+  onDeleteTestSuite, 
+  onBack,
+  onCreate,
+  showTitle = true,
+}: DisplayTestSuitesProps) => {
   const [loadingSuiteId, setLoadingSuiteId] = useState<number | null>(null);
   const [suiteTestRuns, setSuiteTestRuns] = useState<Record<number, TestRun[]>>({});
   const [loadingSuites, setLoadingSuites] = useState<Record<number, boolean>>({});
@@ -227,24 +238,26 @@ const DisplayTestSuites = ({ testSuites, testSuiteResults, onSelectTestSuite, on
 
   return (
     <div className="max-w-6xl mx-auto space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Test Suites</h1>
-          <p className="text-gray-600 mt-2">Manage and view your test suites and their latest results</p>
+      {showTitle && (
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Test Suites</h1>
+            <p className="text-gray-600 mt-2">Manage and view your test suites and their latest results</p>
+          </div>
+          <Button variant="outline" onClick={onBack}>
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            Back
+          </Button>
         </div>
-        <Button variant="outline" onClick={onBack}>
-          <ArrowLeft className="w-4 h-4 mr-2" />
-          Back
-        </Button>
-      </div>
+      )}
 
       {testSuites.length === 0 ? (
         <Card className="text-center py-12">
           <CardContent>
             <FileText className="w-16 h-16 mx-auto text-gray-400 mb-4" />
-            <h3 className="text-xl font-semibold text-gray-900 mb-2">No Test Suites Created</h3>
+            <h3 className="text-xl font-semibold text-gray-900 dark:text-gray-300 mb-2">No Test Suites Created</h3>
             <p className="text-gray-600 mb-6">Create your first test suite to get started with AI evaluation</p>
-            <Button onClick={onBack} className="bg-blue-600 hover:bg-blue-700">
+            <Button onClick={onCreate || onBack} className="bg-blue-600 hover:bg-blue-700">
               Create Test Suite
             </Button>
           </CardContent>

@@ -33,12 +33,14 @@ interface DashboardProps {
   testSuites: TestSuite[];
   userData: { id: number; name: string; email: string } | null;
   onSelectTestRun: (runId: number) => void;
+  setResults: (results: any) => void;
   onSelectTestSuite: (suiteId: number) => void;
   onUpdateTestSuite?: (testSuite: TestSuite) => void;
   onDeleteTestSuite?: (suiteId: number) => void;
+  onCreateTestSuite: () => void;
 }
 
-const Dashboard = ({ testSuites, userData, onSelectTestRun, onSelectTestSuite, onUpdateTestSuite, onDeleteTestSuite }: DashboardProps) => {
+const Dashboard = ({ testSuites, userData, onSelectTestRun, setResults, onSelectTestSuite, onUpdateTestSuite, onDeleteTestSuite, onCreateTestSuite }: DashboardProps) => {
   const [allTestRuns, setAllTestRuns] = useState<TestRun[]>([]);
   const [suiteTestRuns, setSuiteTestRuns] = useState<Record<number, TestRun[]>>({});
   const [loading, setLoading] = useState(true);
@@ -89,6 +91,8 @@ const Dashboard = ({ testSuites, userData, onSelectTestRun, onSelectTestSuite, o
       setLoadingSuiteRuns(prev => ({ ...prev, [suiteId]: false }));
     }
   };
+
+  
 
   const fetchAllTestRuns = async () => {
     setLoading(true);
@@ -206,7 +210,20 @@ const Dashboard = ({ testSuites, userData, onSelectTestRun, onSelectTestSuite, o
   // Function to check if results are null (same as in TestExecution)
   const checkResultsNull = (results: any) => {
     return !results || results.evaluation === null || (Array.isArray(results.test_results) && results.test_results.length === 0);
-  };
+  }; 
+
+  const generateMockResults = (suiteId: string) => {
+    const seed = suiteId ? parseInt(suiteId.slice(-3)) || 123 : 123;
+    const random = (min: number, max: number) => min + ((seed * 9301 + 49297) % 233280) / 233280 * (max - min);
+    
+    // Content Evaluation with more variance
+    const contentEvaluation = {
+      correctness: Math.round((45 + random(0, 40)) * 10) / 10,
+      hallucination: Math.round((5 + random(0, 25)) * 10) / 10,
+      answer_relevancy: Math.round((35 + random(0, 50)) * 10) / 10,
+      contextual_relevance: Math.round((30 + random(0, 45)) * 10) / 10
+    }
+    };
 
   // Function to fetch actual results (same as in TestExecution)
   const fetchActualResults = async (runId: number, suiteId: number) => {
@@ -218,6 +235,8 @@ const Dashboard = ({ testSuites, userData, onSelectTestRun, onSelectTestSuite, o
     console.log("✅ Test Run ID returned:", runId);
   
     const response = await fetch(`http://127.0.0.1:8000/test-suite/${suiteId}/test-run/${runId}/`);
+
+
     if (!response.ok) {
       throw new Error("Failed to fetch test results");
     }
@@ -227,8 +246,10 @@ const Dashboard = ({ testSuites, userData, onSelectTestRun, onSelectTestSuite, o
     return data;
   };
 
+  
+
   // Updated test run click handler
-  const handleTestRunClick = async (runId: number) => {
+  const handleTestRunClick = async (runId: number, suiteId: number) => {
     try {
       // Find the test suite for this run
       const run = allTestRuns.find(r => r.test_run_id === runId);
@@ -237,20 +258,24 @@ const Dashboard = ({ testSuites, userData, onSelectTestRun, onSelectTestSuite, o
         return;
       }
 
+
       // Fetch actual results
-      const results = await fetchActualResults(runId, run.test_suite);
+      //const results = await fetchActualResults(runId, run.test_suite);
+      const  results= generateMockResults(suiteId.toString() || "default");
+      setResults(results);
+
       
       // Check if results are null
-      if (checkResultsNull(results)) {
-        setServerError(true);
-        return;
-      }
+      //if (checkResultsNull(results)) {
+        //setServerError(true);
+        //return;
+      //}
       
       // If results are valid, proceed normally
       onSelectTestRun(runId);
     } catch (error) {
       console.error("Failed to fetch test run results:", error);
-      setServerError(true);
+      //setServerError(true);
     }
   };
 
@@ -359,7 +384,7 @@ const Dashboard = ({ testSuites, userData, onSelectTestRun, onSelectTestSuite, o
           <Card className="text-center py-12">
             <CardContent>
               <BarChart3 className="w-16 h-16 mx-auto text-gray-400 mb-4" />
-              <h3 className="text-xl font-semibold text-gray-900 mb-2">No Test Runs Found</h3>
+              <h3 className="text-xl font-semibold text-gray-900 dark:text-gray-300 mb-2">No Test Runs Found</h3>
               <p className="text-gray-600 mb-6">No test runs have been executed yet across all test suites</p>
             </CardContent>
           </Card>
@@ -374,7 +399,7 @@ const Dashboard = ({ testSuites, userData, onSelectTestRun, onSelectTestSuite, o
                 <Card 
                   key={run.test_run_id} 
                   className="hover:shadow-lg transition-shadow cursor-pointer group"
-                  onClick={() => handleTestRunClick(run.test_run_id)}
+                  onClick={() => handleTestRunClick(run.test_run_id, run.test_suite)}
                 >
                   <CardContent className="p-6">
                     <div className="flex items-center justify-between">
@@ -462,6 +487,8 @@ const Dashboard = ({ testSuites, userData, onSelectTestRun, onSelectTestSuite, o
           onUpdateTestSuite={onUpdateTestSuite}
           onDeleteTestSuite={onDeleteTestSuite}
           onBack={() => {}}
+          onCreate={onCreateTestSuite}
+          showTitle={false}
         />
       </div>
     </div>
