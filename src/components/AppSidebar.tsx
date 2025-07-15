@@ -30,6 +30,7 @@ import { ThemeToggle } from "@/components/ThemeToggle"
 import EditUserProfile from "./EditUserProfile"
 import SettingsDialog from "./SettingsDialog"
 import HelpDialog from "./HelpDialog"
+import { getBackendUrl } from "../lib/config";
 
 interface AppSidebarProps {
   userData: { id: number; name: string; email: string };
@@ -53,7 +54,8 @@ const AppSidebar = ({
 
   const handleLogout = async () => {
     try {
-      const res = await fetch(`http://127.0.0.1:8000/user/${userData.id}/`, {
+      const backendUrl = await getBackendUrl();
+      const res = await fetch(`${backendUrl}/user/${userData.id}/`, {
         method: "DELETE",
         headers: {
           'Content-Type': 'application/json'

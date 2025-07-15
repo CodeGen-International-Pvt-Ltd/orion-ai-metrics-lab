@@ -7,6 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Progress } from "@/components/ui/progress";
 import { Settings, ArrowRight, Save, Edit, Trash2, Lock, AlertCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { getBackendUrl } from "../lib/config";
 
 interface TestRun {
   test_run_id: number;
@@ -88,7 +89,8 @@ const MetricsConfiguration = ({
     
     setLoadingTestRuns(true);
     try {
-      const response = await fetch(`http://127.0.0.1:8000/test-suite/${testSuiteId}/test-run/filter/`);
+      const backendUrl = await getBackendUrl();
+      const response = await fetch(`${backendUrl}/test-suite/${testSuiteId}/test-run/filter/`);
       
       if (response.ok) {
         const data = await response.json();
@@ -128,7 +130,8 @@ const MetricsConfiguration = ({
   // Fetch existing configuration from backend
   const fetchExistingConfiguration = async (testSuiteId: string) => {
     try {
-      const response = await fetch(`http://127.0.0.1:8000/test-suite/${testSuiteId}/configurations/`);
+      const backendUrl = await getBackendUrl();
+      const response = await fetch(`${backendUrl}/test-suite/${testSuiteId}/configurations/`);
       if (response.ok) {
         const data = await response.json();
         if (data && data.length > 0) {
@@ -312,8 +315,9 @@ const MetricsConfiguration = ({
       });
 
       if (existingConfig) {
+        const backendUrl = await getBackendUrl();
         // Update existing configuration
-        const response = await fetch(`http://127.0.0.1:8000/test-suite/${selectedTestSuiteIdLocal}/configurations/${existingConfig.config_id}/`, {
+        const response = await fetch(`${backendUrl}/test-suite/${selectedTestSuiteIdLocal}/configurations/${existingConfig.config_id}/`, {
           method: 'PUT',
           headers: {
             'Content-Type': 'application/json',
@@ -335,8 +339,9 @@ const MetricsConfiguration = ({
           throw new Error('Failed to update configuration');
         }
       } else {
+        const backendUrl = await getBackendUrl();
         // Create new configuration
-        const response = await fetch(`http://127.0.0.1:8000/test-suite/${selectedTestSuiteIdLocal}/configurations/`, {
+        const response = await fetch(`${backendUrl}/test-suite/${selectedTestSuiteIdLocal}/configurations/`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',

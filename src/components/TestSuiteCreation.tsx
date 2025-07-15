@@ -6,6 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Plus, Trash2, FileText, ArrowRight } from "lucide-react";
+import { getBackendUrl } from "../lib/config";
 
 interface TestSuite {
   id: number;
@@ -47,7 +48,8 @@ const TestSuiteCreation = ({ userId, testSuites, setTestSuites, onNext, onBack, 
     };
   
     try {
-      const response = await fetch(`http://127.0.0.1:8000/user/${userId}/test-suite/`, {
+      const backendUrl = await getBackendUrl();
+      const response = await fetch(`${backendUrl}/user/${userId}/test-suite/`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

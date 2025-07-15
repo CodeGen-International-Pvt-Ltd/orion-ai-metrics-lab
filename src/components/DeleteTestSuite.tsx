@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Trash2 } from "lucide-react";
+import { getBackendUrl } from "../lib/config";
 
 interface TestSuite {
   id: number;
@@ -26,7 +27,8 @@ const DeleteTestSuite = ({ testSuite, userId, onDeleteTestSuite }: DeleteTestSui
     setIsDeleting(true);
 
     try {
-      const res = await fetch(`http://127.0.0.1:8000/user/${userId}/test-suite/${testSuite.id}/`, {
+      const backendUrl = await getBackendUrl();
+      const res = await fetch(`${backendUrl}/user/${userId}/test-suite/${testSuite.id}/`, {
         method: "DELETE",
         headers: {
           "Content-Type": "application/json",

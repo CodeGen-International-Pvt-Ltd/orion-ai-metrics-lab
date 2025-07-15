@@ -6,6 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Progress } from "@/components/ui/progress";
 import { Play, Pause, ArrowRight, CheckCircle, Clock, AlertCircle } from "lucide-react";
 import ServerErrorPage from "./ServerErrorPage";
+import { getBackendUrl } from "../lib/config";
 
 interface TestExecutionProps {
   onNext: () => void;
@@ -59,7 +60,8 @@ const TestExecution = ({ onNext, onBack, setResults, selectedTestSuiteId }: Test
       if (!selectedTestSuiteId || !testRunId) return;
     
       try {
-        await fetch(`http://127.0.0.1:8000/test-suite/${selectedTestSuiteId}/test_run/${testRunId}/`, {
+        const backendUrl = await getBackendUrl();
+        await fetch(`${backendUrl}/test-suite/${selectedTestSuiteId}/test_run/${testRunId}/`, {
           method: 'DELETE',
         });
         console.log('Test run deleted');
@@ -167,7 +169,8 @@ const TestExecution = ({ onNext, onBack, setResults, selectedTestSuiteId }: Test
   
     console.log("✅ Test Run ID returned:", runId);
   
-    const response = await fetch(`http://127.0.0.1:8000/test-suite/${selectedTestSuiteId}/test-run/${runId}/`);
+    const backendUrl = await getBackendUrl();
+    const response = await fetch(`${backendUrl}/test-suite/${selectedTestSuiteId}/test-run/${runId}/`);
     if (!response.ok) {
       throw new Error("Failed to fetch test results");
     }
@@ -289,8 +292,8 @@ const TestExecution = ({ onNext, onBack, setResults, selectedTestSuiteId }: Test
   const createTestRun = async () => {
     if (!selectedTestSuiteId) return;
     console.log("Creating test run for suite ID:", selectedTestSuiteId);
-  
-    const response = await fetch(`http://127.0.0.1:8000/test-suite/${selectedTestSuiteId}/test-run/`, {
+    const backendUrl = await getBackendUrl();
+    const response = await fetch(`${backendUrl}/test-suite/${selectedTestSuiteId}/test-run/`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

@@ -7,6 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Brain, ArrowRight } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { getBackendUrl } from "../lib/config";
 
 interface ModelSelectionProps {
   selectedModel: string;
@@ -172,7 +173,8 @@ const supportedBackendMetrics = Object.keys(metricCategoryMap);
     
     
     
-    const response = await fetch(`http://127.0.0.1:8000/test-suite/${pendingConfig.testSuiteId}/configurations/`, {
+    const backendUrl = getBackendUrl();
+    const response = await fetch(`${backendUrl}/test-suite/${pendingConfig.testSuiteId}/configurations/`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

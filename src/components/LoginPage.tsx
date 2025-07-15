@@ -5,6 +5,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Brain, Mail, User } from "lucide-react";
 import { ThemeToggleLarge } from "@/components/ThemeToggle";
+import { getBackendUrl } from "../lib/config";
 
 interface LoginPageProps {
   onLogin: (userData: { id:number; name: string; email: string }) => void;
@@ -47,7 +48,8 @@ const LoginPage = ({ onLogin }: LoginPageProps) => {
     if (!validateForm()) return;
   
     try {
-      const response = await fetch("http://localhost:8000/user/", {
+      const backendUrl = await getBackendUrl();
+      const response = await fetch(`${backendUrl}/user/`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json"

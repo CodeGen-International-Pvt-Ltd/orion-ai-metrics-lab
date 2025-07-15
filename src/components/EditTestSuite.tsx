@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Edit2 } from "lucide-react";
+import { getBackendUrl } from "../lib/config";
 
 interface TestSuite {
   id: number;
@@ -35,7 +36,8 @@ const EditTestSuite = ({ testSuite, userId, onUpdateTestSuite }: EditTestSuitePr
     }
   
     try {
-      const res = await fetch(`http://127.0.0.1:8000/user/${userId}/test-suite/${testSuite.id}/`, {
+      const backendUrl = await getBackendUrl();
+      const res = await fetch(`${backendUrl}/user/${userId}/test-suite/${testSuite.id}/`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",

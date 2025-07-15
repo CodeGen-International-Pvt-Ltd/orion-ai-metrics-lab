@@ -7,6 +7,7 @@ import EditTestSuite from "./EditTestSuite";
 import DeleteTestSuite from "./DeleteTestSuite";
 import DisplayTestSuites from './DisplayTestSuites';
 import ServerErrorPage from './ServerErrorPage';
+import { getBackendUrl } from "../lib/config";
 
 interface TestRun {
   test_run_id: number;
@@ -66,7 +67,8 @@ const Dashboard = ({ testSuites, userData, onSelectTestRun, setResults, onSelect
     setLoadingSuiteRuns(prev => ({ ...prev, [suiteId]: true }));
     
     try {
-      const response = await fetch(`http://127.0.0.1:8000/test-suite/${suiteId}/test-run/filter/`);
+      const backendUrl = await getBackendUrl();
+      const response = await fetch(`${backendUrl}/test-suite/${suiteId}/test-run/filter/`);
       console.log(suiteId);
       
       if (!response.ok) {
@@ -104,7 +106,8 @@ const Dashboard = ({ testSuites, userData, onSelectTestRun, setResults, onSelect
       // Fetch test runs for each test suite
       for (const suite of testSuites) {
         try {
-          const response = await fetch(`http://127.0.0.1:8000/test-suite/${suite.id}/test-run/filter/`);
+          const backendUrl = await getBackendUrl();
+          const response = await fetch(`${backendUrl}/test-suite/${suite.id}/test-run/filter/`);
           console.log(suite.id);
           
           if (!response.ok) {
@@ -234,7 +237,8 @@ const Dashboard = ({ testSuites, userData, onSelectTestRun, setResults, onSelect
     console.log("Fetching results with:");
     console.log("✅ Test Run ID returned:", runId);
   
-    const response = await fetch(`http://127.0.0.1:8000/test-suite/${suiteId}/test-run/${runId}/`);
+    const backendUrl = await getBackendUrl();
+    const response = await fetch(`${backendUrl}/test-suite/${suiteId}/test-run/${runId}/`);
 
 
     if (!response.ok) {
@@ -286,7 +290,8 @@ const Dashboard = ({ testSuites, userData, onSelectTestRun, setResults, onSelect
     
     try {
       // Fetch test runs from API
-      const response = await fetch(`http://127.0.0.1:8000/test-suite/${suiteId}/test-run/filter/`);
+      const backendUrl = await getBackendUrl();
+      const response = await fetch(`${backendUrl}/test-suite/${suiteId}/test-run/filter/`);
       console.log(suiteId);
       
       if (!response.ok) {
