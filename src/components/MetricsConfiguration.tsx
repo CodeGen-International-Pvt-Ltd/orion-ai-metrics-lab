@@ -349,6 +349,8 @@ const MetricsConfiguration = ({
           body: JSON.stringify(backendConfig),
         });
 
+        
+
         if (response.ok) {
           const newConfig = await response.json();
           setExistingConfig(newConfig);

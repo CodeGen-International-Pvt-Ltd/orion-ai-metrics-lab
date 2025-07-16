@@ -79,6 +79,14 @@ const ModelSelection = ({ selectedModel, setSelectedModel, onNext, onBack, testS
   const createOrUpdateConfiguration = async () => {
     const pendingConfig = config.pendingConfiguration;
     if (!pendingConfig) return;
+    if (!pendingConfig.testSuiteId || pendingConfig.testSuiteId === '' || pendingConfig.testSuiteId === undefined) {
+      toast({
+        title: 'No Test Suite Selected',
+        description: 'Please select a test suite before creating a configuration.',
+        variant: 'destructive',
+      });
+      return;
+    }
 
     const allMetrics = [
       { id: 'correctness', name: 'Correctness' },
@@ -133,16 +141,17 @@ const supportedBackendMetrics = Object.keys(metricCategoryMap);
 
   Object.entries(thresholds).forEach(([metricId, metricData]: [string, any]) => {
     const metricKey = metricId.trim().toLowerCase();
-
     // Try to find the exact backend key from mapping
     const backendKey = supportedBackendMetrics.find(
       backendMetric => backendMetric === metricKey
     );
-
     if (backendKey) {
       const group = metricCategoryMap[backendKey];
       if (!groupedMetrics[group]) groupedMetrics[group] = {};
-      groupedMetrics[group][backendKey] = metricData.threshold / 100;
+      // Use display name as key
+      const metricInfo = allMetrics.find(m => m.id === metricId);
+      const displayName = metricInfo ? metricInfo.name : metricId;
+      groupedMetrics[group][displayName] = metricData.threshold / 100;
     }
   });
 });
@@ -173,7 +182,7 @@ const supportedBackendMetrics = Object.keys(metricCategoryMap);
     
     
     
-    const backendUrl = getBackendUrl();
+    const backendUrl = await getBackendUrl();
     const response = await fetch(`${backendUrl}/test-suite/${pendingConfig.testSuiteId}/configurations/`, {
       method: 'POST',
       headers: {
