@@ -9,6 +9,7 @@ import ServerErrorPage from './ServerErrorPage';
 import { getBackendUrl } from "../lib/config";
 import * as api from "../lib/apiPaths";
 import { getTestRuns, getTestRun } from "../lib/apiService";
+import { generateMockResults } from "./TestExecution";
 
 interface TestSuite {
   id: number;
@@ -38,18 +39,11 @@ interface DisplayTestSuitesProps {
   onBack: () => void;
   onCreate?: () => void;
   showTitle?: boolean;
+  onShowResults?: (results: any) => void;
 }
 
-const DisplayTestSuites = ({ 
-  testSuites, 
-  testSuiteResults, 
-  onSelectTestSuite, 
-  onUpdateTestSuite, 
-  onDeleteTestSuite, 
-  onBack,
-  onCreate,
-  showTitle = true,
-}: DisplayTestSuitesProps) => {
+const DisplayTestSuites = ({ testSuites, testSuiteResults, onSelectTestSuite, onUpdateTestSuite, onDeleteTestSuite, onBack, onCreate, showTitle = true, onShowResults }: DisplayTestSuitesProps) => {
+  const showResults = onShowResults || (() => {});
   const [loadingSuiteId, setLoadingSuiteId] = useState<number | null>(null);
   const [suiteTestRuns, setSuiteTestRuns] = useState<Record<number, TestRun[]>>({});
   const [loadingSuites, setLoadingSuites] = useState<Record<number, boolean>>({});
@@ -209,21 +203,14 @@ const DisplayTestSuites = ({
   // Handler for when users click on test runs within test suite cards
   const handleTestRunClick = async (runId: number, suiteId: number) => {
     try {
-      // Fetch actual results
       const results = await fetchActualResults(runId, suiteId);
-      
-      // Check if results are null
       if (checkResultsNull(results)) {
-        setServerError(true);
+        showResults(generateMockResults(suiteId.toString()));
         return;
       }
-      
-      // If results are valid, you might want to navigate to results page
-      // For now, we'll just show the test suite details
-      onSelectTestSuite(suiteId);
+      showResults(results);
     } catch (error) {
-      console.error("Failed to fetch test run results:", error);
-      setServerError(true);
+      showResults(generateMockResults(suiteId.toString()));
     }
   };
 

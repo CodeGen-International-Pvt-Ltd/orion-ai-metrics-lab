@@ -23,7 +23,7 @@ import { getTestRuns } from "../lib/apiService";
 
 const Index = () => {
   const [currentStep, setCurrentStep] = useState(1);
-  const [currentView, setCurrentView] = useState<'workflow' | 'displaySuites' | 'testRuns' | 'dashboard'>('dashboard');
+  const [currentView, setCurrentView] = useState<'workflow' | 'displaySuites' | 'testRuns' | 'dashboard' | 'results' | 'report'>('dashboard');
   const [testSuites, setTestSuites] = useState<any[]>([]);
   const [selectedTestSuiteId, setSelectedTestSuiteId] = useState<number | null>(null);
   const [metricsConfig, setMetricsConfig] = useState<any>({});
@@ -132,6 +132,11 @@ const Index = () => {
     setCurrentView('displaySuites');
   };
 
+  const handleShowResults = (results: any) => {
+    setEvaluationResults(results);
+    setCurrentView('results');
+  };
+
   const getStepIcon = (stepIndex: number) => {
     const icons = [null, FileText, BarChart3, Brain, Brain, BarChart3, FileText];
     return icons[stepIndex];
@@ -195,6 +200,12 @@ const Index = () => {
   }
 
   const renderCurrentStep = () => {
+    if (currentView === 'report') {
+      return <ReportGeneration results={evaluationResults} onBack={() => setCurrentView('results')} />;
+    }
+    if (currentView === 'results') {
+      return <ResultsDashboard results={evaluationResults} onNext={() => setCurrentView('report')} onBack={() => setCurrentView('dashboard')} />;
+    }
     if (currentView === 'dashboard') {
       return (
         <Dashboard 
@@ -206,10 +217,10 @@ const Index = () => {
           onUpdateTestSuite={handleUpdateTestSuite}
           onDeleteTestSuite={handleDeleteTestSuite}
           onCreateTestSuite={handleRegisterTestSuite}
+          onShowResults={handleShowResults}
         />
       );
     }
-
     if (currentView === 'displaySuites') {
       return (
         <DisplayTestSuites 
@@ -220,10 +231,10 @@ const Index = () => {
           onDeleteTestSuite={handleDeleteTestSuite}
           onBack={handleBackToWorkflow}
           onCreate={handleRegisterTestSuite}
+          onShowResults={handleShowResults}
         />
       );
     }
-
     if (currentView === 'testRuns') {
       const selectedSuite = getSelectedTestSuite();
       
@@ -233,6 +244,7 @@ const Index = () => {
           testSuiteId={selectedTestSuiteId || 0}
           onSelectTestRun={handleSelectTestRun}
           onBack={handleBackToTestSuites}
+          onShowResults={handleShowResults}
         />
       );
     }

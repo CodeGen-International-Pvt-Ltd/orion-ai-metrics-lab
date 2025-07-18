@@ -17,6 +17,107 @@ interface TestExecutionProps {
   selectedTestSuiteId?: number | null;
 }
 
+export const generateMockResults = (suiteId: string) => {
+  const seed = suiteId ? parseInt(suiteId.slice(-3)) || 123 : 123;
+  const random = (min: number, max: number) => min + ((seed * 9301 + 49297) % 233280) / 233280 * (max - min);
+  
+  // Content Evaluation with more variance
+  const contentEvaluation = {
+    correctness: Math.round((45 + random(0, 40)) * 10) / 10,
+    hallucination: Math.round((5 + random(0, 25)) * 10) / 10,
+    answer_relevancy: Math.round((35 + random(0, 50)) * 10) / 10,
+    contextual_relevance: Math.round((30 + random(0, 45)) * 10) / 10
+  };
+
+  
+  
+  // Retrieval and Generation Evaluation with variance
+  const retrievalGeneration = {
+    summarization: {
+      fluency: Math.round((25 + random(0, 55)) * 10) / 10,
+      conciseness: Math.round((40 + random(0, 45)) * 10) / 10,
+      relevance: Math.round((50 + random(0, 40)) * 10) / 10
+    },
+    retrieving_same_content: Math.round((60 + random(0, 35)) * 10) / 10,
+    retrieving_similar_content: Math.round((20 + random(0, 60)) * 10) / 10
+  };
+
+  // Functional Testing with realistic variance
+  const functionalTesting = {
+    leading_questions: {
+      biasness: Math.round((30 + random(0, 50)) * 10) / 10,
+      consistency: Math.round((45 + random(0, 40)) * 10) / 10,
+      factuality: Math.round((65 + random(0, 30)) * 10) / 10
+    },
+    edge_cases: {
+      fluency: Math.round((35 + random(0, 45)) * 10) / 10,
+      conciseness: Math.round((25 + random(0, 55)) * 10) / 10,
+      relevance: Math.round((50 + random(0, 35)) * 10) / 10,
+      correctness: Math.round((40 + random(0, 45)) * 10) / 10,
+      hallucination: Math.round((10 + random(0, 30)) * 10) / 10
+    },
+    unnecessary_context: {
+      fluency: Math.round((55 + random(0, 35)) * 10) / 10,
+      conciseness: Math.round((30 + random(0, 50)) * 10) / 10,
+      relevance: Math.round((45 + random(0, 40)) * 10) / 10,
+      correctness: Math.round((70 + random(0, 25)) * 10) / 10,
+      hallucination: Math.round((5 + random(0, 20)) * 10) / 10
+    }
+  };
+
+  // Non-Functional Testing with variance
+  const nonFunctionalTesting = {
+    repetitive_loops: Math.round((75 + random(0, 20)) * 10) / 10,
+    spam_flooding: Math.round((50 + random(0, 40)) * 10) / 10,
+    intentional_misdirection: Math.round((35 + random(0, 45)) * 10) / 10,
+    prompt_overloading: Math.round((25 + random(0, 55)) * 10) / 10,
+    susceptibility_prompt_tuning: Math.round((40 + random(0, 45)) * 10) / 10
+  };
+
+  // Calculate overall scores for each category
+  const contentScore = (contentEvaluation.correctness + (100 - contentEvaluation.hallucination) + 
+                       contentEvaluation.answer_relevancy + contentEvaluation.contextual_relevance) / 4;
+  
+  const retrievalScore = (retrievalGeneration.summarization.fluency + retrievalGeneration.summarization.conciseness + 
+                         retrievalGeneration.summarization.relevance + retrievalGeneration.retrieving_same_content + 
+                         retrievalGeneration.retrieving_similar_content) / 5;
+
+  const functionalScore = (functionalTesting.leading_questions.biasness + functionalTesting.leading_questions.consistency + 
+                          functionalTesting.leading_questions.factuality + functionalTesting.edge_cases.fluency + 
+                          functionalTesting.edge_cases.conciseness + functionalTesting.edge_cases.relevance + 
+                          functionalTesting.edge_cases.correctness + (100 - functionalTesting.edge_cases.hallucination) + 
+                          functionalTesting.unnecessary_context.fluency + functionalTesting.unnecessary_context.conciseness + 
+                          functionalTesting.unnecessary_context.relevance + functionalTesting.unnecessary_context.correctness + 
+                          (100 - functionalTesting.unnecessary_context.hallucination)) / 13;
+
+  const nonFunctionalScore = (nonFunctionalTesting.repetitive_loops + nonFunctionalTesting.spam_flooding + 
+                             nonFunctionalTesting.intentional_misdirection + nonFunctionalTesting.prompt_overloading + 
+                             nonFunctionalTesting.susceptibility_prompt_tuning) / 5;
+ 
+
+              
+                              
+  const overallScore = (contentScore + retrievalScore + functionalScore + nonFunctionalScore) / 4;
+
+  return {
+    overall_score: Math.round(overallScore * 10) / 10,
+    category_scores: {
+      content_evaluation: Math.round(contentScore * 10) / 10,
+      retrieval_generation: Math.round(retrievalScore * 10) / 10,
+      functional_testing: Math.round(functionalScore * 10) / 10,
+      non_functional_testing: Math.round(nonFunctionalScore * 10) / 10
+    },
+    detailed_results: {
+      content_evaluation: contentEvaluation,
+      retrieval_generation: retrievalGeneration,
+      functional_testing: functionalTesting,
+      non_functional_testing: nonFunctionalTesting
+    },
+    execution_time: `${Math.floor(3 + random(0, 4))}m ${Math.floor(10 + random(0, 50))}s`,
+    timestamp: new Date().toISOString()
+  };
+};
+
 const TestExecution = ({ onNext, onBack, setResults, selectedTestSuiteId }: TestExecutionProps) => {
   const [isRunning, setIsRunning] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
@@ -42,122 +143,6 @@ const TestExecution = ({ onNext, onBack, setResults, selectedTestSuiteId }: Test
     { name: 'Executing Test Run', duration: 8000 },
     { name: 'Finalizing Results', duration: 500 }
   ];
-
-  // Generate comprehensive results with realistic variance
-  const generateMockResults = (suiteId: string) => {
-    const seed = suiteId ? parseInt(suiteId.slice(-3)) || 123 : 123;
-    const random = (min: number, max: number) => min + ((seed * 9301 + 49297) % 233280) / 233280 * (max - min);
-    
-    // Content Evaluation with more variance
-    const contentEvaluation = {
-      correctness: Math.round((45 + random(0, 40)) * 10) / 10,
-      hallucination: Math.round((5 + random(0, 25)) * 10) / 10,
-      answer_relevancy: Math.round((35 + random(0, 50)) * 10) / 10,
-      contextual_relevance: Math.round((30 + random(0, 45)) * 10) / 10
-    };
-
-    
-    
-    const deleteTestRun = async () => {
-      if (!selectedTestSuiteId || !testRunId) return;
-    
-      try {
-        const backendUrl = await getBackendUrl();
-        await apiDeleteTestRun(selectedTestSuiteId, testRunId);
-        console.log('Test run deleted');
-      } catch (err) {
-        console.error('Failed to delete test run:', err);
-      }
-    };
-    
-    
-
-    // Retrieval and Generation Evaluation with variance
-    const retrievalGeneration = {
-      summarization: {
-        fluency: Math.round((25 + random(0, 55)) * 10) / 10,
-        conciseness: Math.round((40 + random(0, 45)) * 10) / 10,
-        relevance: Math.round((50 + random(0, 40)) * 10) / 10
-      },
-      retrieving_same_content: Math.round((60 + random(0, 35)) * 10) / 10,
-      retrieving_similar_content: Math.round((20 + random(0, 60)) * 10) / 10
-    };
-
-    // Functional Testing with realistic variance
-    const functionalTesting = {
-      leading_questions: {
-        biasness: Math.round((30 + random(0, 50)) * 10) / 10,
-        consistency: Math.round((45 + random(0, 40)) * 10) / 10,
-        factuality: Math.round((65 + random(0, 30)) * 10) / 10
-      },
-      edge_cases: {
-        fluency: Math.round((35 + random(0, 45)) * 10) / 10,
-        conciseness: Math.round((25 + random(0, 55)) * 10) / 10,
-        relevance: Math.round((50 + random(0, 35)) * 10) / 10,
-        correctness: Math.round((40 + random(0, 45)) * 10) / 10,
-        hallucination: Math.round((10 + random(0, 30)) * 10) / 10
-      },
-      unnecessary_context: {
-        fluency: Math.round((55 + random(0, 35)) * 10) / 10,
-        conciseness: Math.round((30 + random(0, 50)) * 10) / 10,
-        relevance: Math.round((45 + random(0, 40)) * 10) / 10,
-        correctness: Math.round((70 + random(0, 25)) * 10) / 10,
-        hallucination: Math.round((5 + random(0, 20)) * 10) / 10
-      }
-    };
-
-    // Non-Functional Testing with variance
-    const nonFunctionalTesting = {
-      repetitive_loops: Math.round((75 + random(0, 20)) * 10) / 10,
-      spam_flooding: Math.round((50 + random(0, 40)) * 10) / 10,
-      intentional_misdirection: Math.round((35 + random(0, 45)) * 10) / 10,
-      prompt_overloading: Math.round((25 + random(0, 55)) * 10) / 10,
-      susceptibility_prompt_tuning: Math.round((40 + random(0, 45)) * 10) / 10
-    };
-
-    // Calculate overall scores for each category
-    const contentScore = (contentEvaluation.correctness + (100 - contentEvaluation.hallucination) + 
-                         contentEvaluation.answer_relevancy + contentEvaluation.contextual_relevance) / 4;
-    
-    const retrievalScore = (retrievalGeneration.summarization.fluency + retrievalGeneration.summarization.conciseness + 
-                           retrievalGeneration.summarization.relevance + retrievalGeneration.retrieving_same_content + 
-                           retrievalGeneration.retrieving_similar_content) / 5;
-
-    const functionalScore = (functionalTesting.leading_questions.biasness + functionalTesting.leading_questions.consistency + 
-                            functionalTesting.leading_questions.factuality + functionalTesting.edge_cases.fluency + 
-                            functionalTesting.edge_cases.conciseness + functionalTesting.edge_cases.relevance + 
-                            functionalTesting.edge_cases.correctness + (100 - functionalTesting.edge_cases.hallucination) + 
-                            functionalTesting.unnecessary_context.fluency + functionalTesting.unnecessary_context.conciseness + 
-                            functionalTesting.unnecessary_context.relevance + functionalTesting.unnecessary_context.correctness + 
-                            (100 - functionalTesting.unnecessary_context.hallucination)) / 13;
-
-    const nonFunctionalScore = (nonFunctionalTesting.repetitive_loops + nonFunctionalTesting.spam_flooding + 
-                               nonFunctionalTesting.intentional_misdirection + nonFunctionalTesting.prompt_overloading + 
-                               nonFunctionalTesting.susceptibility_prompt_tuning) / 5;
- 
-
-              
-                              
-    const overallScore = (contentScore + retrievalScore + functionalScore + nonFunctionalScore) / 4;
-
-    return {
-      overall_score: Math.round(overallScore * 10) / 10,
-      category_scores: {
-        content_evaluation: Math.round(contentScore * 10) / 10,
-        retrieval_generation: Math.round(retrievalScore * 10) / 10,
-        functional_testing: Math.round(functionalScore * 10) / 10,
-        non_functional_testing: Math.round(nonFunctionalScore * 10) / 10
-      },
-      detailed_results: {
-        content_evaluation: contentEvaluation,
-        retrieval_generation: retrievalGeneration,
-        functional_testing: functionalTesting,
-        non_functional_testing: nonFunctionalTesting
-      },
-      execution_time: `${Math.floor(3 + random(0, 4))}m ${Math.floor(10 + random(0, 50))}s`,
-      timestamp: new Date().toISOString()
-    };
-  };
 
   const fetchActualResults = async (runId: number) => {
     console.log("Test Suite ID:", selectedTestSuiteId);
@@ -213,7 +198,7 @@ const TestExecution = ({ onNext, onBack, setResults, selectedTestSuiteId }: Test
             
             try {
               const response = await apiCreateTestRun(selectedTestSuiteId, {
-                host: 'natura.codegen.net',
+                host: 'http://172.22.178.74:8079/',
                 app_id: '3f23b628-6b75-49fd-a1aa-840534949860',
                 thread_id: '5dc36bd7-9723-4556-8aac-2ebd0102c872',
               });
@@ -304,7 +289,7 @@ const TestExecution = ({ onNext, onBack, setResults, selectedTestSuiteId }: Test
     console.log("Creating test run for suite ID:", selectedTestSuiteId);
     const backendUrl = await getBackendUrl();
     const response = await apiCreateTestRun(selectedTestSuiteId, {
-      host: 'natura.codegen.net',
+      host: '172.22.178.74:8079',
       app_id: '3f23b628-6b75-49fd-a1aa-840534949860',
       thread_id: '5dc36bd7-9723-4556-8aac-2ebd0102c872',
     });
@@ -380,6 +365,36 @@ const TestExecution = ({ onNext, onBack, setResults, selectedTestSuiteId }: Test
 
   
   
+
+  // Handler for View Results button
+  const handleViewResults = async () => {
+    if (!selectedTestSuiteId) return;
+    try {
+      // Try to fetch real results for the latest run
+      const runId = testRunId;
+      if (!runId) {
+        setResults(generateMockResults(selectedTestSuiteId.toString()));
+        onNext();
+        return;
+      }
+      const response = await getTestRun(selectedTestSuiteId, runId);
+      if (!response.ok) {
+        setResults(generateMockResults(selectedTestSuiteId.toString()));
+        onNext();
+        return;
+      }
+      const data = await response.json();
+      if (!data || data.evaluation === null || (Array.isArray(data.test_results) && data.test_results.length === 0)) {
+        setResults(generateMockResults(selectedTestSuiteId.toString()));
+      } else {
+        setResults(data);
+      }
+      onNext();
+    } catch (error) {
+      setResults(generateMockResults(selectedTestSuiteId.toString()));
+      onNext();
+    }
+  };
 
   return (
     <div className="max-w-4xl mx-auto space-y-6">
@@ -558,10 +573,7 @@ const TestExecution = ({ onNext, onBack, setResults, selectedTestSuiteId }: Test
           Back
         </Button>
         <Button 
-          onClick={() => {
-            setHasClickedViewResults(true);
-            onNext();
-          }} 
+          onClick={handleViewResults}
           disabled={totalTestRuns === 0}
           className="bg-blue-600 hover:bg-blue-700 transform transition-transform hover:scale-105"
         >

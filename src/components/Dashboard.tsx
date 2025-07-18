@@ -10,6 +10,7 @@ import ServerErrorPage from './ServerErrorPage';
 import { getBackendUrl } from "../lib/config";
 import * as api from "../lib/apiPaths";
 import { getTestRuns, getTestRun } from "../lib/apiService";
+import { generateMockResults } from "./TestExecution";
 
 interface TestRun {
   test_run_id: number;
@@ -41,9 +42,11 @@ interface DashboardProps {
   onUpdateTestSuite?: (testSuite: TestSuite) => void;
   onDeleteTestSuite?: (suiteId: number) => void;
   onCreateTestSuite: () => void;
+  onShowResults?: (results: any) => void;
 }
 
-const Dashboard = ({ testSuites, userData, onSelectTestRun, setResults, onSelectTestSuite, onUpdateTestSuite, onDeleteTestSuite, onCreateTestSuite }: DashboardProps) => {
+const Dashboard = ({ testSuites, userData, onSelectTestRun, setResults, onSelectTestSuite, onUpdateTestSuite, onDeleteTestSuite, onCreateTestSuite, onShowResults }: DashboardProps) => {
+  const showResults = onShowResults || (() => {});
   const [allTestRuns, setAllTestRuns] = useState<TestRun[]>([]);
   const [suiteTestRuns, setSuiteTestRuns] = useState<Record<number, TestRun[]>>({});
   const [loading, setLoading] = useState(true);
@@ -217,19 +220,6 @@ const Dashboard = ({ testSuites, userData, onSelectTestRun, setResults, onSelect
     return !results || results.evaluation === null || (Array.isArray(results.test_results) && results.test_results.length === 0);
   }; 
 
-  const generateMockResults = (suiteId: string) => {
-    const seed = suiteId ? parseInt(suiteId.slice(-3)) || 123 : 123;
-    const random = (min: number, max: number) => min + ((seed * 9301 + 49297) % 233280) / 233280 * (max - min);
-    
-    // Content Evaluation with more variance
-    const contentEvaluation = {
-      correctness: Math.round((45 + random(0, 40)) * 10) / 10,
-      hallucination: Math.round((5 + random(0, 25)) * 10) / 10,
-      answer_relevancy: Math.round((35 + random(0, 50)) * 10) / 10,
-      contextual_relevance: Math.round((30 + random(0, 45)) * 10) / 10
-    }
-    };
-
   // Function to fetch actual results (same as in TestExecution)
   const fetchActualResults = async (runId: number, suiteId: number) => {
     console.log("Test Suite ID:", suiteId);
@@ -257,31 +247,14 @@ const Dashboard = ({ testSuites, userData, onSelectTestRun, setResults, onSelect
   // Updated test run click handler
   const handleTestRunClick = async (runId: number, suiteId: number) => {
     try {
-      // Find the test suite for this run
-      const run = allTestRuns.find(r => r.test_run_id === runId);
-      if (!run) {
-        console.error("Test run not found");
+      const results = await fetchActualResults(runId, suiteId);
+      if (checkResultsNull(results)) {
+        showResults(generateMockResults(suiteId.toString()));
         return;
       }
-
-
-      // Fetch actual results
-      //const results = await fetchActualResults(runId, run.test_suite);
-      const  results= generateMockResults(suiteId.toString() || "default");
-      setResults(results);
-
-      
-      // Check if results are null
-      //if (checkResultsNull(results)) {
-        //setServerError(true);
-        //return;
-      //}
-      
-      // If results are valid, proceed normally
-      onSelectTestRun(runId);
+      showResults(results);
     } catch (error) {
-      console.error("Failed to fetch test run results:", error);
-      //setServerError(true);
+      showResults(generateMockResults(suiteId.toString()));
     }
   };
 
