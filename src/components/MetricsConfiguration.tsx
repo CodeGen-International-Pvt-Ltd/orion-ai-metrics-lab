@@ -8,6 +8,8 @@ import { Progress } from "@/components/ui/progress";
 import { Settings, ArrowRight, Save, Edit, Trash2, Lock, AlertCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { getBackendUrl } from "../lib/config";
+import * as api from "../lib/apiPaths";
+import { getConfigurations, createConfiguration, updateConfiguration, getTestRuns } from "../lib/apiService";
 
 interface TestRun {
   test_run_id: number;
@@ -89,8 +91,7 @@ const MetricsConfiguration = ({
     
     setLoadingTestRuns(true);
     try {
-      const backendUrl = await getBackendUrl();
-      const response = await fetch(`${backendUrl}/test-suite/${testSuiteId}/test-run/filter/`);
+      const response = await getTestRuns(testSuiteId);
       
       if (response.ok) {
         const data = await response.json();
@@ -130,8 +131,7 @@ const MetricsConfiguration = ({
   // Fetch existing configuration from backend
   const fetchExistingConfiguration = async (testSuiteId: string) => {
     try {
-      const backendUrl = await getBackendUrl();
-      const response = await fetch(`${backendUrl}/test-suite/${testSuiteId}/configurations/`);
+      const response = await getConfigurations(testSuiteId);
       if (response.ok) {
         const data = await response.json();
         if (data && data.length > 0) {
@@ -315,15 +315,7 @@ const MetricsConfiguration = ({
       });
 
       if (existingConfig) {
-        const backendUrl = await getBackendUrl();
-        // Update existing configuration
-        const response = await fetch(`${backendUrl}/test-suite/${selectedTestSuiteIdLocal}/configurations/${existingConfig.config_id}/`, {
-          method: 'PUT',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(backendConfig),
-        });
+        const response = await updateConfiguration(selectedTestSuiteIdLocal, existingConfig.config_id, backendConfig);
 
         if (response.ok) {
           const updatedConfig = await response.json();
@@ -339,15 +331,7 @@ const MetricsConfiguration = ({
           throw new Error('Failed to update configuration');
         }
       } else {
-        const backendUrl = await getBackendUrl();
-        // Create new configuration
-        const response = await fetch(`${backendUrl}/test-suite/${selectedTestSuiteIdLocal}/configurations/`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(backendConfig),
-        });
+        const response = await createConfiguration(selectedTestSuiteIdLocal, backendConfig);
 
         
 

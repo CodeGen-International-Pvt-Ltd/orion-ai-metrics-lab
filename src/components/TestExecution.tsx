@@ -7,6 +7,8 @@ import { Progress } from "@/components/ui/progress";
 import { Play, Pause, ArrowRight, CheckCircle, Clock, AlertCircle } from "lucide-react";
 import ServerErrorPage from "./ServerErrorPage";
 import { getBackendUrl } from "../lib/config";
+import * as api from "../lib/apiPaths";
+import { createTestRun as apiCreateTestRun, deleteTestRun as apiDeleteTestRun, getTestRun } from "../lib/apiService";
 
 interface TestExecutionProps {
   onNext: () => void;
@@ -61,9 +63,7 @@ const TestExecution = ({ onNext, onBack, setResults, selectedTestSuiteId }: Test
     
       try {
         const backendUrl = await getBackendUrl();
-        await fetch(`${backendUrl}/test-suite/${selectedTestSuiteId}/test_run/${testRunId}/`, {
-          method: 'DELETE',
-        });
+        await apiDeleteTestRun(selectedTestSuiteId, testRunId);
         console.log('Test run deleted');
       } catch (err) {
         console.error('Failed to delete test run:', err);
@@ -170,7 +170,7 @@ const TestExecution = ({ onNext, onBack, setResults, selectedTestSuiteId }: Test
     console.log("✅ Test Run ID returned:", runId);
   
     const backendUrl = await getBackendUrl();
-    const response = await fetch(`${backendUrl}/test-suite/${selectedTestSuiteId}/test-run/${runId}/`);
+    const response = await getTestRun(selectedTestSuiteId, runId);
     if (!response.ok) {
       throw new Error("Failed to fetch test results");
     }
@@ -212,7 +212,17 @@ const TestExecution = ({ onNext, onBack, setResults, selectedTestSuiteId }: Test
             testRunCreated = true;
             
             try {
-              const runId = await createTestRun();
+              const response = await apiCreateTestRun(selectedTestSuiteId, {
+                host: 'natura.codegen.net',
+                app_id: '3f23b628-6b75-49fd-a1aa-840534949860',
+                thread_id: '5dc36bd7-9723-4556-8aac-2ebd0102c872',
+              });
+              if (!response.ok) {
+                throw new Error('Failed to create test run');
+              }
+              const data = await response.json();
+              const runId = data.test_run?.test_run_id;
+              if (!runId) throw new Error('test_run_id missing from response');
               createdRunId = runId;
               console.log(`✅ Test run created successfully for execution ID ${executionId}:`, runId);
               setTotalTestRuns(prev => {
@@ -293,16 +303,10 @@ const TestExecution = ({ onNext, onBack, setResults, selectedTestSuiteId }: Test
     if (!selectedTestSuiteId) return;
     console.log("Creating test run for suite ID:", selectedTestSuiteId);
     const backendUrl = await getBackendUrl();
-    const response = await fetch(`${backendUrl}/test-suite/${selectedTestSuiteId}/test-run/`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        host: 'natura.codegen.net',
-        app_id: '3f23b628-6b75-49fd-a1aa-840534949860',
-        thread_id: '5dc36bd7-9723-4556-8aac-2ebd0102c872',
-      }),
+    const response = await apiCreateTestRun(selectedTestSuiteId, {
+      host: 'natura.codegen.net',
+      app_id: '3f23b628-6b75-49fd-a1aa-840534949860',
+      thread_id: '5dc36bd7-9723-4556-8aac-2ebd0102c872',
     });
   
     if (!response.ok) {

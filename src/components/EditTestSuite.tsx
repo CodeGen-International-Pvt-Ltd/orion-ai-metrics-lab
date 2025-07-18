@@ -6,6 +6,8 @@ import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Edit2 } from "lucide-react";
 import { getBackendUrl } from "../lib/config";
+import * as api from "../lib/apiPaths";
+import { updateTestSuite } from "../lib/apiService";
 
 interface TestSuite {
   id: number;
@@ -36,17 +38,10 @@ const EditTestSuite = ({ testSuite, userId, onUpdateTestSuite }: EditTestSuitePr
     }
   
     try {
-      const backendUrl = await getBackendUrl();
-      const res = await fetch(`${backendUrl}/user/${userId}/test-suite/${testSuite.id}/`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          suite_name: suiteName.trim(),
-          user: testSuite.user_id,
-          confidential_status: testSuite.confidentialityStatus,
-        }),
+      const res = await updateTestSuite(userId, testSuite.id, {
+        suite_name: suiteName.trim(),
+        user: testSuite.user_id,
+        confidential_status: testSuite.confidentialityStatus,
       });
   
       if (!res.ok) {

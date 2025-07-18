@@ -8,6 +8,8 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Brain, ArrowRight } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { getBackendUrl } from "../lib/config";
+import * as api from "../lib/apiPaths";
+import { createConfiguration } from "../lib/apiService";
 
 interface ModelSelectionProps {
   selectedModel: string;
@@ -175,21 +177,16 @@ const supportedBackendMetrics = Object.keys(metricCategoryMap);
       api_endpoint: "https://api.example.com/process",
       selected_metrics: groupedMetrics, // nested and grouped by backend categories
       selected_thresholds: [], // keep empty or remove if not needed
-      directory: "C:/Users/krithigat/Downloads/ML-viva",
-      excel_output_path: "C:/Users/krithigat/Downloads",
+      //directory: "C:/Users/krithigat/Downloads/ML-viva",
+      //excel_output_path: "C:/Users/krithigat/Downloads", 
+      directory: "/opt/orion_evaluator/uploads/",
+      excel_output_path: "/opt/orion_evaluator/uploads/outputs/",
       model_selected: selectedModel === 'custom' ? 'custom' : selectedModel
     };
     
     
     
-    const backendUrl = await getBackendUrl();
-    const response = await fetch(`${backendUrl}/test-suite/${pendingConfig.testSuiteId}/configurations/`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(requestBody),
-    });
+    const response = await createConfiguration(pendingConfig.testSuiteId, requestBody);
     console.log('Request body:', requestBody);
     
     if (!response.ok) {

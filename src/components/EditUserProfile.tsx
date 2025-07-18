@@ -6,6 +6,8 @@ import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { User, Mail, Edit2 } from "lucide-react";
 import { getBackendUrl } from "../lib/config";
+import * as api from "../lib/apiPaths";
+import { updateUser } from "../lib/apiService";
 
 interface EditUserProfileProps {
   userData: { id: number; name: string; email: string };
@@ -50,16 +52,9 @@ const EditUserProfile = ({ userData, onUpdateUser }: EditUserProfileProps) => {
     if (!validateForm()) return;
   
     try {
-      const backendUrl = await getBackendUrl();
-      const response = await fetch(`${backendUrl}/user/${formData.id}/`, {
-        method: 'PUT', 
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          name: formData.username,
-          email: formData.email
-        })
+      const response = await updateUser(formData.id, {
+        name: formData.username,
+        email: formData.email
       });
   
       if (!response.ok) {

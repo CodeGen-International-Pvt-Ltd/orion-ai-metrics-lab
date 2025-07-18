@@ -4,6 +4,8 @@ import { Button } from "@/components/ui/button";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Trash2 } from "lucide-react";
 import { getBackendUrl } from "../lib/config";
+import * as api from "../lib/apiPaths";
+import { deleteTestSuite } from "../lib/apiService";
 
 interface TestSuite {
   id: number;
@@ -27,13 +29,7 @@ const DeleteTestSuite = ({ testSuite, userId, onDeleteTestSuite }: DeleteTestSui
     setIsDeleting(true);
 
     try {
-      const backendUrl = await getBackendUrl();
-      const res = await fetch(`${backendUrl}/user/${userId}/test-suite/${testSuite.id}/`, {
-        method: "DELETE",
-        headers: {
-          "Content-Type": "application/json",
-        }
-      });
+      const res = await deleteTestSuite(userId, testSuite.id);
 
       if (!res.ok) {
         const error = await res.text();

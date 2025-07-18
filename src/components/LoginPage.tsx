@@ -6,6 +6,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Brain, Mail, User } from "lucide-react";
 import { ThemeToggleLarge } from "@/components/ThemeToggle";
 import { getBackendUrl } from "../lib/config";
+import * as api from "../lib/apiPaths";
+import { createUser } from "../lib/apiService";
 
 interface LoginPageProps {
   onLogin: (userData: { id:number; name: string; email: string }) => void;
@@ -48,16 +50,9 @@ const LoginPage = ({ onLogin }: LoginPageProps) => {
     if (!validateForm()) return;
   
     try {
-      const backendUrl = await getBackendUrl();
-      const response = await fetch(`${backendUrl}/user/`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          name: formData.username,
-          email: formData.email
-        })
+      const response = await createUser({
+        name: formData.username,
+        email: formData.email
       });
   
       if (!response.ok) {

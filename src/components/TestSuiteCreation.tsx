@@ -7,6 +7,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Plus, Trash2, FileText, ArrowRight } from "lucide-react";
 import { getBackendUrl } from "../lib/config";
+import * as api from "../lib/apiPaths";
+import { createTestSuite } from "../lib/apiService";
 
 interface TestSuite {
   id: number;
@@ -48,14 +50,7 @@ const TestSuiteCreation = ({ userId, testSuites, setTestSuites, onNext, onBack, 
     };
   
     try {
-      const backendUrl = await getBackendUrl();
-      const response = await fetch(`${backendUrl}/user/${userId}/test-suite/`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(payload),
-      });
+      const response = await createTestSuite(userId, payload);
   
       if (!response.ok) {
         throw new Error("Failed to create test suite");

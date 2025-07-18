@@ -31,6 +31,8 @@ import EditUserProfile from "./EditUserProfile"
 import SettingsDialog from "./SettingsDialog"
 import HelpDialog from "./HelpDialog"
 import { getBackendUrl } from "../lib/config";
+import * as api from "../lib/apiPaths";
+import { deleteUser } from "../lib/apiService";
 
 interface AppSidebarProps {
   userData: { id: number; name: string; email: string };
@@ -54,13 +56,7 @@ const AppSidebar = ({
 
   const handleLogout = async () => {
     try {
-      const backendUrl = await getBackendUrl();
-      const res = await fetch(`${backendUrl}/user/${userData.id}/`, {
-        method: "DELETE",
-        headers: {
-          'Content-Type': 'application/json'
-        }
-      });
+      const res = await deleteUser(userData.id);
   
       if (!res.ok) {
         throw new Error("Failed to delete user");

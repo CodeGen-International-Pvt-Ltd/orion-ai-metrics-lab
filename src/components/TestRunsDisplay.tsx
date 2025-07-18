@@ -5,6 +5,8 @@ import { Badge } from "@/components/ui/badge";
 import { ArrowLeft, Play, AlertCircle, CheckCircle, Clock, BarChart3, Loader2 } from "lucide-react";
 import ServerErrorPage from './ServerErrorPage';
 import { getBackendUrl } from "../lib/config";
+import * as api from "../lib/apiPaths";
+import { getTestRuns, getTestRun } from "../lib/apiService";
 
 interface TestRun {
   test_run_id: number;
@@ -38,8 +40,7 @@ const TestRunsDisplay = ({ testSuiteName, testSuiteId, onSelectTestRun, onBack }
     setError(null);
     
     try {
-      const backendUrl = await getBackendUrl();
-      const response = await fetch(`${backendUrl}/test-suite/${testSuiteId}/test-run/filter/`);
+      const response = await getTestRuns(testSuiteId);
       
       if (!response.ok) {
         throw new Error(`Failed to fetch test runs: ${response.status}`);
@@ -94,8 +95,7 @@ const TestRunsDisplay = ({ testSuiteName, testSuiteId, onSelectTestRun, onBack }
     console.log("Fetching results with:");
     console.log("✅ Test Run ID returned:", runId);
   
-    const backendUrl = await getBackendUrl();
-    const response = await fetch(`${backendUrl}/test-suite/${testSuiteId}/test-run/${runId}/`);
+    const response = await getTestRun(testSuiteId, runId);
     if (!response.ok) {
       throw new Error("Failed to fetch test results");
     }

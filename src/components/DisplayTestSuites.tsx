@@ -7,6 +7,8 @@ import EditTestSuite from "./EditTestSuite";
 import DeleteTestSuite from "./DeleteTestSuite";
 import ServerErrorPage from './ServerErrorPage';
 import { getBackendUrl } from "../lib/config";
+import * as api from "../lib/apiPaths";
+import { getTestRuns, getTestRun } from "../lib/apiService";
 
 interface TestSuite {
   id: number;
@@ -65,7 +67,7 @@ const DisplayTestSuites = ({
     
     try {
       const backendUrl = await getBackendUrl();
-      const response = await fetch(`${backendUrl}/test-suite/${suiteId}/test-run/filter/`);
+      const response = await getTestRuns(suiteId);
       
       if (!response.ok) {
         console.warn(`Failed to fetch test runs for suite ${suiteId}:`, response.status);
@@ -96,7 +98,7 @@ const DisplayTestSuites = ({
     try {
       const backendUrl = await getBackendUrl();
       // Fetch test runs from API
-      const response = await fetch(`${backendUrl}/test-suite/${suiteId}/test-run/filter/`);
+      const response = await getTestRuns(suiteId);
       
       if (!response.ok) {
         console.error(`Failed to fetch test runs for suite ${suiteId}:`, response.status);
@@ -194,7 +196,7 @@ const DisplayTestSuites = ({
     console.log("✅ Test Run ID returned:", runId);
   
     const backendUrl = await getBackendUrl();
-    const response = await fetch(`${backendUrl}/test-suite/${suiteId}/test-run/${runId}/`);
+    const response = await getTestRun(suiteId, runId);
     if (!response.ok) {
       throw new Error("Failed to fetch test results");
     }

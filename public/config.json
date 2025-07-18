@@ -1,4 +1,6 @@
 {
-    "backendUrl": "http://127.0.0.1:8000/"
+    "backendUrl": "http://127.0.0.1:8000/",
+    "naturabackendUrl": "http://172.22.178.74:8080/v1/", 
+    "localbackendUrl":  "http://127.0.0.1:8000/v1/"
   }
   

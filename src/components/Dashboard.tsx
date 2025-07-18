@@ -8,6 +8,8 @@ import DeleteTestSuite from "./DeleteTestSuite";
 import DisplayTestSuites from './DisplayTestSuites';
 import ServerErrorPage from './ServerErrorPage';
 import { getBackendUrl } from "../lib/config";
+import * as api from "../lib/apiPaths";
+import { getTestRuns, getTestRun } from "../lib/apiService";
 
 interface TestRun {
   test_run_id: number;
@@ -68,7 +70,7 @@ const Dashboard = ({ testSuites, userData, onSelectTestRun, setResults, onSelect
     
     try {
       const backendUrl = await getBackendUrl();
-      const response = await fetch(`${backendUrl}/test-suite/${suiteId}/test-run/filter/`);
+      const response = await getTestRuns(suiteId);
       console.log(suiteId);
       
       if (!response.ok) {
@@ -107,7 +109,7 @@ const Dashboard = ({ testSuites, userData, onSelectTestRun, setResults, onSelect
       for (const suite of testSuites) {
         try {
           const backendUrl = await getBackendUrl();
-          const response = await fetch(`${backendUrl}/test-suite/${suite.id}/test-run/filter/`);
+          const response = await getTestRuns(suite.id);
           console.log(suite.id);
           
           if (!response.ok) {
@@ -238,7 +240,7 @@ const Dashboard = ({ testSuites, userData, onSelectTestRun, setResults, onSelect
     console.log("✅ Test Run ID returned:", runId);
   
     const backendUrl = await getBackendUrl();
-    const response = await fetch(`${backendUrl}/test-suite/${suiteId}/test-run/${runId}/`);
+    const response = await getTestRun(suiteId, runId);
 
 
     if (!response.ok) {
@@ -291,7 +293,7 @@ const Dashboard = ({ testSuites, userData, onSelectTestRun, setResults, onSelect
     try {
       // Fetch test runs from API
       const backendUrl = await getBackendUrl();
-      const response = await fetch(`${backendUrl}/test-suite/${suiteId}/test-run/filter/`);
+      const response = await getTestRuns(suiteId);
       console.log(suiteId);
       
       if (!response.ok) {

@@ -18,6 +18,8 @@ import LoginPage from '@/components/LoginPage';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import ServerErrorPage from '@/components/ServerErrorPage';
 import { getBackendUrl } from "../lib/config";
+import * as api from "../lib/apiPaths";
+import { getTestRuns } from "../lib/apiService";
 
 const Index = () => {
   const [currentStep, setCurrentStep] = useState(1);
@@ -34,8 +36,7 @@ const Index = () => {
     if (userData) {
       const fetchTestSuites = async () => {
         try {
-          const backendUrl = await getBackendUrl();
-          const response = await fetch(`${backendUrl}/user/${userData.id}/test-suite/`);
+          const response = await getTestRuns(userData.id);
           if (response.ok) {
             const data = await response.json();
             setTestSuites(data);
